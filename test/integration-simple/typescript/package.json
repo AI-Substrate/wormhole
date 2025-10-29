@@ -1,0 +1,14 @@
+{
+  "name": "vsc-bridge-integration-simple-typescript",
+  "version": "1.0.0",
+  "description": "Simple TypeScript test target for VSC-Bridge integration tests",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}

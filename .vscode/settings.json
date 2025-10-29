@@ -1,0 +1,62 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+	"files.exclude": {
+		"out": false // set this to true to hide the "out" folder with the compiled JS files
+	},
+	"search.exclude": {
+		"out": true // set this to false to include "out" folder in search results
+	},
+	// Turn off tsc task auto detection since we have the necessary tasks as npm scripts
+	"typescript.tsc.autoDetect": "off",
+	// Set Python interpreter to container Python
+	"python.defaultInterpreterPath": "/usr/local/python/current/bin/python3",
+	"omnisharp.dotnetPath": "/usr/bin/dotnet",
+	"dotnet.defaultSolution": "test/TestWorkspace.sln",
+	"dotnetAcquisitionExtension.existingDotnetPath": [
+		{
+			"extensionId": "ms-dotnettools.csharp",
+			"path": "/usr/bin/dotnet"
+		},
+		{
+			"extensionId": "ms-dotnettools.csdevkit",
+			"path": "/usr/bin/dotnet"
+		}
+	],
+	"peacock.color": "#007fff",
+	// Exclude test fixtures and archived tests from file watching
+	// These are separate projects used in Extension Host, not part of host project
+	"files.watcherExclude": {
+		"**/test/integration-simple/**": true,
+		"**/scratch/vitest-tests-archived/**": true
+	},
+	// Explicitly tell Vitest extension which config to use (only root config)
+	"vitest.include": ["**/vitest.config.ts"],
+	"vitest.exclude": ["**/test/integration-simple/**", "**/scratch/**", "**/node_modules/**"],
+	"vitest.configSearchPatternExclude": "{**/test/integration-simple/**,**/scratch/**}",
+	// Disable extension test discovery in host workspace
+	// Extension tests should only run via npm scripts, not in test explorer UI
+	"testing.automaticallyOpenPeekView": "never",
+	"extensions.ignoreRecommendations": false,
+	// Disable the extension-test-runner in this workspace
+	"vscode-test.enable": false,
+	"workbench.colorCustomizations": {
+		"activityBar.activeBackground": "#3399ff",
+		"activityBar.background": "#3399ff",
+		"activityBar.foreground": "#15202b",
+		"activityBar.inactiveForeground": "#15202b99",
+		"activityBarBadge.background": "#bf0060",
+		"activityBarBadge.foreground": "#e7e7e7",
+		"commandCenter.border": "#e7e7e799",
+		"sash.hoverBorder": "#3399ff",
+		"statusBar.background": "#007fff",
+		"statusBar.foreground": "#e7e7e7",
+		"statusBarItem.hoverBackground": "#3399ff",
+		"statusBarItem.remoteBackground": "#007fff",
+		"statusBarItem.remoteForeground": "#e7e7e7",
+		"titleBar.activeBackground": "#007fff",
+		"titleBar.activeForeground": "#e7e7e7",
+		"titleBar.inactiveBackground": "#007fff99",
+		"titleBar.inactiveForeground": "#e7e7e799"
+	},
+	"peacock.remoteColor": "#007fff"
+}

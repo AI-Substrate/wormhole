@@ -1,0 +1,124 @@
+alias: dap.exceptions
+category: dap
+description: Show exceptions with surrounding context and stack traces
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to latest session)
+  count:
+    type: number
+    required: false
+    default: 10
+    description: How many exceptions to show (1-100)
+  withContext:
+    type: boolean
+    required: false
+    default: true
+    description: Include surrounding outputs before/after exception
+  contextLines:
+    type: number
+    required: false
+    default: 5
+    description: How many output lines before/after to show (0-50)
+response: query
+errors:
+  - E_NO_EXCEPTIONS
+  - E_NO_SESSION
+cli:
+  command: dap exceptions
+  description: Deep dive into exceptions with context
+  examples:
+    - vscb script run dap.exceptions
+    - vscb script run dap.exceptions --param count=5
+    - vscb script run dap.exceptions --param withContext=false
+    - vscb script run dap.exceptions --param contextLines=10
+# Hidden from MCP by default - can be verbose, specialized analysis
+# Still available via CLI: vscb script run dap.exceptions
+mcp:
+  enabled: false
+  description: Inspect exceptions with surrounding context and stack traces for deep error analysis
+  timeout: 30000
+
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_EXCEPTIONS
+        summary: "No exceptions found in specified session"
+        is_retryable: false
+        user_fix_hint: "Session may have run successfully without errors, or sessionId is incorrect"
+      - code: E_NO_SESSION
+        summary: "No debug session found"
+        is_retryable: false
+        user_fix_hint: "Start a debug session first or specify a valid sessionId"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Deep dive into exception details and stack traces
+      - Understanding exception context (surrounding outputs)
+      - Analyzing error patterns in debug sessions
+      - Getting exception-focused view of session failures
+
+      DON'T USE FOR:
+      - General log viewing (use dap.logs)
+      - Searching for non-exception patterns (use dap.search)
+      - Comparing exception counts between sessions (use dap.compare)
+      - Statistical analysis of all outputs (use dap.stats)
+
+      PREREQUISITES:
+      - Debug session must have captured exception events
+      - For specific session, sessionId must be valid
+
+      SAFETY:
+      - Read-only operation (no state changes)
+      - Idempotent (same query returns same results)
+
+    parameter_hints:
+      sessionId:
+        description: "Debug session to retrieve exceptions from"
+        required: false
+        examples:
+          - "latest"
+          - "abc-123-def"
+          - "null (defaults to latest)"
+        note: "Defaults to most recent session if omitted"
+
+      count:
+        description: "Maximum number of exceptions to return"
+        required: false
+        examples:
+          - "10"
+          - "5"
+          - "20"
+        note: "Default is 10, range is 1-100"
+
+      withContext:
+        description: "Include surrounding output lines before/after exception"
+        required: false
+        examples:
+          - "true"
+          - "false"
+        note: "Default is true (includes context)"
+
+      contextLines:
+        description: "Number of output lines to show before/after exception"
+        required: false
+        examples:
+          - "5"
+          - "10"
+          - "20"
+        note: "Default is 5, range is 0-50"
+        pitfalls:
+          - "High values may produce large output if many exceptions exist"

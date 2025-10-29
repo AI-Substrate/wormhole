@@ -1,0 +1,284 @@
+# Comprehensive MCP Metadata Enhancement Template
+# Version: 1.0
+# Based on: Deep research findings (2025-10-12)
+# Token Budget: 250-450 tokens per tool (guideline, not hard limit)
+#
+# This template shows the complete P0+P1 metadata structure for VSC-Bridge tools.
+# Use this as a reference when enhancing existing *.meta.yaml files.
+#
+# NOTE: Only the `mcp` section is new. Preserve all existing top-level fields.
+
+# ============================================================================
+# EXISTING FIELDS (Preserve These)
+# ============================================================================
+
+alias: category.operation            # e.g., breakpoint.set, debug.evaluate
+name: Human Readable Name             # CLI display name
+category: category                    # Tool category
+description: Brief CLI description    # Used in CLI help
+dangerOnly: false                     # Deprecated field (keep if present)
+
+params:
+  param_name:
+    type: string                      # string|number|boolean|enum|object
+    required: true                    # true|false
+    description: Parameter description
+    # Add constraints as needed: min, max, values, default, resolve
+
+response: action                      # action|query|waitable
+result:
+  field_name:
+    type: string
+    description: Result field description
+
+errors:
+  - E_ERROR_CODE_1                    # List all possible error codes
+  - E_ERROR_CODE_2
+
+cli:
+  command: cli command
+  description: CLI description
+  examples:
+    - Example CLI usage
+
+# ============================================================================
+# NEW MCP SECTION (Add This)
+# ============================================================================
+
+mcp:
+  # --------------------------------------------------------------------------
+  # P0: Must-Have Fields
+  # --------------------------------------------------------------------------
+
+  enabled: true
+  # Set to false to exclude tool from MCP exposure
+  # Default: true (can omit if enabling)
+
+  tool: tool_name_override
+  # Optional: Override auto-generated tool name
+  # Default: alias with dots → underscores (breakpoint.set → breakpoint_set)
+  # Only set if you want a different name than the default
+
+  description: "One-line contrastive summary (NOT same as CLI description)"
+  # Requirements:
+  # - One sentence, no newlines
+  # - Contrast with sibling tools (not just "what it does")
+  # - Focus on unique trigger/use case
+  # - Token budget: 30-50 tokens (~15-25 words)
+  # Example: "Set a line or conditional breakpoint in active debug session"
+
+  timeout: 5000
+  # Milliseconds for tool execution (overrides default 30000ms)
+  # Guidelines by operation type:
+  # - Quick ops (breakpoints, stepping): 5000-10000ms
+  # - Medium ops (restart, DAP queries): 15000-30000ms
+  # - Long ops (debug start, test discovery): 60000ms
+  # - Very long ops (wait-for-hit): 90000ms
+  # Omit if default 30s timeout is appropriate
+
+  # --------------------------------------------------------------------------
+  # P0: Tool Relationships (NEW - Orchestration Hints)
+  # --------------------------------------------------------------------------
+
+  relationships:
+    requires: ["prerequisite.tool"]
+    # Hard dependencies: Tools that MUST run before this one
+    # Tool will fail or behave incorrectly without these
+    # Example: debug.evaluate requires debug.start
+    # Use empty array [] if no hard dependencies
+
+    recommended: ["helpful.tool"]
+    # Soft suggestions: Tools that SHOULD run first for better results
+    # Tool works without them, but agents should consider running first
+    # Example: debug.evaluate recommends breakpoint.set (pause first)
+    # Use empty array [] if no soft suggestions
+
+    provides: ["outputIdentifier"]
+    # What this tool produces that other tools can use
+    # Example: debug.start provides "debugSessionId"
+    # Use empty array [] if tool doesn't produce reusable output
+
+    conflicts: ["incompatible.tool"]
+    # Tools that can't coexist or run simultaneously
+    # Example: debug.start conflicts with debug.start (no multiple sessions)
+    # Use empty array [] if no conflicts
+
+  # --------------------------------------------------------------------------
+  # P0: Structured Error Contract (NEW - Retryability Guidance)
+  # --------------------------------------------------------------------------
+
+  error_contract:
+    errors:
+      - code: E_ERROR_CODE
+        # Must match codes in top-level `errors` field
+        summary: "Human-readable error description"
+        # Brief explanation of what this error means
+        is_retryable: true
+        # true: Transient failure, fixable input, or state race condition
+        # false: Missing prerequisite, permanent failure, invalid config
+        user_fix_hint: "Specific action to resolve (tool call or check)"
+        # Actionable instruction, NOT vague description
+        # Example: "Call debug.start first" NOT "Debug session required"
+
+      - code: E_SECOND_ERROR
+        summary: "Another common error"
+        is_retryable: false
+        user_fix_hint: "Specific fix action"
+
+    # Guidelines:
+    # - Cover top 2-3 most common errors (not all possible errors)
+    # - Prioritize user-fixable errors over internal errors
+    # - Token budget: 40-80 tokens for 2-3 errors
+
+  # --------------------------------------------------------------------------
+  # P0: Safety Flags (NEW - MCP Spec Annotations)
+  # --------------------------------------------------------------------------
+
+  safety:
+    idempotent: true
+    # true: Same inputs → same result (safe to retry on timeout)
+    # false: Repeated calls have different effects
+    # Examples:
+    #   true: breakpoint.set (setting same BP twice = same result)
+    #   false: debug.step_over (stepping twice ≠ stepping once)
+
+    read_only: true
+    # true: Tool only reads state, never modifies program state
+    # false: Tool modifies runtime state or debugger state
+    # Note: Debugger state changes (loading scopes) don't count as writes
+    # Examples:
+    #   true: debug.list_variables (query only)
+    #   false: debug.set_variable (modifies runtime)
+
+    destructive: false
+    # true: Operation is dangerous or irreversible
+    # false: Normal operation (most tools)
+    # Examples:
+    #   true: util.restart_vscode (kills editor)
+    #   false: Most debug tools
+
+  # --------------------------------------------------------------------------
+  # P1: LLM Guidance (Enhanced Structure)
+  # --------------------------------------------------------------------------
+
+  llm:
+    # ------------------------------------------------------------------------
+    # 4-Part When-To-Use Pattern (Use/Don't/Prereqs/Safety)
+    # ------------------------------------------------------------------------
+
+    when_to_use: |
+      USE FOR:
+      - Specific trigger condition 1
+      - Specific trigger condition 2
+      - Specific trigger condition 3
+
+      DON'T USE FOR:
+      - Anti-trigger 1 (use sibling.tool instead)
+      - Anti-trigger 2 (use alternative.tool instead)
+
+      PREREQUISITES:
+      - State requirement 1
+      - State requirement 2
+
+      SAFETY:
+      - Safety note from flags (e.g., "Read-only, idempotent")
+
+    # IMPORTANT: Use exact label text (including colons and capitalization):
+    # "USE FOR:", "DON'T USE FOR:", "PREREQUISITES:", "SAFETY:"
+    # Validation script checks for exact matches - no variations allowed!
+    #
+    # Guidelines:
+    # - USE FOR: 2-5 specific triggers (not generic descriptions)
+    # - DON'T USE FOR: 2-4 anti-triggers pointing to sibling tools
+    # - PREREQUISITES: Explicit state/environment requirements
+    # - SAFETY: Reflect safety flags (idempotent/read_only/destructive)
+    # - Token budget: 80-120 tokens (moderate level recommended)
+
+    # ------------------------------------------------------------------------
+    # Enhanced Parameter Hints (With Pitfalls)
+    # ------------------------------------------------------------------------
+
+    parameter_hints:
+      param_name:
+        description: "Brief, clear description"
+        # One-line explanation of what this parameter does
+
+        required: true
+        # true|false - must match params section
+
+        examples:
+          - "example1"
+          - "example2"
+          - "example3"
+        # MUST provide 2-3 examples (not more, not less)
+        # Show concrete values, not abstract descriptions
+        # Token budget: ~10-15 tokens per example
+
+        note: "Additional context or tip"
+        # Optional: Extra guidance or gotchas
+        # Example: "Prefer workspace-relative paths for portability"
+
+        language_specific:
+          python: "Python-specific guidance"
+          javascript: "JavaScript-specific guidance"
+          csharp: "C#-specific guidance"
+        # Optional: Only for language-dependent parameters (expressions, syntax)
+        # Omit if parameter is language-agnostic
+
+        pitfalls:
+          - "Don't do X"
+          - "Avoid Y"
+        # Optional: Common mistakes agents make with this parameter
+        # Use for complex parameters (expressions, enums, paths)
+        # Token budget: ~15-25 tokens for 1-2 pitfalls
+
+# ============================================================================
+# TOKEN BUDGET BREAKDOWN (Target: 250-450 tokens total)
+# ============================================================================
+#
+# P0 Fields:
+#   - description: 30-50 tokens (~15-25 words)
+#   - relationships: 20-40 tokens
+#   - error_contract: 40-80 tokens (2-3 errors)
+#   - safety: 10-20 tokens
+#   Subtotal: ~100-190 tokens
+#
+# P1 Fields:
+#   - when_to_use: 80-120 tokens (4-part structure)
+#   - parameter_hints: 100-200 tokens (varies by param count)
+#   Subtotal: ~180-320 tokens
+#
+# Total: ~280-510 tokens
+#   (Aim for middle: 350-400 tokens per tool)
+#
+# Note: This is a guideline to optimize agent context usage, not a hard limit.
+# Tools exceeding this range will warn but won't fail the build.
+
+# ============================================================================
+# IMPLEMENTATION CHECKLIST
+# ============================================================================
+#
+# When enhancing a *.meta.yaml file:
+#
+# [ ] Preserve all existing top-level fields (alias, name, category, params, etc.)
+# [ ] Add complete `mcp` section with all P0 fields
+# [ ] Set timeout if different from 30s default
+# [ ] Define relationships (requires/recommended/provides/conflicts)
+# [ ] Document top 2-3 errors with retryability and fix hints
+# [ ] Set safety flags (idempotent/read_only/destructive)
+# [ ] Write 4-part when_to_use with exact label text
+# [ ] Add parameter_hints for ALL parameters
+# [ ] Provide 2-3 examples per parameter
+# [ ] Add pitfalls for complex parameters
+# [ ] Add language_specific hints if parameter is language-dependent
+# [ ] Verify token count is in 250-450 range (use validation script)
+# [ ] Review for clarity and consistency
+
+# ============================================================================
+# REFERENCE EXAMPLES
+# ============================================================================
+#
+# See: docs/rules/mcp-tool-prompting.md
+# - Section 10: Complete examples (breakpoint.set, debug.evaluate)
+# - Token budget breakdowns
+# - Anti-patterns to avoid

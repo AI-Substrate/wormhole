@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "type": "error",
+  "error": {
+    "code": "E_NO_SESSION",
+    "message": "No active debug session"
+  },
+  "meta": {
+    "requestId": "test-job-002",
+    "timestamp": "2025-10-11T10:00:01.000Z"
+  }
+}

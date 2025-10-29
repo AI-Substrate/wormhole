@@ -1,0 +1,87 @@
+alias: breakpoint.clear.file
+name: Clear File Breakpoints
+category: breakpoint
+description: Clear all breakpoints in a specific file
+dangerOnly: false
+params:
+  path:
+    type: string
+    required: true
+    description: File path (absolute or relative to current directory)
+    resolve: cwd-relative
+response: action
+result:
+  cleared:
+    type: number
+    description: Number of breakpoints cleared
+  path:
+    type: string
+    description: File path where breakpoints were cleared
+errors:
+  - E_FILE_NOT_FOUND
+  - E_INVALID_PATH
+cli:
+  command: bp clear-file
+  description: Clear breakpoints in a file
+  examples:
+    - vscb script run breakpoint.clear.file --param path=test.js
+mcp:
+  # P0: Must-Have Fields
+  enabled: true
+  description: "Clear all breakpoints in a specific file (contrast: clear-project clears workspace-wide)"
+  timeout: 5000
+
+  # P0: Tool Relationships
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  # P0: Structured Error Contract
+  error_contract:
+    errors:
+      - code: E_FILE_NOT_FOUND
+        summary: "File path not found or not accessible"
+        is_retryable: true
+        user_fix_hint: "Check file path and ensure it exists in workspace"
+      - code: E_INVALID_PATH
+        summary: "File path is malformed or not a valid file"
+        is_retryable: true
+        user_fix_hint: "Provide absolute or workspace-relative file path"
+
+  # P0: Safety Flags
+  safety:
+    idempotent: true
+    read_only: false
+    destructive: false
+
+  # P1: LLM Guidance
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Removing all breakpoints from a single file when refactoring or debugging
+      - Cleaning up file-specific breakpoints before setting new ones
+      - Quick reset of debugging state for one file
+
+      DON'T USE FOR:
+      - Clearing all workspace breakpoints (use breakpoint.clear-project instead)
+      - Removing a single specific breakpoint (use breakpoint.remove instead)
+
+      PREREQUISITES:
+      - File must exist in workspace (path must be valid)
+      - No active debug session required (can clear at any time)
+
+      SAFETY:
+      - Idempotent (clearing twice achieves same result)
+      - Not destructive (breakpoints can be re-added easily)
+
+    parameter_hints:
+      path:
+        description: "Absolute or workspace-relative file path to clear breakpoints from"
+        required: true
+        examples:
+          - "src/main.js"
+          - "/absolute/path/to/file.py"
+          - "lib/utils/helper.ts"
+        note: "Prefer workspace-relative paths for portability"

@@ -1,0 +1,6 @@
+{
+	// This is a test fixture project used when opened in Extension Host
+	// Disable Vitest extension when this folder is opened directly
+	// (it should only run when triggered by integration tests)
+	"vitest.enable": false
+}

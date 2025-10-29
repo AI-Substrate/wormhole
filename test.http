@@ -1,0 +1,641 @@
+### Health Check (no auth required)
+GET http://127.0.0.1:3001/healthz
+
+### ==========================================
+### SSE - Subscribe to Debug Events
+### ==========================================
+
+### Subscribe to debug events (SSE)
+# Run this with curl for proper SSE support:
+# curl -N -H "X-VSC-Bridge-Token: YOUR_TOKEN" http://127.0.0.1:3001/debugger/events
+# @prompt token
+GET http://127.0.0.1:3001/debugger/events
+X-VSC-Bridge-Token: {{token}}
+Accept: text/event-stream
+
+### ==========================================
+### Debug-First Script Suite (19 scripts)
+### ==========================================
+
+### Set breakpoint with condition
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "bp.set",
+  "params": {
+    "path": "/Users/jordanknight/github/vsc-bridge/test/python/sample.py",
+    "line": 7,
+    "condition": "x > 5"
+  }
+}
+
+### Start debug session
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "debug.start",
+  "params": {
+    "launch": "Python: Current File"
+  }
+}
+
+### Wait for breakpoint hit
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "dbg.waitForHit",
+  "params": {
+    "timeoutMs": 30000
+  }
+}
+
+### Evaluate expression in debug context
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "dbg.evaluate",
+  "params": {
+    "expression": "x * 2"
+  }
+}
+
+### List variables in current scope
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "dbg.vars",
+  "params": {
+    "scope": "locals"
+  }
+}
+
+### Get scopes for current frame
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "dbg.scopes",
+  "params": {
+    "frameId": 0
+  }
+}
+
+### Step over
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "debug.step-over",
+  "params": {}
+}
+
+### Continue execution
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "debug.continue",
+  "params": {}
+}
+
+### Stop debug session
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "dbg.stop",
+  "params": {}
+}
+
+### Collect diagnostics
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "diag.collect",
+  "params": {}
+}
+
+### ==========================================
+### Legacy Endpoints (for backward compatibility)
+### ==========================================
+
+### Forbidden (no token)
+POST http://127.0.0.1:3001/breakpoint
+Content-Type: application/json
+
+{}
+
+### Breakpoint (with token) - replace 'test-token' with your actual token
+# @prompt token
+POST http://127.0.0.1:3001/breakpoint
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "path": "/Users/jordanknight/github/vsc-bridge/test/python/sample.py",
+  "line": 7,
+  "action": "add"
+}
+
+### Add breakpoint to a file
+# @prompt line
+# @prompt token
+POST  http://127.0.0.1:3001/breakpoint HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "path": "/Users/jordanknight/github/vsc-bridge/test/python/sample.py",
+    "line": "{{line}}",
+    "action": "add"
+}
+
+### Delete breakpoint from file
+# @prompt line
+# @prompt token
+POST  http://localhost:3001/breakpoint HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "path": "/workspaces/vsc-bridge/test/python/sample.py",
+    "line": "{{line}}",
+    "action": "delete"
+}
+
+### Add breakpoint to a file after removing all breakpoints
+# @prompt line
+# @prompt token
+POST  http://localhost:3001/breakpoint HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "path": "/workspaces/vsc-bridge/test/python/sample.py",
+    "line": "{{line}}",
+    "action": "add",
+    "reset": "file"
+}
+
+### Add breakpoint to a file after removing all breakpoints c#
+# @prompt line
+# @prompt token
+POST  http://localhost:3001/breakpoint HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "path": "/workspaces/vsc-bridge/test/c#/Program.cs",
+    "line": "{{line}}",
+    "action": "add",
+    "reset": "file"
+}
+
+### Run debugger
+# @prompt token
+POST  http://localhost:3001/debugger HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "launch": "Python: Debug Tests",
+    "folder": "/workspaces/vsc-bridge/test",
+    "command": "len(dummy)"
+}
+
+### Run debugger c#
+# @prompt token
+POST  http://localhost:3001/debugger HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "launch": ".NET Core Launch (console)",
+    "folder": "/workspaces/vsc-bridge/test",
+    "command": [
+        "var message = \"Hello, World!\";",
+        "Console.WriteLine(message)"
+    ]
+}
+
+### Run debugger c# - Loop 10 times
+# @prompt token
+POST  http://localhost:3001/debugger HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "launch": ".NET Core Launch (console)",
+    "folder": "/workspaces/vsc-bridge/test",
+    "command": [
+        "DebugEvaluator.PrintJason(test);"
+    ]
+}
+
+### Test eval - Run all test cases (DANGER MODE REQUIRED)
+# @prompt token
+POST  http://localhost:3001/command HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "command": "test",
+    "mode": "test"
+}
+
+### Test eval - Basic math expression (DANGER MODE REQUIRED)
+# @prompt token
+POST  http://localhost:3001/command HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "command": "2 + 2",
+    "mode": "safe"
+}
+
+### Test eval - Create and call function (DANGER MODE REQUIRED)
+# @prompt token
+POST  http://localhost:3001/command HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "command": "(function greet(name) { return `Hello, ${name}!`; })('World')",
+    "mode": "safe"
+}
+
+### Test eval - Check VS Code API availability (DANGER MODE REQUIRED)
+# @prompt token
+POST  http://localhost:3001/command HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "command": "typeof vscode !== 'undefined' ? 'VS Code API is available' : 'VS Code API not found'",
+    "mode": "unsafe"
+}
+
+### Test eval - List available globals (DANGER MODE REQUIRED)
+# @prompt token
+POST  http://localhost:3001/command HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "command": "Object.keys(global).filter(k => !k.startsWith('_')).slice(0, 10).join(', ')",
+    "mode": "unsafe"
+}
+
+### Test eval - Async operation (DANGER MODE REQUIRED)
+# @prompt token
+POST  http://localhost:3001/command HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "command": "(async () => { await new Promise(r => setTimeout(r, 100)); return 'Async completed!'; })()",
+    "mode": "unsafe",
+    "timeout": 5000
+}
+
+### Test eval - Access Node.js features (DANGER MODE REQUIRED)
+# @prompt token
+POST  http://localhost:3001/command HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "command": "process.version",
+    "mode": "unsafe"
+}
+
+### Test eval - Set breakpoint using VS Code API (DANGER MODE REQUIRED)
+# @prompt token
+POST  http://localhost:3001/command HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "command": "(async () => { const vscode = require('vscode'); const uri = vscode.Uri.file('/Users/jordanknight/github/vsc-bridge/test/python/sample.py'); const position = new vscode.Position(6, 0); const breakpoint = new vscode.SourceBreakpoint(new vscode.Location(uri, position)); vscode.debug.addBreakpoints([breakpoint]); return `Breakpoint set at ${uri.fsPath}:7`; })()",
+    "mode": "unsafe",
+    "timeout": 5000
+}
+
+### Test eval - Safe mode rejection (should fail) (DANGER MODE REQUIRED)
+# @prompt token
+POST  http://localhost:3001/command HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+    "command": "require('fs')",
+    "mode": "safe"
+}
+
+### Test 404 response
+# @prompt token
+POST  http://localhost:3001/nonexistent HTTP/1.1
+content-type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+### v2 Script (Normal mode)
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "bp.set",
+  "params": { "path": "/absolute/path/to/file.py", "line": 12 }
+}
+
+### v2 Execute (Danger mode only)
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/execute
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "script": "(async () => { return 'hello danger'; })()",
+  "timeout": 5000
+}
+
+#########################################
+# Phase 3 Script Examples
+#########################################
+
+### Breakpoint Scripts
+
+### bp.set - Set a breakpoint
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "bp.set",
+  "params": {
+    "path": "/Users/jordanknight/github/vsc-bridge/test/python/sample.py",
+    "line": 7,
+    "condition": "x > 10"
+  }
+}
+
+### bp.clear - Clear breakpoints
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "bp.clear",
+  "params": {
+    "scope": "file",
+    "path": "/Users/jordanknight/github/vsc-bridge/test/python/sample.py"
+  }
+}
+
+### bp.clear - Clear all project breakpoints
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "bp.clear",
+  "params": {
+    "scope": "project"
+  }
+}
+
+### bp.remove - Remove specific breakpoint
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "bp.remove",
+  "params": {
+    "path": "/Users/jordanknight/github/vsc-bridge/test/python/sample.py",
+    "line": 7
+  }
+}
+
+### bp.list - List all breakpoints
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "bp.list",
+  "params": {}
+}
+
+### Debug Control Scripts
+
+### debug.start - Start debugging session
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "debug.start",
+  "params": {
+    "launch": "Python: Debug Tests",
+    "folder": "/Users/jordanknight/github/vsc-bridge/test"
+  }
+}
+
+### debug.continue - Continue execution
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "debug.continue",
+  "params": {
+    "timeoutMs": 30000
+  }
+}
+
+### debug.step-over - Step over
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "debug.step-over",
+  "params": {}
+}
+
+### debug.step-into - Step into
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "debug.step-into",
+  "params": {}
+}
+
+### debug.step-out - Step out
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "debug.step-out",
+  "params": {}
+}
+
+### dbg.waitForHit - Wait for breakpoint hit
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "dbg.waitForHit",
+  "params": {
+    "timeoutMs": 30000
+  }
+}
+
+### Debug Data Scripts
+
+### dbg.vars - List variables
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "dbg.vars",
+  "params": {
+    "scope": "local"
+  }
+}
+
+### debug.stack - Get call stack
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "debug.stack",
+  "params": {}
+}
+
+### debug.threads - Get threads
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "debug.threads",
+  "params": {}
+}
+
+### Editor Scripts
+
+### editor.save - Save active editor
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "editor.save",
+  "params": {}
+}
+
+### editor.save-all - Save all editors
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "editor.save-all",
+  "params": {
+    "includeUntitled": false
+  }
+}
+
+### editor.selection - Get current selection
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "editor.selection",
+  "params": {}
+}
+
+### Workspace Scripts
+
+### workspace.files - List workspace files
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "workspace.files",
+  "params": {
+    "glob": "**/*.js",
+    "exclude": "**/node_modules/**"
+  }
+}
+
+### workspace.search - Search in files
+# @prompt token
+POST http://127.0.0.1:3001/api/v2/script
+Content-Type: application/json
+X-VSC-Bridge-Token: {{token}}
+
+{
+  "scriptName": "workspace.search",
+  "params": {
+    "query": "TODO",
+    "include": "**/*.ts",
+    "maxResults": 50
+  }
+}

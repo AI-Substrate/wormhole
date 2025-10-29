@@ -1,0 +1,118 @@
+{
+  "name": "vsc-bridge-extension",
+  "displayName": "VSCode Bridge",
+  "description": "Bridge for debugging and development tools integration",
+  "version": "1.2.0",
+  "publisher": "AI-Substrate",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AI-Substrate/wormhole.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AI-Substrate/wormhole/issues"
+  },
+  "homepage": "https://github.com/AI-Substrate/wormhole#readme",
+  "license": "MIT",
+  "keywords": [
+    "debugging",
+    "mcp",
+    "development",
+    "bridge"
+  ],
+  "engines": {
+    "vscode": "^1.104.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/extension.js",
+  "enabledApiProposals": [
+    "resolvers"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "vsc-bridge.helloWorld",
+        "title": "Hello World"
+      },
+      {
+        "command": "vsc-bridge.debug.stats",
+        "title": "VSC-Bridge: Show Bridge Statistics"
+      },
+      {
+        "command": "vsc-bridge.debug.safetyScan",
+        "title": "VSC-Bridge: Debug Safety Scan"
+      }
+    ],
+    "configuration": {
+      "title": "VSC-Bridge",
+      "properties": {
+        "vscBridge.dangerMode": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "⚠️ DANGER: Enable arbitrary code execution. Dev only."
+        },
+        "vscBridge.telemetry.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Application Insights telemetry collection for VSC-Bridge extension. Telemetry helps improve the extension by collecting usage patterns and error information. No personally identifiable information (PII) is collected."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "npm run test:unit",
+    "test:unit": "vitest run test/core/fs-bridge/dlq.test.ts test/core/fs-bridge/event-writer.test.ts test/core/fs-bridge/flood-protection.test.ts test/core/fs-bridge/scanner.test.ts test/core/fs-bridge/crash-recovery.test.ts test/core/fs-bridge/cleaner-dlq.test.ts",
+    "test:integration": "vscode-test --label integration",
+    "vsce:package": "vsce package",
+    "publish": "vsce publish",
+    "clean": "rm -rf out *.vsix",
+    "manifest:build": "ts-node ../scripts/build-manifest.ts",
+    "manifest:watch": "chokidar 'src/vsc-scripts/**/*.{js,meta.yaml}' -c 'npm run manifest:build'",
+    "schemas:build": "tsx scripts/generate-zod-schemas.ts",
+    "prebuild": "npm run manifest:build && npm run schemas:build"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.19.19",
+    "@types/sinon": "^17.0.4",
+    "@types/vscode": "^1.104.0",
+    "@types/yaml": "^1.9.6",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@vitest/ui": "^3.2.4",
+    "@vsc-bridge/shared-test": "*",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.6.2",
+    "chokidar-cli": "^3.0.0",
+    "copy-webpack-plugin": "^13.0.1",
+    "cross-env": "^7.0.3",
+    "eslint": "^9.25.1",
+    "glob": "^11.0.3",
+    "js-yaml": "^4.1.0",
+    "sinon": "^21.0.0",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "@vscode/extension-telemetry": "^0.9.9",
+    "gray-matter": "^4.0.3",
+    "yaml": "^2.8.1",
+    "zod": "^4.1.8"
+  }
+}

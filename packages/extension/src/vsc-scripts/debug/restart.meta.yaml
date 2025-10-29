@@ -1,0 +1,78 @@
+alias: debug.restart
+name: Restart Debug Session
+category: debug
+description: Restart the active or specified debug session
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to active session)
+response: action
+result:
+  restarted:
+    type: boolean
+    description: Whether the session was successfully restarted
+  sessionId:
+    type: string
+    description: ID of the restarted session
+errors:
+  - E_NO_SESSION
+cli:
+  command: debug restart
+  description: Restart debug session
+  examples:
+    - vscb script run debug.restart
+    - vscb script run debug.restart --param sessionId=abc-123
+mcp:
+  enabled: true
+  description: "Restart the active debug session, performing a stop and start cycle to reload code changes"
+  timeout: 60000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: []
+    provides: ["debugSessionId"]
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session to restart"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create initial session"
+
+  safety:
+    idempotent: false
+    read_only: false
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Reloading code changes during debug session
+      - Resetting program state while keeping breakpoints
+      - Quickly restarting without manual stop/start
+
+      DON'T USE FOR:
+      - Starting initial session (use debug.start instead)
+      - Continuing execution (use debug.continue instead)
+      - Stopping permanently (use debug.stop instead)
+
+      PREREQUISITES:
+      - Active debug session from debug.start
+
+      SAFETY:
+      - Not idempotent (restarting multiple times has side effects)
+      - Modifies debugger state (cycles session)
+      - Long operation (60s timeout for stop+start)
+
+    parameter_hints:
+      sessionId:
+        description: "ID of debug session to restart (defaults to active session)"
+        required: false
+        examples:
+          - "abc-123"
+          - ""
+          - "session-456"
+        note: "Omit to restart currently active session"

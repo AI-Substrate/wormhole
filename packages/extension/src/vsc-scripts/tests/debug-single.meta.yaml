@@ -1,0 +1,131 @@
+alias: test.debug-single
+name: Debug Single Test
+category: tests
+description: Debug a single test at specified file location using VS Code Testing API
+dangerOnly: false
+params:
+  path:
+    type: string
+    required: true
+    description: Absolute path to the test file
+  line:
+    type: number
+    required: true
+    description: Line number where the test is located (1-indexed)
+  column:
+    type: number
+    required: false
+    default: 1
+    description: Column position (1-indexed, defaults to 1)
+  timeoutMs:
+    type: number
+    required: false
+    default: 30000
+    description: Maximum time to wait for debug session to start (in milliseconds)
+response: waitable
+errors:
+  - E_TIMEOUT
+  - E_NO_TEST_AT_CURSOR
+  - E_API_UNAVAILABLE
+  - E_DISCOVERY_FAILED
+  - E_FILE_NOT_FOUND
+cli:
+  command: tests debug-single
+  description: Debug a single test at specific location
+  examples:
+    - vscb script run test.debug-single --param path="/path/to/test.py" --param line=25
+    - vscb script run test.debug-single --param path="/path/to/test.js" --param line=10 --param column=5
+mcp:
+  enabled: true
+  description: Start a debug session for a single test at a specific file location, combining test discovery and debugging
+  timeout: 60000
+
+  relationships:
+    requires: []
+    recommended: []
+    provides: ["debugSessionId"]
+    conflicts: ["debug.start"]
+
+  error_contract:
+    errors:
+      - code: E_FILE_NOT_FOUND
+        summary: "Test file does not exist at specified path"
+        is_retryable: false
+        user_fix_hint: "Verify file path is absolute and file exists"
+      - code: E_NO_TEST_AT_CURSOR
+        summary: "No test found at specified line/column position"
+        is_retryable: false
+        user_fix_hint: "Check line number points to a test function/method"
+      - code: E_TIMEOUT
+        summary: "Test discovery or debug session startup exceeded timeout"
+        is_retryable: true
+        user_fix_hint: "Increase timeoutMs parameter or check test framework configuration"
+
+  safety:
+    idempotent: false
+    read_only: false
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Starting a debug session for a single test at a specific file location
+      - Combining test discovery and debugging in one operation
+      - Debugging tests when you know the file path and line number
+
+      DON'T USE FOR:
+      - Debugging multiple tests (this targets a single test)
+      - General code debugging (use debug.start with launch configuration)
+      - Running tests without debugging (VS Code has separate test runners)
+
+      PREREQUISITES:
+      - Valid test file exists at specified path
+      - Line number points to a test function/method
+      - VS Code Testing API is available for the language
+      - Test framework is configured (pytest for Python, Jest for JS, etc.)
+
+      SAFETY:
+      - Non-idempotent (creates new debug session each time)
+      - Conflicts with debug.start (manages its own session)
+
+    parameter_hints:
+      path:
+        description: "Absolute path to the test file to debug"
+        required: true
+        examples:
+          - "/Users/name/project/test/python/test_example.py"
+          - "/home/user/workspace/tests/unit/test_auth.js"
+          - "C:\\Users\\name\\project\\tests\\test_api.py"
+        note: "Must be absolute path, not relative or workspace-relative"
+        pitfalls:
+          - "Don't use relative paths like './test.py' - must be absolute"
+          - "Don't use non-test files - must be a file recognized by test framework"
+
+      line:
+        description: "Line number where the test function/method is defined (1-indexed)"
+        required: true
+        examples:
+          - "25"
+          - "10"
+          - "142"
+        note: "Must point to the line containing the test function definition"
+        pitfalls:
+          - "Don't use line numbers inside the test body - must be the definition line"
+
+      column:
+        description: "Column position for precise test location (1-indexed)"
+        required: false
+        examples:
+          - "1"
+          - "5"
+          - "8"
+        note: "Defaults to 1 if omitted; rarely needed for test discovery"
+
+      timeoutMs:
+        description: "Maximum time to wait for test discovery and session startup"
+        required: false
+        examples:
+          - "30000"
+          - "60000"
+          - "90000"
+        note: "Increase for slow test frameworks or large projects; default is 30000ms (30 seconds)"

@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Snapshot Tests should match snapshot for object 1`] = `
+{
+  "email": "john@example.com",
+  "id": 1,
+  "name": "John Doe",
+}
+`;

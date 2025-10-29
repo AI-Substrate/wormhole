@@ -1,0 +1,72 @@
+version: 2
+
+updates:
+  # Extension dependencies
+  - package-ecosystem: "npm"
+    directory: "/extension"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "@octocat"  # Replace with your GitHub username
+    assignees:
+      - "@octocat"  # Replace with your GitHub username
+    commit-message:
+      prefix: "chore(extension)"
+      include: "scope"
+    groups:
+      dev-dependencies:
+        patterns:
+          - "@types/*"
+          - "@typescript-eslint/*"
+          - "@vscode/*"
+          - "eslint*"
+          - "typescript"
+      production-dependencies:
+        patterns:
+          - "express"
+
+  # MCP Server dependencies
+  - package-ecosystem: "npm"
+    directory: "/mcp-server"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "@octocat"  # Replace with your GitHub username
+    assignees:
+      - "@octocat"  # Replace with your GitHub username
+    commit-message:
+      prefix: "chore(mcp-server)"
+      include: "scope"
+    groups:
+      dev-dependencies:
+        patterns:
+          - "@types/*"
+          - "typescript"
+      production-dependencies:
+        patterns:
+          - "@modelcontextprotocol/*"
+          - "axios"
+          - "express"
+          - "cors"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/mcp-server"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "chore(docker)"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "chore(actions)"

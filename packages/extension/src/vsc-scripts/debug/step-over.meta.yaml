@@ -1,0 +1,90 @@
+alias: debug.step-over
+name: Step Over
+category: debug
+description: Step over the current line and wait until stopped at the next line
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to active session)
+  timeoutMs:
+    type: number
+    required: false
+    default: 5000
+    description: Maximum time to wait for step to complete (in milliseconds)
+response: waitable
+errors:
+  - E_TIMEOUT
+  - E_NO_SESSION
+cli:
+  command: debug step-over
+  description: Step over the current line
+  examples:
+    - vscb script run debug.step-over
+mcp:
+  enabled: true
+  description: "Execute current line without entering function calls, stopping at next line in current scope"
+  timeout: 10000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+      - code: E_TIMEOUT
+        summary: "Step operation did not complete within timeout"
+        is_retryable: true
+        user_fix_hint: "Increase timeoutMs parameter or verify program is not hanging"
+
+  safety:
+    idempotent: false
+    read_only: false
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Advancing execution by one line without entering functions
+      - Stepping over function calls to stay in current scope
+      - Line-by-line debugging in current function
+
+      DON'T USE FOR:
+      - Entering function calls (use debug.step-into instead)
+      - Exiting current function (use debug.step-out instead)
+      - Running to next breakpoint (use debug.continue instead)
+
+      PREREQUISITES:
+      - Active debug session from debug.start
+      - Session must be paused at breakpoint or after previous step
+
+      SAFETY:
+      - Not idempotent (stepping twice moves twice)
+      - Modifies execution state (advances program)
+      - Quick operation (10s timeout)
+
+    parameter_hints:
+      sessionId:
+        description: "ID of debug session (defaults to active session)"
+        required: false
+        examples:
+          - "abc-123"
+          - ""
+          - "session-456"
+        note: "Omit to use currently active session"
+
+      timeoutMs:
+        description: "Maximum milliseconds to wait for step to complete"
+        required: false
+        examples:
+          - "5000"
+          - "10000"
+          - "15000"
+        note: "Default 5000ms, increase if stepping over slow line execution"

@@ -1,0 +1,17 @@
+{
+  "name": "vsc-bridge-test-workspace",
+  "version": "1.0.0",
+  "description": "Test workspace for VSC-Bridge tutorials and examples",
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "test:auth": "jest javascript/auth.test.js --verbose"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "verbose": true
+  }
+}

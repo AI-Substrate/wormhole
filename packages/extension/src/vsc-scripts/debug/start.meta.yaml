@@ -1,0 +1,126 @@
+alias: debug.start
+name: Start Debug Session
+category: debug
+description: Start a debug session and wait until it's initialized
+dangerOnly: false
+params:
+  launch:
+    type: string
+    required: true
+    description: Launch configuration name from launch.json
+  folder:
+    type: string
+    required: false
+    description: Workspace folder path (defaults to first workspace folder)
+  timeoutMs:
+    type: number
+    required: false
+    default: 30000
+    description: Maximum time to wait for session to start (in milliseconds)
+  wait:
+    type: boolean
+    required: false
+    default: false
+    description: Wait for breakpoint/error/exit after launch (like test.debug_single)
+response: waitable
+errors:
+  - E_TIMEOUT
+  - E_LAUNCH_FAILED
+  - E_NOT_FOUND
+cli:
+  command: debug start
+  description: Start a debug session
+  examples:
+    - vscb script run debug.start --param launch="Python: Debug Tests"
+    - vscb script run debug.start --param launch="Node.js" --param folder=/home/user/project
+mcp:
+  enabled: true
+  description: "Start a new debug session using launch.json configuration, launching the runtime and loading symbols"
+  timeout: 60000
+
+  relationships:
+    requires: []
+    recommended: ["breakpoint.set"]
+    provides: ["debugSessionId"]
+    conflicts: ["debug.start"]
+
+  error_contract:
+    errors:
+      - code: E_LAUNCH_FAILED
+        summary: "Failed to launch debug session with specified configuration"
+        is_retryable: false
+        user_fix_hint: "Verify launch.json exists and configuration name is correct"
+      - code: E_NOT_FOUND
+        summary: "Launch configuration not found in launch.json"
+        is_retryable: false
+        user_fix_hint: "Check that launch configuration name matches entry in launch.json"
+      - code: E_TIMEOUT
+        summary: "Session startup exceeded timeout waiting for initialization"
+        is_retryable: true
+        user_fix_hint: "Increase timeoutMs parameter to 60000ms or verify runtime is installed"
+
+  safety:
+    idempotent: false
+    read_only: false
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Starting a new debug session before setting breakpoints or stepping
+      - Launching application with specific launch.json configuration
+      - Beginning debug workflow when no session exists
+
+      DON'T USE FOR:
+      - Restarting existing session (use debug.restart instead)
+      - Running tests (use test.debug-single instead)
+      - Checking if session exists (use debug.status instead)
+
+      PREREQUISITES:
+      - Valid launch.json with named configuration
+      - Runtime/debugger installed for target language
+      - No conflicting debug session active
+
+      SAFETY:
+      - Not idempotent (starting twice creates issues)
+      - Modifies debugger state (creates session)
+      - Long operation (60s timeout)
+
+    parameter_hints:
+      launch:
+        description: "Name of launch configuration from workspace launch.json"
+        required: true
+        examples:
+          - "Python: Debug Tests"
+          - "Node.js: Launch Program"
+          - "Run Extension"
+        note: "Must match configuration name exactly (case-sensitive)"
+        pitfalls:
+          - "Don't use file paths - only configuration names from launch.json"
+          - "Verify configuration exists before calling this tool"
+
+      folder:
+        description: "Workspace folder path containing launch.json (defaults to first workspace folder)"
+        required: false
+        examples:
+          - "/home/user/my-project"
+          - "/workspace/monorepo/package-a"
+          - ""
+        note: "Omit for single-folder workspaces"
+
+      timeoutMs:
+        description: "Maximum milliseconds to wait for session initialization"
+        required: false
+        examples:
+          - "30000"
+          - "60000"
+          - "90000"
+        note: "Default 30000ms may be too short for slow runtimes - increase to 60000ms for complex applications"
+
+      wait:
+        description: "Whether to wait for breakpoint/error/exit after launching (blocks until event)"
+        required: false
+        examples:
+          - "false"
+          - "true"
+        note: "Set to true to pause execution flow until significant event occurs"

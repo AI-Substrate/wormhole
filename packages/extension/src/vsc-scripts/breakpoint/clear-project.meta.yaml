@@ -1,0 +1,58 @@
+alias: breakpoint.clear.project
+name: Clear Project Breakpoints
+category: breakpoint
+description: Clear all breakpoints across the entire project
+dangerOnly: false
+params: {}
+response: action
+result:
+  cleared:
+    type: number
+    description: Number of breakpoints cleared
+errors: []
+cli:
+  command: bp clear-project
+  description: Clear all breakpoints in the project
+  examples:
+    - vscb script run breakpoint.clear.project
+mcp:
+  # P0: Must-Have Fields
+  enabled: true
+  description: "Clear all breakpoints across entire workspace (contrast: clear-file targets single file)"
+  timeout: 5000
+
+  # P0: Tool Relationships
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  # P0: Structured Error Contract
+  error_contract:
+    errors: []  # No common errors - operation is always safe
+
+  # P0: Safety Flags
+  safety:
+    idempotent: true
+    read_only: false
+    destructive: false
+
+  # P1: LLM Guidance
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Complete reset of debugging state across workspace
+      - Starting fresh debugging session without old breakpoints
+      - Cleanup before setting new systematic breakpoints
+
+      DON'T USE FOR:
+      - Clearing breakpoints in a single file (use breakpoint.clear-file instead)
+      - Removing a specific breakpoint (use breakpoint.remove instead)
+
+      PREREQUISITES:
+      - None (always safe to execute)
+
+      SAFETY:
+      - Idempotent (clearing twice achieves same result)
+      - Not destructive (breakpoints can be re-added easily)

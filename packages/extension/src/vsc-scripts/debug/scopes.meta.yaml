@@ -1,0 +1,111 @@
+alias: debug.scopes
+name: List Scopes
+category: debug
+description: List available scopes for a given frame
+dangerOnly: false
+params:
+  frameId:
+    type: number
+    required: true
+    description: Frame ID to get scopes for
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to active session)
+response: query
+result:
+  scopes:
+    type: array
+    description: List of available scopes
+    items:
+      name:
+        type: string
+        description: Scope name (e.g., Locals, Globals)
+      variablesReference:
+        type: number
+        description: Reference for retrieving variables
+      expensive:
+        type: boolean
+        description: Whether fetching variables is expensive
+      namedVariables:
+        type: number
+        description: Number of named variables
+      indexedVariables:
+        type: number
+        description: Number of indexed variables
+errors:
+  - E_NO_SESSION
+  - E_INTERNAL
+cli:
+  command: debug scopes
+  description: List scopes for a frame
+  examples:
+    - vscb script run debug.scopes --param frameId=0
+    - vscb script run debug.scopes --param frameId=1 --param sessionId=abc-123
+mcp:
+  enabled: true
+  description: List available scopes (Local, Global, Closure) for a specific stack frame during debugging
+  timeout: 5000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: ["breakpoint.set", "debug.stack"]
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+      - code: E_INTERNAL
+        summary: "Invalid frame ID or debugger error"
+        is_retryable: true
+        user_fix_hint: "Get valid frame ID from debug.stack and retry"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Discovering available variable scopes for a stack frame
+      - Getting variablesReference IDs for use with debug.list-variables
+      - Understanding scope hierarchy (locals, closures, globals)
+      - Preparing to list variables in specific scope
+
+      DON'T USE FOR:
+      - Directly listing variable values (use debug.list-variables instead)
+      - Evaluating expressions (use debug.evaluate instead)
+      - Getting stack frames (use debug.stack first to get frame IDs)
+
+      PREREQUISITES:
+      - Active debug session must exist (debug.start)
+      - Program should be paused at breakpoint
+      - Frame ID must be valid (get from debug.stack)
+
+      SAFETY:
+      - Read-only operation (doesn't modify program state)
+      - Idempotent (returns same scopes for same frame)
+
+    parameter_hints:
+      frameId:
+        description: "Stack frame ID to get scopes for (0 = top frame)"
+        required: true
+        examples:
+          - "0"
+          - "1"
+          - "2"
+        note: "Get valid frame IDs from debug.stack output"
+
+      sessionId:
+        description: "Debug session ID (optional, defaults to active session)"
+        required: false
+        examples:
+          - "abc-123-def"
+          - "latest"
+          - "session-xyz"
+        note: "Omit to use active session automatically"

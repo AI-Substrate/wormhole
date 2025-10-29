@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "type": "success",
+  "data": {
+    "success": true,
+    "details": {
+      "breakpoint": {
+        "id": "bp-001",
+        "path": "/test/file.js",
+        "line": 10,
+        "verified": true
+      }
+    }
+  },
+  "meta": {
+    "requestId": "test-job-001",
+    "timestamp": "2025-10-11T10:00:00.000Z"
+  }
+}

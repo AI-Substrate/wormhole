@@ -1,0 +1,150 @@
+alias: dap.search
+category: dap
+description: Search for text/regex patterns in session outputs with context
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID or 'all' to search all sessions (defaults to latest)
+  pattern:
+    type: string
+    required: true
+    description: Text or regex pattern to search for
+  category:
+    type: enum
+    values: [all, stdout, stderr, console, telemetry]
+    required: false
+    description: Filter to specific category before searching
+  contextLines:
+    type: number
+    required: false
+    default: 2
+    description: How many lines before/after to show (0-20)
+  limit:
+    type: number
+    required: false
+    default: 50
+    description: Max results to return (1-1000)
+  caseSensitive:
+    type: boolean
+    required: false
+    default: false
+    description: Case-sensitive search
+response: query
+errors:
+  - E_NO_RESULTS
+  - E_INVALID_REGEX
+cli:
+  command: dap search
+  description: Search for patterns in session outputs
+  examples:
+    - vscb script run dap.search --param pattern=ERROR
+    - vscb script run dap.search --param pattern="user_id:\s*\d+" --param sessionId=latest
+    - vscb script run dap.search --param pattern=TestCase --param caseSensitive=true
+# Hidden from MCP by default - advanced search, rarely needed
+# Still available via CLI: vscb script run dap.search
+mcp:
+  enabled: false
+  description: Search for text or regex patterns across debug session outputs with context lines
+  timeout: 30000
+
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_RESULTS
+        summary: "Pattern not found in session outputs"
+        is_retryable: false
+        user_fix_hint: "Try broader search pattern or check sessionId is correct"
+      - code: E_INVALID_REGEX
+        summary: "Invalid regular expression pattern"
+        is_retryable: true
+        user_fix_hint: "Use valid JavaScript regex syntax (escape special chars like . * + ?)"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Finding specific error messages or patterns across logs
+      - Searching with context lines before/after matches
+      - Cross-session search (sessionId=all)
+      - Regex pattern matching in debug outputs
+
+      DON'T USE FOR:
+      - Simple log viewing (use dap.logs instead)
+      - Statistical analysis of patterns (use dap.stats)
+      - Comparing outputs between sessions (use dap.compare)
+      - Exception-focused analysis (use dap.exceptions)
+
+      PREREQUISITES:
+      - DAP logger must have captured session data
+      - For specific session search, sessionId must be valid
+
+      SAFETY:
+      - Read-only operation (no state changes)
+      - Idempotent (same search returns same results)
+
+    parameter_hints:
+      pattern:
+        description: "Text or regex pattern to search for in outputs"
+        required: true
+        examples:
+          - "ERROR"
+          - "user_id:\\s*\\d+"
+          - "TypeError.*undefined"
+        note: "Supports JavaScript regex syntax"
+        pitfalls:
+          - "Escape special regex characters: . * + ? [ ] ( ) { } ^ $ | \\"
+
+      sessionId:
+        description: "Session to search (or 'all' for cross-session search)"
+        required: false
+        examples:
+          - "latest"
+          - "abc-123-def"
+          - "all"
+        note: "Defaults to latest session if omitted"
+
+      category:
+        description: "Filter to specific output category before searching"
+        required: false
+        examples:
+          - "stderr"
+          - "stdout"
+          - "console"
+        note: "Use to narrow search scope for better performance"
+
+      contextLines:
+        description: "Number of lines to show before/after each match"
+        required: false
+        examples:
+          - "2"
+          - "5"
+          - "10"
+        note: "Default is 2, range is 0-20"
+
+      limit:
+        description: "Maximum number of search results to return"
+        required: false
+        examples:
+          - "50"
+          - "100"
+          - "500"
+        note: "Default is 50, range is 1-1000"
+
+      caseSensitive:
+        description: "Enable case-sensitive search"
+        required: false
+        examples:
+          - "true"
+          - "false"
+        note: "Default is false (case-insensitive)"

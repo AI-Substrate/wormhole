@@ -1,0 +1,127 @@
+alias: diagnostic.collect
+name: Collect Diagnostics
+category: diag
+description: Collect system, extension, and code diagnostics
+dangerOnly: false
+params:
+  path:
+    type: string
+    required: false
+    description: File path for file-specific diagnostics (omit for workspace-wide)
+response: query
+result:
+  diagnostics:
+    type: array
+    description: List of code diagnostics
+    items:
+      file:
+        type: string
+        description: File path
+      line:
+        type: number
+        description: Line number (1-indexed)
+      column:
+        type: number
+        description: Column number
+      message:
+        type: string
+        description: Diagnostic message
+      severity:
+        type: string
+        description: Severity level (error, warning, info, hint)
+      code:
+        type: string
+        description: Diagnostic code
+      source:
+        type: string
+        description: Source of diagnostic
+  system:
+    type: object
+    description: System information
+    properties:
+      vscodeVersion:
+        type: string
+      extensionVersion:
+        type: string
+      platform:
+        type: string
+      arch:
+        type: string
+      nodeVersion:
+        type: string
+      mode:
+        type: string
+  debug:
+    type: object
+    description: Debug session information
+    properties:
+      hasActiveSession:
+        type: boolean
+      sessionId:
+        type: string
+      sessionName:
+        type: string
+      sessionType:
+        type: string
+      breakpointCount:
+        type: number
+  timestamp:
+    type: string
+    description: ISO timestamp of collection
+errors: []
+cli:
+  command: diag collect
+  description: Collect diagnostics
+  examples:
+    - vscb script run diagnostic.collect
+    - vscb script run diagnostic.collect --param path=/home/user/test.js
+mcp:
+  enabled: true
+  description: Gather comprehensive diagnostics including system info, debug state, and code issues
+  timeout: 30000
+
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors: []
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Collecting system information for troubleshooting
+      - Gathering code diagnostics (errors, warnings) from language servers
+      - Inspecting debug session state and configuration
+      - Creating diagnostic snapshots before reporting issues
+
+      DON'T USE FOR:
+      - Modifying diagnostics or fixing issues (this is read-only)
+      - Running linters or formatters (this queries existing diagnostics)
+      - Collecting runtime logs (use dap.logs for debug protocol logs)
+
+      PREREQUISITES:
+      - None (always available)
+
+      SAFETY:
+      - Read-only operation (no state changes)
+      - Idempotent (safe to retry on timeout)
+
+    parameter_hints:
+      path:
+        description: "Optional file path to filter diagnostics for a specific file"
+        required: false
+        examples:
+          - "/Users/name/project/src/main.py"
+          - "/home/user/workspace/lib/auth.js"
+          - "C:\\Users\\name\\project\\api\\handler.ts"
+        note: "Omit to collect workspace-wide diagnostics from all files"
+        pitfalls:
+          - "Don't expect real-time diagnostics - this queries current cached state"

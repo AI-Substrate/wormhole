@@ -1,0 +1,32 @@
+{
+	"servers": {
+		"vsc-bridge": {
+			"type": "stdio",
+			"command": "vscb",
+			"args": [
+				"mcp",
+				"--workspace",
+				"${workspaceFolder}"
+			]
+			
+		},
+		"vsc-bridge-extension": {
+			"type": "stdio",
+			"command": "vscb",
+			"args": [
+				"mcp",
+				"--workspace",
+				"${workspaceFolder}/test"
+			]
+		}
+		// "serena for vsc-bridge": {
+		// 	"type": "stdio",
+		// 	"command": "bash",
+		// 	"args": [
+		// 		"-lc",
+		// 		"uvx --from git+https://github.com/oraios/serena serena start-mcp-server --context ide-assistant --project \"${workspaceFolder}\""
+		// 	]
+		// }
+	},
+	"inputs": []
+}

@@ -1,0 +1,194 @@
+alias: search.symbol-search
+name: Symbol Search
+category: search
+description: Search symbols in workspace or get document outline (classes, functions, methods, etc.)
+dangerOnly: false
+params:
+  query:
+    type: string
+    required: false
+    default: ""
+    description: Search query string for workspace symbols (fuzzy matching, empty returns all)
+  mode:
+    type: string
+    required: false
+    default: "workspace"
+    description: Search mode - "workspace" for global search or "document" for single file outline
+  path:
+    type: string
+    required: false
+    description: File path for document mode (required when mode=document)
+    resolve: cwd-relative
+  kinds:
+    type: string
+    required: false
+    description: Comma-separated symbol kinds to filter (Class, Interface, Function, Method, etc.)
+  limit:
+    type: number
+    required: false
+    default: 100
+    min: 1
+    max: 1000
+    description: Maximum number of symbols to return
+  includeLocation:
+    type: boolean
+    required: false
+    default: true
+    description: Include full location information (file path, line, character, range)
+  includeContainer:
+    type: boolean
+    required: false
+    default: true
+    description: Include container/parent symbol information
+response: query
+result:
+  mode:
+    type: string
+    description: Search mode used
+  query:
+    type: string
+    description: Query string used
+  filters:
+    type: object
+    description: Applied filters
+  results:
+    type: object
+    description: Result summary (total, returned, truncated)
+  statistics:
+    type: object
+    description: Symbol distribution statistics
+  symbols:
+    type: array
+    description: Array of matched symbols
+errors:
+  - E_FILE_NOT_FOUND
+  - E_INVALID_MODE
+cli:
+  command: search symbol-search
+  description: Search symbols in workspace or get document outline
+  examples:
+    - vscb script run search.symbol-search --param query="UserService"
+    - vscb script run search.symbol-search --param query="" --param kinds="Class"
+    - vscb script run search.symbol-search --param mode="document" --param path="src/main.ts"
+    - vscb script run search.symbol-search --param query="test" --param kinds="Function,Method" --param limit=50
+mcp:
+  # P0: Must-Have Fields
+  enabled: true
+  description: "Workspace-wide symbol search (classes, functions, methods) with optional document outline mode"
+  timeout: 10000
+
+  # P0: Tool Relationships
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  # P0: Structured Error Contract
+  error_contract:
+    errors:
+      - code: E_FILE_NOT_FOUND
+        summary: "File not found for document mode"
+        is_retryable: false
+        user_fix_hint: "Verify file path exists in workspace"
+      - code: E_INVALID_MODE
+        summary: "Invalid mode parameter"
+        is_retryable: false
+        user_fix_hint: "Use 'workspace' or 'document'"
+
+  # P0: Safety Flags
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  # P1: LLM Guidance
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Finding classes, functions, methods by name across workspace
+      - Getting file outline/structure (document mode)
+      - Discovering available symbols in codebase
+      - Navigating to symbol definitions
+      - Markdown document outline (headers as symbols)
+
+      DON'T USE FOR:
+      - Text/regex search (use workspace text search instead)
+      - Finding symbol references (use find-references if available)
+      - Searching file contents (symbols are declarations only)
+
+      PREREQUISITES:
+      - None for workspace mode (always works)
+      - File must exist for document mode
+
+      PATTERNS:
+      - Find all classes: query="", kinds="Class"
+      - Search by name: query="UserService"
+      - File structure: mode="document", path="src/file.ts"
+      - Multiple kinds: kinds="Class,Interface,Function"
+      - Minimal output: includeLocation=false, includeContainer=false
+
+    parameter_hints:
+      query:
+        description: "Fuzzy search string (empty returns all symbols, respects kind filter)"
+        required: false
+        examples:
+          - "UserService"
+          - "Auth"
+          - ""
+        note: "Uses VS Code's built-in fuzzy matching, case-insensitive"
+
+      mode:
+        description: "Search scope - workspace (global) or document (single file)"
+        required: false
+        examples:
+          - "workspace"
+          - "document"
+        note: "Document mode requires path parameter, returns hierarchical structure flattened"
+
+      path:
+        description: "Absolute or workspace-relative file path for document mode"
+        required: false
+        examples:
+          - "src/services/UserService.ts"
+          - "/absolute/path/to/file.py"
+          - "README.md"
+        note: "Required when mode=document, works with code and Markdown files"
+
+      kinds:
+        description: "Filter by symbol types (comma-separated)"
+        required: false
+        examples:
+          - "Class"
+          - "Class,Interface"
+          - "Function,Method"
+          - "String"
+        note: "Available kinds: File, Module, Namespace, Package, Class, Method, Property, Field, Constructor, Enum, Interface, Function, Variable, Constant, String (for Markdown headers), EnumMember, Struct, Event"
+        pitfalls:
+          - "Kind names are case-sensitive (use 'Class' not 'class')"
+          - "Markdown headers use 'String' kind"
+
+      limit:
+        description: "Maximum symbols to return (prevents overwhelming output)"
+        required: false
+        examples:
+          - "50"
+          - "100"
+          - "500"
+        note: "Default 100, max 1000. Check results.truncated to see if more exist"
+
+      includeLocation:
+        description: "Include file path, line, character, and range in output"
+        required: false
+        examples:
+          - "true"
+          - "false"
+        note: "Set to false for minimal output when only names/kinds needed"
+
+      includeContainer:
+        description: "Include parent symbol name (e.g., class name for methods)"
+        required: false
+        examples:
+          - "true"
+          - "false"
+        note: "Provides context for nested symbols, useful for disambiguation"

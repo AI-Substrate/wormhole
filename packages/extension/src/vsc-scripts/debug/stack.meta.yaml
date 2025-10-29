@@ -1,0 +1,75 @@
+alias: debug.stack
+name: Get Call Stack
+category: debug
+description: Get the current call stack frames
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to active session)
+response: query
+errors:
+  - E_NO_SESSION
+  - E_NOT_STOPPED
+cli:
+  command: debug stack
+  description: Get call stack frames
+  examples:
+    - vscb script run debug.stack
+mcp:
+  enabled: true
+  description: Get the current call stack frames with function names, source locations, and frame IDs
+  timeout: 5000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: ["breakpoint.set"]
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+      - code: E_NOT_STOPPED
+        summary: "Program is running, not paused at breakpoint"
+        is_retryable: true
+        user_fix_hint: "Set breakpoint and wait for execution to pause, or use debug.continue to resume"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Viewing call stack when paused at breakpoint
+      - Understanding execution path and function call hierarchy
+      - Getting frame IDs for use with debug.scopes or debug.evaluate
+      - Diagnosing where execution stopped and how it got there
+
+      DON'T USE FOR:
+      - Listing variables (use debug.list-variables or debug.scopes instead)
+      - Evaluating expressions (use debug.evaluate instead)
+      - Checking if session exists (use debug.status instead)
+
+      PREREQUISITES:
+      - Active debug session must exist (debug.start)
+      - Program should be paused at breakpoint for meaningful stack
+
+      SAFETY:
+      - Read-only operation (doesn't modify program state)
+      - Idempotent (returns same stack at same execution point)
+
+    parameter_hints:
+      sessionId:
+        description: "Debug session ID to query (optional, defaults to active session)"
+        required: false
+        examples:
+          - "abc-123-def"
+          - "session-xyz"
+        note: "Omit to use active session automatically"

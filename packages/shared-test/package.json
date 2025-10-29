@@ -1,0 +1,29 @@
+{
+  "name": "@vsc-bridge/shared-test",
+  "version": "1.0.0",
+  "description": "Shared test infrastructure for VSC-Bridge",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.0",
+    "vitest": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "keywords": [
+    "vsc-bridge",
+    "testing",
+    "shared"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AI-Substrate/wormhole.git"
+  }
+}

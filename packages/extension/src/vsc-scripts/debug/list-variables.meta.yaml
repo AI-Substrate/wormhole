@@ -1,0 +1,98 @@
+alias: debug.list-variables
+category: debug
+description: List variables at the current debug stop with depth control
+dangerOnly: false
+params:
+  scope:
+    type: enum
+    values: [local, closure, global, all]
+    required: false
+    default: all
+    description: Variable scope (local, closure, global, or all)
+  maxDepth:
+    type: number
+    required: false
+    default: 3
+    description: Maximum depth for variable tree traversal (0-10)
+response: query
+errors:
+  - E_NO_SESSION
+  - E_UNSUPPORTED_LANGUAGE
+  - E_UNKNOWN
+cli:
+  command: debug list-variables
+  description: List debug variables with depth control
+  examples:
+    - vscb script debug/list-variables
+    - vscb script debug/list-variables --param scope=local
+    - vscb script debug/list-variables --param scope=local --param maxDepth=2
+mcp:
+  enabled: true
+  description: List all variables in scope (local, closure, global) with configurable depth traversal
+  timeout: 10000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: ["breakpoint.set"]
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+      - code: E_UNSUPPORTED_LANGUAGE
+        summary: "Language adapter doesn't support variable listing"
+        is_retryable: false
+        user_fix_hint: "Check if current language debugger supports DAP scopes request"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Listing all variables in current scope when paused at breakpoint
+      - Inspecting local, closure, and global variables together
+      - Getting overview of program state at current execution point
+      - Discovering available variables before evaluation
+
+      DON'T USE FOR:
+      - Expanding deeply nested structures (use debug.get-variable with pagination)
+      - Evaluating complex expressions (use debug.evaluate instead)
+      - Getting variables from specific frame (use debug.scopes first)
+
+      PREREQUISITES:
+      - Active debug session must exist (debug.start)
+      - Program should be paused at breakpoint for meaningful results
+      - Language debugger must support DAP scopes/variables protocol
+
+      SAFETY:
+      - Read-only operation (doesn't modify variable values)
+      - Idempotent (returns same variables at same execution point)
+
+    parameter_hints:
+      scope:
+        description: "Variable scope filter (local, closure, global, or all)"
+        required: false
+        examples:
+          - "local"
+          - "closure"
+          - "global"
+        note: "Defaults to 'all' which includes all scopes"
+
+      maxDepth:
+        description: "Maximum depth for nested object/array traversal (0-10)"
+        required: false
+        examples:
+          - "1"
+          - "3"
+          - "5"
+        note: "Higher values fetch more nested data but increase response size; default is 3"
+        pitfalls:
+          - "Don't use maxDepth > 5 for large objects (response may timeout)"
+          - "Use maxDepth=0 to get only top-level variables without expansion"

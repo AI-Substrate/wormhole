@@ -1,0 +1,10 @@
+{
+  "alwaysThinkingEnabled": false
+  // Uncomment to enable LiteLLM proxy for GitHub Copilot models:
+  // "env": {
+  //   "ANTHROPIC_AUTH_TOKEN": "sk-",
+  //   "ANTHROPIC_BASE_URL": "http://localhost:4000",
+  //   "ANTHROPIC_MODEL": "claude-sonnet-4.5",
+  //   "ANTHROPIC_SMALL_FAST_MODEL": "gpt-5-mini"
+  // }
+}

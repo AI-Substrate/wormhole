@@ -1,0 +1,136 @@
+alias: dap.timeline
+category: dap
+description: View chronological event stream with timestamps and milestones
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to latest session)
+  eventTypes:
+    type: array
+    items:
+      type: string
+    required: false
+    description: Event types to include (output, exception, stopped, exit)
+  window:
+    type: number
+    required: false
+    description: Time window in milliseconds (null = show all)
+  granularity:
+    type: enum
+    values: [all, summary, milestones]
+    required: false
+    default: all
+    description: Level of detail (all=every event, summary=per-second groups, milestones=key events only)
+  fromEnd:
+    type: boolean
+    required: false
+    default: false
+    description: Measure window from session end instead of start
+response: query
+errors:
+  - E_NO_SESSION
+  - E_NO_EVENTS
+cli:
+  command: dap timeline
+  description: View chronological event timeline
+  examples:
+    - vscb script run dap.timeline
+    - vscb script run dap.timeline --param window=5000 --param fromEnd=true
+    - vscb script run dap.timeline --param granularity=milestones
+# Hidden from MCP by default - low-value visualization tool
+# Still available via CLI: vscb script run dap.timeline
+mcp:
+  enabled: false
+  description: View chronological timeline of debug session events with timestamps and milestones
+  timeout: 20000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No debug session found"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create an active session"
+      - code: E_NO_EVENTS
+        summary: "No events captured for specified session"
+        is_retryable: false
+        user_fix_hint: "Ensure session has run and generated events"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Viewing chronological sequence of debug events
+      - Understanding session flow and execution path
+      - Identifying timing issues or event gaps
+      - Focusing on milestones (breakpoint hits, exceptions, exit)
+
+      DON'T USE FOR:
+      - Viewing raw console output (use dap.logs)
+      - Statistical analysis of events (use dap.stats)
+      - Comparing event sequences across sessions (use dap.compare)
+      - Exception-focused analysis (use dap.exceptions)
+
+      PREREQUISITES:
+      - Active or completed debug session with events
+      - Session must have been started with debug.start
+
+      SAFETY:
+      - Read-only operation (no state changes)
+      - Idempotent (same query returns same results)
+
+    parameter_hints:
+      sessionId:
+        description: "Debug session to view timeline for"
+        required: false
+        examples:
+          - "latest"
+          - "abc-123-def"
+          - "null (defaults to latest)"
+        note: "Defaults to most recent session if omitted"
+
+      eventTypes:
+        description: "Event types to include in timeline"
+        required: false
+        examples:
+          - '["output", "exception"]'
+          - '["stopped", "exit"]'
+          - '["output"]'
+        note: "Omit to include all event types"
+
+      window:
+        description: "Time window in milliseconds to display"
+        required: false
+        examples:
+          - "5000 (5 seconds)"
+          - "10000 (10 seconds)"
+          - "null (show all events)"
+        note: "Use with fromEnd to show last N milliseconds"
+
+      granularity:
+        description: "Level of detail for event display"
+        required: false
+        examples:
+          - "all"
+          - "summary"
+          - "milestones"
+        note: "all=every event, summary=grouped, milestones=key events only"
+
+      fromEnd:
+        description: "Measure window from session end instead of start"
+        required: false
+        examples:
+          - "true"
+          - "false"
+        note: "Useful with window parameter for 'last N seconds' view"

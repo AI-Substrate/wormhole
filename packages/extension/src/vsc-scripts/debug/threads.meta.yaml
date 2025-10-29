@@ -1,0 +1,70 @@
+alias: debug.threads
+name: Get Debug Threads
+category: debug
+description: Get information about active threads in the debug session
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to active session)
+response: query
+errors:
+  - E_NO_SESSION
+cli:
+  command: debug threads
+  description: Get debug thread information
+  examples:
+    - vscb script run debug.threads
+mcp:
+  enabled: true
+  description: Get information about active threads (thread IDs, names, and current state) during debugging
+  timeout: 5000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Listing all active threads in debug session
+      - Getting thread IDs for multi-threaded debugging
+      - Understanding which threads are running/stopped
+      - Identifying main thread vs worker threads
+
+      DON'T USE FOR:
+      - Getting stack frames (use debug.stack instead)
+      - Switching between threads (not supported by DAP directly)
+      - Checking session status (use debug.status for comprehensive info)
+
+      PREREQUISITES:
+      - Active debug session must exist (debug.start)
+      - Thread information updates as execution progresses
+
+      SAFETY:
+      - Read-only operation (doesn't modify program state)
+      - Idempotent (returns same threads at same execution point)
+
+    parameter_hints:
+      sessionId:
+        description: "Debug session ID (optional, defaults to active session)"
+        required: false
+        examples:
+          - "abc-123-def"
+          - "session-xyz"
+        note: "Omit to use active session automatically"

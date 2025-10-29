@@ -1,0 +1,53 @@
+// A launch configuration that compiles the extension and then opens it inside a new window
+// Use IntelliSense to learn about possible attributes.
+// Hover to view descriptions of existing attributes.
+// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Run Extension",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}/packages/extension",
+				"--folder-uri=${workspaceFolder}/test"
+			],
+			"outFiles": [
+				"${workspaceFolder}/packages/extension/out/**/*.js"
+			],
+			"preLaunchTask": "${defaultBuildTask}"
+		},
+		{
+			"name": "Extension Tests (monorepo)",
+			"type": "extensionHost",
+			"request": "launch",
+			"testConfiguration": "${workspaceFolder}/.vscode-test.mjs",
+			"args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/extension"],
+			"env": {
+				"VSC_BRIDGE_TOKEN": "test-token"
+			}
+		},
+		{
+			"type": "node",
+			"name": "vscode-jest-tests.v2",
+			"request": "launch",
+			"program": "${workspaceFolder}/test/javascript/node_modules/.bin/jest",
+			"args": [
+				"--runInBand",
+				"--watchAll=false",
+				"--testNamePattern",
+				"${jest.testNamePattern}",
+				"--runTestsByPath",
+				"${jest.testFile}"
+			],
+			"cwd": "${workspaceFolder}/test/javascript",
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen",
+			"disableOptimisticBPs": true,
+			"windows": {
+				"program": "${workspaceFolder}/test/javascript/node_modules/jest/bin/jest"
+			}
+		}
+	]
+}

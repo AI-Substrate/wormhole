@@ -1,0 +1,78 @@
+alias: debug.stop
+name: Stop Debug Session
+category: debug
+description: Stop the active or specified debug session
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to active session)
+response: action
+result:
+  status:
+    type: string
+    description: Session status after stopping
+  sessionId:
+    type: string
+    description: ID of the stopped session
+errors:
+  - E_NO_SESSION
+cli:
+  command: vscb script run debug.stop
+  description: Stop debug session
+  examples:
+    - vscb script run debug.stop
+    - vscb script run debug.stop --param sessionId=abc-123
+mcp:
+  enabled: true
+  description: "Stop the active debug session, terminating the debugged process and cleaning up resources"
+  timeout: 15000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session to stop"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first or use debug.status to verify session exists"
+
+  safety:
+    idempotent: false
+    read_only: false
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Ending active debug session when finished debugging
+      - Cleaning up before starting new session
+      - Terminating debugged process
+
+      DON'T USE FOR:
+      - Restarting session (use debug.restart instead)
+      - Pausing execution (use breakpoint.set instead)
+      - Checking session status (use debug.status instead)
+
+      PREREQUISITES:
+      - Active debug session from debug.start
+
+      SAFETY:
+      - Not idempotent (stopping twice may error)
+      - Modifies debugger state (destroys session)
+      - Medium timeout (15s for cleanup)
+
+    parameter_hints:
+      sessionId:
+        description: "ID of debug session to stop (defaults to active session)"
+        required: false
+        examples:
+          - "abc-123"
+          - ""
+          - "session-456"
+        note: "Omit to stop currently active session"

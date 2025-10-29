@@ -1,0 +1,92 @@
+alias: breakpoint.remove
+name: Remove Breakpoint
+category: breakpoint
+description: Remove a breakpoint at a specific line
+dangerOnly: false
+params:
+  path:
+    type: string
+    required: true
+    description: File path (absolute or relative to current directory)
+    resolve: cwd-relative
+  line:
+    type: number
+    required: true
+    description: Line number (1-indexed)
+response: action
+errors:
+  - E_NOT_FOUND
+  - E_INVALID_PARAMS
+cli:
+  command: bp remove
+  description: Remove a specific breakpoint
+  examples:
+    - vscb script run breakpoint.remove --param path=test.js --param line=42
+# Hidden from MCP by default - future consolidation candidate
+# Still available via CLI: vscb script run breakpoint.remove
+mcp:
+  # P0: Must-Have Fields
+  enabled: false
+  description: "Remove a specific breakpoint by file path and line number (contrast: clear-file/clear-project remove multiple)"
+  timeout: 5000
+
+  # P0: Tool Relationships
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  # P0: Structured Error Contract
+  error_contract:
+    errors:
+      - code: E_NOT_FOUND
+        summary: "No breakpoint exists at specified file and line"
+        is_retryable: false
+        user_fix_hint: "Use breakpoint.list to find actual breakpoint locations"
+      - code: E_INVALID_PARAMS
+        summary: "Invalid file path or line number"
+        is_retryable: true
+        user_fix_hint: "Verify path exists and line is a positive integer"
+
+  # P0: Safety Flags
+  safety:
+    idempotent: true
+    read_only: false
+    destructive: false
+
+  # P1: LLM Guidance
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Removing a single specific breakpoint by location
+      - Selective cleanup of breakpoints during debugging
+      - Disabling one breakpoint while keeping others
+
+      DON'T USE FOR:
+      - Clearing all breakpoints in a file (use breakpoint.clear-file instead)
+      - Clearing all workspace breakpoints (use breakpoint.clear-project instead)
+
+      PREREQUISITES:
+      - Breakpoint must exist at specified file and line
+      - File must exist in workspace
+
+      SAFETY:
+      - Idempotent (removing same breakpoint twice is safe)
+      - Not destructive (breakpoint can be re-added easily)
+
+    parameter_hints:
+      path:
+        description: "Absolute or workspace-relative file path containing breakpoint"
+        required: true
+        examples:
+          - "src/main.js"
+          - "/absolute/path/to/file.py"
+          - "test/integration/api.test.ts"
+        note: "Must match path used when breakpoint was created"
+
+      line:
+        description: "1-indexed line number where breakpoint exists"
+        required: true
+        examples: ["10", "42", "150"]
+        note: "Must match exact line where breakpoint was set"

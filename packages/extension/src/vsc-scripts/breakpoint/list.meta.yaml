@@ -1,0 +1,54 @@
+alias: breakpoint.list
+name: List Breakpoints
+category: breakpoint
+description: List all active breakpoints in the workspace
+dangerOnly: false
+params: {}
+response: query
+errors: []
+cli:
+  command: bp list
+  description: List all breakpoints
+  examples:
+    - vscb script run breakpoint.list
+mcp:
+  # P0: Must-Have Fields
+  enabled: true
+  description: "Query all active breakpoints in workspace with locations and conditions (read-only)"
+  timeout: 5000
+
+  # P0: Tool Relationships
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  # P0: Structured Error Contract
+  error_contract:
+    errors: []  # No common errors - query is always safe
+
+  # P0: Safety Flags
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  # P1: LLM Guidance
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Inspecting current breakpoint configuration before debugging
+      - Finding breakpoint locations to remove or modify
+      - Verifying breakpoints were set correctly
+
+      DON'T USE FOR:
+      - Setting breakpoints (use breakpoint.set instead)
+      - Removing breakpoints (use breakpoint.remove/clear-file/clear-project)
+
+      PREREQUISITES:
+      - None (always safe to query)
+
+      SAFETY:
+      - Read-only operation (no state changes)
+      - Idempotent (querying multiple times returns same results)

@@ -1,0 +1,142 @@
+alias: breakpoint.set
+name: Set Breakpoint
+category: breakpoint
+description: Set a breakpoint with optional conditions and log messages
+dangerOnly: false
+params:
+  path:
+    type: string
+    required: true
+    description: File path (absolute or relative to current directory)
+    resolve: cwd-relative
+  line:
+    type: number
+    required: true
+    description: Line number (1-indexed)
+    min: 1
+  condition:
+    type: string
+    required: false
+    description: Conditional expression for breakpoint
+  hitCondition:
+    type: string
+    required: false
+    description: Hit count expression (e.g., ">5", "==10")
+  logMessage:
+    type: string
+    required: false
+    description: Message to log when breakpoint hits (logpoint)
+response: action
+result:
+  breakpoint:
+    type: object
+    description: Created breakpoint details
+errors:
+  - E_FILE_NOT_FOUND
+  - E_INVALID_LINE
+  - E_INVALID_PATH
+cli:
+  command: bp set
+  description: Set a breakpoint
+  examples:
+    - vscb script run breakpoint.set --param path=test.js --param line=42
+    - vscb script run breakpoint.set --param path=./test.js --param line=42 --param condition="x > 10"
+    - vscb script run breakpoint.set --param path=src/main.py --param line=42 --param hitCondition=">5"
+    - vscb script run breakpoint.set --param path=test.js --param line=42 --param logMessage="Value is {x}"
+mcp:
+  # P0: Must-Have Fields
+  enabled: true
+  description: "Set a line or conditional breakpoint in active or future debug session"
+  timeout: 5000
+
+  # P0: Tool Relationships
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  # P0: Structured Error Contract
+  error_contract:
+    errors:
+      - code: E_FILE_NOT_FOUND
+        summary: "File path not found or not accessible"
+        is_retryable: true
+        user_fix_hint: "Check file path and ensure it exists in workspace"
+      - code: E_INVALID_LINE
+        summary: "Line number not executable or out of range"
+        is_retryable: true
+        user_fix_hint: "Verify line number exists and contains executable code"
+
+  # P0: Safety Flags
+  safety:
+    idempotent: true
+    read_only: false
+    destructive: false
+
+  # P1: LLM Guidance
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Pausing execution at a specific line in any debug session
+      - Setting conditional breakpoints (pause only when expression true)
+      - Creating logpoints (log without pausing via logMessage parameter)
+
+      DON'T USE FOR:
+      - Watch expressions (use debug.watch_add if available)
+      - Temporary inspection (use debug.evaluate after pausing)
+
+      PREREQUISITES:
+      - File must exist in workspace (can set before debug session starts)
+      - Line must contain executable code (not comments or blank lines)
+      - For conditionals: expression must be valid in target language
+
+      SAFETY:
+      - Idempotent (setting same breakpoint twice is safe)
+      - Read-only to program state (modifies debugger state only)
+
+    parameter_hints:
+      path:
+        description: "Absolute or workspace-relative file path"
+        required: true
+        examples:
+          - "src/main.js"
+          - "/absolute/path/to/file.py"
+        note: "Prefer workspace-relative paths for portability"
+
+      line:
+        description: "1-indexed line number where breakpoint should be set"
+        required: true
+        examples: ["10", "42", "100"]
+        note: "First line is 1, not 0"
+
+      condition:
+        description: "Language-specific boolean expression evaluated at breakpoint"
+        required: false
+        examples:
+          - "x > 10"
+          - "user === null"
+          - "len(items) > 0"
+        language_specific:
+          python: "Use Python syntax (e.g., 'len(items) > 0')"
+          javascript: "Use JavaScript syntax (e.g., 'items.length > 0')"
+          csharp: "Use C# syntax (e.g., 'items.Count > 0')"
+        pitfalls:
+          - "Don't mix Python syntax in JS sessions or vice-versa"
+          - "Keep expressions side-effect free (no assignments)"
+
+      hitCondition:
+        description: "Hit count expression controlling when breakpoint triggers"
+        required: false
+        examples:
+          - ">5"
+          - "==10"
+        note: "Breakpoint triggers when hit count matches expression"
+
+      logMessage:
+        description: "Message to log when breakpoint hits (logpoint mode, doesn't pause)"
+        required: false
+        examples:
+          - "Value is {x}"
+          - "User: {user.name}, Age: {user.age}"
+        note: "Use {expression} syntax to interpolate variables"

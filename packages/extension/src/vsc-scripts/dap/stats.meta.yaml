@@ -1,0 +1,108 @@
+alias: dap.stats
+category: dap
+description: Analyze aggregate metrics and patterns across sessions
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID or 'all' for all sessions (defaults to latest)
+  groupBy:
+    type: enum
+    values: [category, source, hour, session]
+    required: false
+    default: category
+    description: How to group statistics
+  includeCharts:
+    type: boolean
+    required: false
+    default: true
+    description: Generate ASCII charts for visualization
+response: query
+errors:
+  - E_NO_DATA
+  - E_INVALID_GROUP_BY
+cli:
+  command: dap stats
+  description: Statistical analysis with charts
+  examples:
+    - vscb script run dap.stats
+    - vscb script run dap.stats --param sessionId=all
+    - vscb script run dap.stats --param groupBy=source
+# Hidden from MCP by default - statistical analysis, rarely needed
+# Still available via CLI: vscb script run dap.stats
+mcp:
+  enabled: false
+  description: Aggregate metrics and pattern detection across debug sessions with optional ASCII charts
+  timeout: 30000
+
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_DATA
+        summary: "No data available for statistical analysis"
+        is_retryable: false
+        user_fix_hint: "Start debug sessions to generate data, or check sessionId parameter"
+      - code: E_INVALID_GROUP_BY
+        summary: "Invalid groupBy parameter value"
+        is_retryable: true
+        user_fix_hint: "Use valid groupBy values: category, source, hour, session"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Statistical analysis of debug output patterns
+      - Aggregate metrics across single or multiple sessions
+      - Visualizing output distribution with ASCII charts
+      - Pattern detection (output frequency by category/source/time)
+
+      DON'T USE FOR:
+      - Viewing raw log content (use dap.logs)
+      - Searching for specific patterns (use dap.search)
+      - Comparing two specific sessions (use dap.compare)
+      - Exception-focused analysis (use dap.exceptions)
+
+      PREREQUISITES:
+      - At least one debug session with captured data
+      - For cross-session stats, use sessionId=all
+
+      SAFETY:
+      - Read-only operation (no state changes)
+      - Idempotent (same query returns same results)
+
+    parameter_hints:
+      sessionId:
+        description: "Session to analyze (or 'all' for cross-session stats)"
+        required: false
+        examples:
+          - "latest"
+          - "abc-123-def"
+          - "all"
+        note: "Defaults to latest session, use 'all' for aggregate stats"
+
+      groupBy:
+        description: "How to group statistics for analysis"
+        required: false
+        examples:
+          - "category"
+          - "source"
+          - "hour"
+        note: "category=by output type, source=by file, hour=by time, session=across sessions"
+
+      includeCharts:
+        description: "Generate ASCII charts for visualization"
+        required: false
+        examples:
+          - "true"
+          - "false"
+        note: "Default is true, set to false for raw numbers only"

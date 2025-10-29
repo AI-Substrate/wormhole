@@ -1,0 +1,60 @@
+alias: util.restart-vscode
+name: Restart VS Code
+category: utils
+description: Reload VS Code window to apply extension updates (useful after just install-extension)
+dangerOnly: false
+params: {}
+response: action
+errors:
+  - E_RESTART_FAILED
+cli:
+  command: utils restart-vscode
+  description: Reload VS Code window
+  examples:
+    - vscb script run util.restart-vscode
+mcp:
+  enabled: true
+  description: Reload the VS Code window to apply extension updates or reset state
+  timeout: 15000
+
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_RESTART_FAILED
+        summary: "Failed to trigger VS Code window reload"
+        is_retryable: true
+        user_fix_hint: "Verify VS Code API is responsive; try manual reload via Command Palette"
+
+  safety:
+    idempotent: false
+    read_only: false
+    destructive: true
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Applying extension updates that require window reload
+      - Resetting VS Code state after configuration changes
+      - Recovering from extension conflicts or errors
+      - Completing workflows that modify extensions (after install/uninstall)
+
+      DON'T USE FOR:
+      - Normal debugging workflows (not required for debug sessions)
+      - Applying settings changes (most apply without reload)
+      - Routine operations (this is disruptive)
+
+      PREREQUISITES:
+      - User has saved all important work (unsaved changes will be lost!)
+      - No critical debug session in progress
+
+      SAFETY:
+      - ⚠️ DESTRUCTIVE: Kills editor process, loses unsaved work
+      - Non-idempotent (each reload restarts entire window)
+      - This is the ONLY tool with destructive=true
+
+    parameter_hints: {}

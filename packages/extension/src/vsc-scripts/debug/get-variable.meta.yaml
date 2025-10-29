@@ -1,0 +1,124 @@
+alias: debug.get-variable
+category: debug
+description: Get children of a single variable with pagination support
+dangerOnly: false
+params:
+  variablesReference:
+    type: number
+    required: true
+    description: Reference ID for the variable container (from list-variables)
+  start:
+    type: number
+    required: false
+    default: 0
+    description: Starting index for pagination (0-based)
+  count:
+    type: number
+    required: false
+    default: 100
+    description: Number of children to retrieve
+  filter:
+    type: enum
+    values: [indexed, named, all]
+    required: false
+    default: all
+    description: Filter children by type (indexed for array elements, named for object properties, all for both)
+response: query
+errors:
+  - E_NO_SESSION
+  - E_INVALID_PARAMS
+  - E_UNSUPPORTED_LANGUAGE
+  - E_INVALID_REFERENCE
+  - E_UNKNOWN
+cli:
+  command: debug get-variable
+  description: Get children of a single variable with pagination
+  examples:
+    - vscb script debug/get-variable --param variablesReference=123
+    - vscb script debug/get-variable --param variablesReference=123 --param start=0 --param count=50
+    - vscb script debug/get-variable --param variablesReference=123 --param filter=indexed
+mcp:
+  enabled: true
+  description: Retrieve children of a single variable (object properties, array elements) with pagination support
+  timeout: 10000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: ["breakpoint.set"]
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+      - code: E_INVALID_REFERENCE
+        summary: "Invalid variablesReference ID"
+        is_retryable: false
+        user_fix_hint: "Get valid variablesReference from debug.list-variables or debug.evaluate"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Expanding object properties or array elements from a variable reference
+      - Paginating through large arrays or objects (use start/count)
+      - Filtering indexed vs named children in structured data
+      - Drilling into nested data structures incrementally
+
+      DON'T USE FOR:
+      - Getting top-level variables in current scope (use debug.list-variables instead)
+      - Evaluating expressions (use debug.evaluate instead)
+      - Simple variable inspection (use debug.list-variables with maxDepth)
+
+      PREREQUISITES:
+      - Active debug session must exist (debug.start)
+      - Valid variablesReference ID (from debug.list-variables or debug.evaluate)
+      - Program should be paused at breakpoint
+
+      SAFETY:
+      - Read-only operation (doesn't modify variable values)
+      - Idempotent (returns same children for same reference)
+
+    parameter_hints:
+      variablesReference:
+        description: "Reference ID for the variable container (from debug.list-variables or debug.evaluate)"
+        required: true
+        examples:
+          - "123"
+          - "456"
+          - "789"
+        note: "Get this ID from variablesReference field in other debug tool outputs"
+
+      start:
+        description: "Starting index for pagination (0-based)"
+        required: false
+        examples:
+          - "0"
+          - "100"
+          - "500"
+        note: "Use with count for paginating large arrays/objects"
+
+      count:
+        description: "Number of children to retrieve (default 100)"
+        required: false
+        examples:
+          - "50"
+          - "100"
+          - "500"
+        note: "Lower values reduce response size, higher values reduce round trips"
+
+      filter:
+        description: "Filter children by type (indexed=array elements, named=object properties, all=both)"
+        required: false
+        examples:
+          - "indexed"
+          - "named"
+          - "all"
+        note: "Use 'indexed' for arrays, 'named' for objects, 'all' for mixed structures"

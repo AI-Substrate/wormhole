@@ -1,0 +1,142 @@
+alias: debug.evaluate
+name: Evaluate Expression
+category: debug
+description: Evaluate an expression in debug context
+dangerOnly: false
+params:
+  expression:
+    type: string
+    required: true
+    description: Expression to evaluate
+  frameId:
+    type: number
+    required: false
+    description: Frame ID for evaluation context (defaults to top frame)
+  context:
+    type: enum
+    values: [repl, watch, hover]
+    required: false
+    description: Evaluation context (defaults to repl)
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to active session)
+response: query
+result:
+  result:
+    type: string
+    description: Evaluation result as string
+  type:
+    type: string
+    description: Type of the result
+  variablesReference:
+    type: number
+    description: Reference for retrieving child variables if result is structured
+  namedVariables:
+    type: number
+    description: Number of named child variables
+  indexedVariables:
+    type: number
+    description: Number of indexed child variables
+errors:
+  - E_NO_SESSION
+  - E_INVALID_EXPRESSION
+  - E_INTERNAL
+cli:
+  command: debug evaluate
+  description: Evaluate expression in debug context
+  examples:
+    - vscb script run debug.evaluate --param expression="x * 2"
+    - vscb script run debug.evaluate --param expression="myObject.property" --param frameId=0
+    - vscb script run debug.evaluate --param expression="array[0]" --param context=watch
+mcp:
+  enabled: true
+  description: Evaluate expression in current debug context (supports expressions in any running language)
+  timeout: 10000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: ["breakpoint.set"]
+    provides: ["evaluationResult"]
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+      - code: E_INVALID_EXPRESSION
+        summary: "Expression syntax error or invalid in current context"
+        is_retryable: true
+        user_fix_hint: "Check expression syntax for current language and ensure variables are in scope"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Evaluating expressions at current execution point (variables, function calls, complex expressions)
+      - Computing derived values from current program state
+      - Testing conditions or function calls without modifying code
+      - Inspecting object properties or array elements dynamically
+
+      DON'T USE FOR:
+      - Reading simple variable values (use debug.get-variable or debug.list-variables instead)
+      - Modifying variable values (use debug.set-variable instead)
+      - Evaluating when no session exists (call debug.start first)
+
+      PREREQUISITES:
+      - Active debug session must exist (debug.start)
+      - Program should be paused at breakpoint for meaningful results
+      - Expression must be valid in current frame's language and scope
+
+      SAFETY:
+      - Read-only operation (expression evaluation doesn't modify state)
+      - Idempotent (same expression returns same result at same execution point)
+
+    parameter_hints:
+      expression:
+        description: "Expression to evaluate in current language syntax"
+        required: true
+        examples:
+          - "x * 2"
+          - "myObject.property"
+          - "array[0]"
+        language_specific:
+          python: "Use Python syntax: obj['key'], len(array), str(x)"
+          javascript: "Use JavaScript syntax: obj.key, array.length, String(x)"
+          csharp: "Use C# syntax: obj.Property, array.Length, x.ToString()"
+          java: "Use Java syntax: obj.getProperty(), array.length, String.valueOf(x)"
+        pitfalls:
+          - "Don't use expressions with side effects (they will execute and affect program state)"
+          - "Avoid very expensive computations (they will block debugger)"
+
+      frameId:
+        description: "Frame ID for evaluation context (0 = top frame, 1 = caller, etc.)"
+        required: false
+        examples:
+          - "0"
+          - "1"
+          - "2"
+        note: "Defaults to top frame (most recent call) if omitted"
+
+      context:
+        description: "Evaluation context type (affects how debugger formats results)"
+        required: false
+        examples:
+          - "repl"
+          - "watch"
+          - "hover"
+        note: "Use 'repl' for interactive evaluation, 'watch' for variable tracking"
+
+      sessionId:
+        description: "Debug session identifier to target specific session"
+        required: false
+        examples:
+          - "3f1a2c1e-b4d5-4e6f-a7b8-c9d0e1f2a3b4"
+          - "active"
+        note: "Defaults to active session if omitted"

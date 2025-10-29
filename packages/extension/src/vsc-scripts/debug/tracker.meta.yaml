@@ -1,0 +1,61 @@
+alias: debug.tracker
+name: Debug Adapter Tracker
+category: debug
+description: Register DebugAdapterTrackerFactory to observe all DAP messages including capabilities, events, and breakpoint mappings
+dangerOnly: false
+params: {}
+response: query
+errors:
+  - E_NO_SESSION
+cli:
+  command: debug tracker
+  description: Track and observe Debug Adapter Protocol messages
+  examples:
+    - vscb script run debug.tracker
+# Hidden from MCP by default - developer-only DAP protocol debugging
+# Still available via CLI: vscb script run debug.tracker
+mcp:
+  enabled: false
+  description: Register Debug Adapter Protocol tracker to observe DAP messages, capabilities, and events
+  timeout: 30000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Debugging DAP protocol issues or investigating adapter behavior
+      - Capturing raw DAP message flow for analysis
+      - Understanding debugger capabilities and feature support
+      - Diagnosing breakpoint mapping or source location problems
+
+      DON'T USE FOR:
+      - Normal variable inspection (use debug.list-variables instead)
+      - Getting stack traces (use debug.stack instead)
+      - Evaluating expressions (use debug.evaluate instead)
+
+      PREREQUISITES:
+      - Active debug session must exist (debug.start)
+      - Understanding of DAP protocol helpful for interpreting output
+
+      SAFETY:
+      - Read-only operation (only observes messages, doesn't modify)
+      - Idempotent (registering multiple times has same effect)
+
+    parameter_hints: {}

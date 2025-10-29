@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "vsc-bridge": {
+      "type": "stdio",
+      "command": "vscb",
+      "args": [
+        "mcp",
+        "--workspace",
+        "/workspaces/vsc-bridge-devcontainer/test"
+      ],
+      "env": {}
+    }
+  }
+}

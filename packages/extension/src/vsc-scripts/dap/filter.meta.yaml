@@ -1,0 +1,96 @@
+alias: dap.filter
+category: dap
+description: Complex filtering with multiple AND-ed criteria
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to latest session)
+  filters:
+    type: object
+    required: true
+    description: Filter criteria object with categories, timeRange, exclude, include, sources, minLength, maxLength
+response: query
+errors:
+  - E_INVALID_FILTERS
+  - E_NO_RESULTS
+cli:
+  command: dap filter
+  description: Advanced multi-criteria filtering
+  examples:
+    - vscb script run dap.filter --param 'filters={"categories":["stdout"],"sources":["test.js"]}'
+    - vscb script run dap.filter --param 'filters={"categories":["stderr"],"timeRange":{"start":1234567890,"end":1234567999}}'
+    - vscb script run dap.filter --param 'filters={"include":["ERROR"],"exclude":["DEBUG"]}'
+# Hidden from MCP by default - overlaps with dap_search
+# Still available via CLI: vscb script run dap.filter
+mcp:
+  enabled: false
+  description: Complex filtering of debug outputs with multiple AND-ed criteria for precise log queries
+  timeout: 30000
+
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_INVALID_FILTERS
+        summary: "Filter object has invalid structure or values"
+        is_retryable: true
+        user_fix_hint: "Check filters object has valid properties: categories, timeRange, exclude, include, sources, minLength, maxLength"
+      - code: E_NO_RESULTS
+        summary: "No outputs match the specified filter criteria"
+        is_retryable: false
+        user_fix_hint: "Try relaxing filter criteria or verify sessionId is correct"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Complex multi-criteria filtering (category AND time AND source)
+      - Precise log queries with multiple constraints
+      - Filtering by source file or output length
+      - Advanced include/exclude pattern combinations
+
+      DON'T USE FOR:
+      - Simple category filtering (use dap.logs with category parameter)
+      - Single pattern search (use dap.search)
+      - Exception-focused queries (use dap.exceptions)
+      - Statistical analysis (use dap.stats)
+
+      PREREQUISITES:
+      - DAP logger must have captured session data
+      - For specific session, sessionId must be valid
+
+      SAFETY:
+      - Read-only operation (no state changes)
+      - Idempotent (same filters return same results)
+
+    parameter_hints:
+      sessionId:
+        description: "Debug session to filter outputs from"
+        required: false
+        examples:
+          - "latest"
+          - "abc-123-def"
+          - "null (defaults to latest)"
+        note: "Defaults to most recent session if omitted"
+
+      filters:
+        description: "Filter criteria object with AND-ed conditions"
+        required: true
+        examples:
+          - '{"categories":["stdout"],"sources":["test.js"]}'
+          - '{"include":["ERROR"],"exclude":["DEBUG"]}'
+          - '{"timeRange":{"start":1234567890,"end":1234567999}}'
+        note: "Multiple criteria are combined with AND logic"
+        pitfalls:
+          - "Use valid property names: categories, timeRange, exclude, include, sources, minLength, maxLength"
+          - "All criteria must match for output to be included"

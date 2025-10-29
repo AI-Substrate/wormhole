@@ -1,0 +1,120 @@
+alias: debug.set-variable
+category: debug
+description: Modify variable values during debugging
+dangerOnly: false
+params:
+  name:
+    type: string
+    required: true
+    description: Name of the variable to modify
+  value:
+    type: string
+    required: true
+    description: New value as a string expression
+  variablesReference:
+    type: number
+    required: false
+    description: Variables reference containing the variable (optional)
+response: mutate
+errors:
+  - E_NO_SESSION
+  - E_NOT_PAUSED
+  - E_UNSUPPORTED_LANGUAGE
+  - E_VARIABLE_NOT_FOUND
+  - E_SET_FAILED
+cli:
+  command: debug set-variable
+  description: Modify variable values during debugging
+  examples:
+    - vscb script debug/set-variable --param name=x --param value=42
+    - vscb script debug/set-variable --param name=obj.prop --param value='"hello"'
+mcp:
+  enabled: true
+  description: Modify variable values at current execution point (supports runtime value changes during debugging)
+  timeout: 10000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: ["debug.get-variable"]
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+      - code: E_NOT_PAUSED
+        summary: "Program is running, cannot modify variables"
+        is_retryable: true
+        user_fix_hint: "Set breakpoint and wait for pause before modifying variables"
+      - code: E_VARIABLE_NOT_FOUND
+        summary: "Variable name not found in current scope"
+        is_retryable: false
+        user_fix_hint: "Use debug.list-variables to see available variables in current scope"
+
+  safety:
+    idempotent: true
+    read_only: false
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Modifying variable values during debugging to test different scenarios
+      - Fixing incorrect values to continue execution past bugs
+      - Testing edge cases by injecting specific values
+      - Hot-fixing values without restarting debug session
+
+      DON'T USE FOR:
+      - Reading variable values (use debug.list-variables or debug.get-variable)
+      - Evaluating expressions (use debug.evaluate instead)
+      - Modifying constants or read-only values (will fail)
+
+      PREREQUISITES:
+      - Active debug session must exist (debug.start)
+      - Program must be paused at breakpoint
+      - Variable must exist in current scope and be writable
+      - Value expression must be valid in current language
+
+      SAFETY:
+      - Modifies runtime state (changes variable values)
+      - Idempotent (setting same value multiple times achieves same state)
+      - Not destructive (can set back to original value)
+
+    parameter_hints:
+      name:
+        description: "Name of the variable to modify (simple name or property path)"
+        required: true
+        examples:
+          - "x"
+          - "obj.property"
+          - "array[0]"
+        note: "Use dot notation for nested properties in some languages"
+        pitfalls:
+          - "Don't use complex expressions here (just the variable name/path)"
+
+      value:
+        description: "New value as string expression in current language syntax"
+        required: true
+        examples:
+          - "42"
+          - '"hello"'
+          - "true"
+        language_specific:
+          python: "Use Python literals: 42, 'hello', True, [1,2,3]"
+          javascript: "Use JavaScript literals: 42, 'hello', true, [1,2,3]"
+          csharp: "Use C# literals: 42, \"hello\", true"
+          java: "Use Java literals: 42, \"hello\", true"
+        pitfalls:
+          - "Don't forget quotes for string values"
+          - "Value must be parseable by current language debugger"
+
+      variablesReference:
+        description: "Optional container reference if variable is nested in object/scope"
+        required: false
+        examples:
+          - "123"
+          - "456"
+        note: "Usually omit for top-level variables; get from debug.list-variables for nested variables"

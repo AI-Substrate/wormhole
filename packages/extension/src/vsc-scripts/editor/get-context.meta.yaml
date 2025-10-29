@@ -1,0 +1,72 @@
+alias: editor.get-context
+name: Get Editor Context
+category: editor
+description: Get current editor context (file path, cursor position, selection, visible range)
+dangerOnly: false
+params: {}
+response: query
+result:
+  message:
+    type: string
+    description: Success message
+  contextAvailable:
+    type: boolean
+    description: Whether an active editor is available
+  file:
+    type: string
+    description: Active file path (null if no editor)
+  line:
+    type: number
+    description: Current cursor line (1-indexed, null if no editor)
+errors: []
+cli:
+  command: editor get-context
+  description: Get current editor context
+  examples:
+    - vscb script run editor.get-context
+mcp:
+  # P0: Must-Have Fields
+  enabled: true
+  description: "Get current editor context (file, cursor position, selection, visible range)"
+  timeout: 5000
+
+  # P0: Tool Relationships
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  # P0: Structured Error Contract
+  error_contract:
+    errors: []
+
+  # P0: Safety Flags
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  # P1: LLM Guidance
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Getting current file path and cursor position
+      - Understanding what code the user is looking at
+      - Capturing context before performing operations
+      - Verifying active editor state
+
+      DON'T USE FOR:
+      - Getting file contents (use read file tools)
+      - Getting workspace information (use workspace tools)
+      - Getting project structure (use symbol search)
+
+      PREREQUISITES:
+      - None (works even if no editor is active)
+
+      PATTERNS:
+      - Simple context capture: no parameters needed
+      - Returns summary in data field + full context in editorContext envelope field
+      - Check contextAvailable field to see if editor is active
+
+    parameter_hints: {}

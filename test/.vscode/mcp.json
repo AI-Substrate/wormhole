@@ -1,0 +1,14 @@
+{
+  "servers": {
+    "vsc-bridge": {
+      "type": "stdio",
+      "command": "vscb",
+      "args": [
+        "mcp",
+        "--workspace",
+        "."
+      ],
+      "env": {}
+    }
+  }
+}

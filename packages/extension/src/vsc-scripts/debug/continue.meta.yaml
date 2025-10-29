@@ -1,0 +1,92 @@
+alias: debug.continue
+name: Continue Debug Execution
+category: debug
+description: Continue execution until next breakpoint hit or program exit
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to active session)
+  timeoutMs:
+    type: number
+    required: false
+    default: 30000
+    description: Maximum time to wait for next event (in milliseconds)
+response: waitable
+errors:
+  - E_TIMEOUT
+  - E_NO_SESSION
+  - E_ABORTED
+cli:
+  command: debug continue
+  description: Continue debug execution
+  examples:
+    - vscb script run debug.continue
+    - vscb script run debug.continue --param timeoutMs=60000
+mcp:
+  enabled: true
+  description: "Resume program execution from paused state, running until next breakpoint or program exit"
+  timeout: 10000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+      - code: E_TIMEOUT
+        summary: "Execution did not hit breakpoint or exit within timeout"
+        is_retryable: true
+        user_fix_hint: "Increase timeoutMs parameter or verify breakpoint is reachable"
+
+  safety:
+    idempotent: false
+    read_only: false
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Resuming execution after hitting breakpoint
+      - Running program until next breakpoint
+      - Continuing after step operation
+
+      DON'T USE FOR:
+      - Starting new session (use debug.start instead)
+      - Stepping through code line-by-line (use debug.step-over instead)
+      - Stopping execution (use debug.stop instead)
+
+      PREREQUISITES:
+      - Active debug session from debug.start
+      - Session must be paused at breakpoint
+
+      SAFETY:
+      - Not idempotent (continuing twice advances execution twice)
+      - Modifies execution state (resumes program)
+      - Medium timeout (10s default)
+
+    parameter_hints:
+      sessionId:
+        description: "ID of debug session (defaults to active session)"
+        required: false
+        examples:
+          - "abc-123"
+          - ""
+          - "session-456"
+        note: "Omit to use currently active session"
+
+      timeoutMs:
+        description: "Maximum milliseconds to wait for next event (breakpoint hit or exit)"
+        required: false
+        examples:
+          - "30000"
+          - "60000"
+          - "10000"
+        note: "Default 30000ms, increase if program takes long time to hit next breakpoint"

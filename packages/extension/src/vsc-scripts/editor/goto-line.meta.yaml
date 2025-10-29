@@ -1,0 +1,92 @@
+alias: editor.goto-line
+name: Goto Line
+category: editor
+description: Open a file in the editor and navigate to a specific line and column
+dangerOnly: false
+params:
+  path:
+    type: string
+    description: Absolute path to the file to open
+    required: true
+  line:
+    type: number
+    description: Line number to navigate to (1-indexed)
+    required: true
+  column:
+    type: number
+    description: Column number to navigate to (1-indexed, defaults to 1)
+    required: false
+    default: 1
+response: action
+errors:
+  - FILE_NOT_FOUND
+  - INVALID_POSITION
+  - NAVIGATION_FAILED
+cli:
+  command: editor goto-line
+  description: Navigate to a specific line in a file
+  examples:
+    - vscb script run editor.goto-line --param path=/path/to/file.js --param line=42
+    - vscb script run editor.goto-line --param path=/path/to/file.js --param line=42 --param column=10
+mcp:
+  enabled: true
+  description: |
+    Opens a file in the VS Code editor and navigates to a specific line and column position.
+    The target line is automatically centered in the viewport for optimal visibility.
+    Opens files as permanent tabs (not preview tabs).
+  timeout: 10000
+
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: FILE_NOT_FOUND
+        summary: The specified file does not exist or cannot be read
+        is_retryable: false
+        user_fix_hint: Verify the file path is correct and the file exists
+      - code: INVALID_POSITION
+        summary: The specified line or column is out of range
+        is_retryable: false
+        user_fix_hint: Check that line/column numbers are valid for the file
+      - code: NAVIGATION_FAILED
+        summary: Failed to open or navigate to the file
+        is_retryable: true
+        user_fix_hint: Check VS Code logs for detailed error information
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Navigating to a specific location in a file (e.g., error location, reference location)
+      - Opening files at specific lines from code analysis or search results
+      - Jumping to code locations mentioned in logs or test output
+      - Programmatically opening files with cursor positioning
+
+      DON'T USE FOR:
+      - Just opening a file without specific line navigation (use VS Code open command)
+      - Setting breakpoints (use breakpoint.set instead)
+      - Selecting ranges of text (this sets cursor position only)
+      - Opening files that don't exist (will fail with FILE_NOT_FOUND)
+
+      PREREQUISITES:
+      - File must exist and be readable
+      - Path must be absolute (not relative)
+      - Line/column numbers must be within valid range for the file
+
+      SAFETY:
+      - Read-only operation (doesn't modify files)
+      - Idempotent (can be called multiple times safely)
+      - Opens permanent tabs (not preview tabs)
+
+    parameter_hints:
+      path: Must be an absolute path (e.g., /workspaces/project/src/file.js, not src/file.js)
+      line: Line numbers are 1-indexed (first line is 1, not 0)
+      column: Column numbers are 1-indexed (first column is 1, not 0). Defaults to 1 if not specified.

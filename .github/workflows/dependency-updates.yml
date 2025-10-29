@@ -1,0 +1,61 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: |
+          extension/package-lock.json
+          mcp-server/package-lock.json
+
+    - name: Update extension dependencies
+      working-directory: ./extension
+      run: |
+        npm update
+        npm audit fix --audit-level moderate
+
+    - name: Update MCP server dependencies
+      working-directory: ./mcp-server
+      run: |
+        npm update
+        npm audit fix --audit-level moderate
+
+    - name: Run tests
+      working-directory: ./extension
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb
+        xvfb-run -a npm test
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v7
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update dependencies'
+        title: 'chore: update dependencies'
+        body: |
+          Automated dependency updates
+
+          - Updated npm dependencies
+          - Fixed security vulnerabilities
+          - Ran tests to ensure compatibility
+        branch: dependency-updates
+        delete-branch: true

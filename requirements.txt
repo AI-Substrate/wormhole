@@ -1,0 +1,8 @@
+# Python testing dependencies for VSC-Bridge Extension Host
+# These are installed during .devcontainer/post-install.sh
+
+# Core testing framework
+pytest>=6.0.0
+
+# Python debugger adapter (required for debugging Python tests)
+debugpy>=1.0.0

@@ -1,0 +1,93 @@
+alias: dap.summary
+category: dap
+description: Get session overview with counts, metrics, and health indicators
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to latest session)
+  compact:
+    type: boolean
+    required: false
+    default: false
+    description: Show condensed one-line summary
+response: query
+errors:
+  - E_NO_SESSION
+  - E_INVALID_SESSION_ID
+cli:
+  command: dap summary
+  description: Quick overview of debug session health
+  examples:
+    - vscb script run dap.summary
+    - vscb script run dap.summary --param sessionId=abc-123
+    - vscb script run dap.summary --param compact=true
+# Hidden from MCP by default - redundant with dap_logs + dap_exceptions
+# Still available via CLI: vscb script run dap.summary
+mcp:
+  enabled: false
+  description: Get debug session overview with counts, metrics, and health indicators for quick diagnosis
+  timeout: 30000
+
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No debug session found"
+        is_retryable: false
+        user_fix_hint: "Start a debug session first or specify a valid sessionId"
+      - code: E_INVALID_SESSION_ID
+        summary: "Specified session ID does not exist"
+        is_retryable: false
+        user_fix_hint: "Check available sessions or omit sessionId to use latest"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Quick health check of debug session
+      - Getting output counts and metrics overview
+      - Understanding session scope before detailed analysis
+      - Identifying anomalies (high exception count, unusual output volumes)
+
+      DON'T USE FOR:
+      - Viewing actual log content (use dap.logs)
+      - Detailed exception analysis (use dap.exceptions)
+      - Chronological event inspection (use dap.timeline)
+      - Comparing multiple sessions (use dap.compare)
+
+      PREREQUISITES:
+      - At least one debug session must have been captured
+      - For specific session, sessionId must be valid
+
+      SAFETY:
+      - Read-only operation (no state changes)
+      - Idempotent (same query returns same results)
+
+    parameter_hints:
+      sessionId:
+        description: "Debug session to summarize"
+        required: false
+        examples:
+          - "latest"
+          - "abc-123-def"
+          - "null (defaults to latest)"
+        note: "Defaults to most recent session if omitted"
+
+      compact:
+        description: "Show condensed one-line summary instead of full breakdown"
+        required: false
+        examples:
+          - "true"
+          - "false"
+        note: "Use for quick overview, default is false (full details)"

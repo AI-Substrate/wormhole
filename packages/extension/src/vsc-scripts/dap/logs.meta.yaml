@@ -1,0 +1,163 @@
+alias: dap.logs
+category: dap
+description: View recent console output with filtering by category, search, and time
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to latest session)
+  count:
+    type: number
+    required: false
+    default: 20
+    description: How many logs to show (1-10000)
+  category:
+    type: enum
+    values: [all, stdout, stderr, console, telemetry]
+    required: false
+    default: all
+    description: Filter by output category
+  search:
+    type: string
+    required: false
+    description: Text or regex pattern to search for
+  since:
+    type: number
+    required: false
+    description: Timestamp in ms or negative offset (e.g. -2000 for last 2 seconds)
+  reverse:
+    type: boolean
+    required: false
+    default: false
+    description: Show oldest first instead of most recent first
+  showSource:
+    type: boolean
+    required: false
+    default: true
+    description: Include file:line:column source information
+response: query
+errors:
+  - E_NO_LOGS
+  - E_INVALID_PARAM
+cli:
+  command: dap logs
+  description: View recent console output with filtering
+  examples:
+    - vscb script run dap.logs
+    - vscb script run dap.logs --param count=50 --param category=stdout
+    - vscb script run dap.logs --param search=ERROR
+    - vscb script run dap.logs --param since=-2000
+# Hidden from MCP by default - verbose output (thousands of lines)
+# Still available via CLI: vscb script run dap.logs
+mcp:
+  enabled: false
+  description: View and filter recent debug session console output with flexible filtering options
+  timeout: 30000
+
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_LOGS
+        summary: "No logs found for specified session"
+        is_retryable: false
+        user_fix_hint: "Start a debug session first or specify a valid sessionId"
+      - code: E_INVALID_PARAM
+        summary: "Invalid parameter value (count, category, or time range)"
+        is_retryable: true
+        user_fix_hint: "Check parameter constraints: count (1-10000), category (stdout|stderr|console|telemetry|all)"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Viewing recent console output from debug sessions
+      - Filtering logs by category (stdout, stderr, console, telemetry)
+      - Searching for specific text or regex patterns in outputs
+      - Time-based log retrieval (last N seconds or since timestamp)
+
+      DON'T USE FOR:
+      - Searching across multiple sessions (use dap.search with sessionId=all)
+      - Comparing logs between sessions (use dap.compare)
+      - Analyzing exception details (use dap.exceptions)
+      - Statistical analysis of output patterns (use dap.stats)
+
+      PREREQUISITES:
+      - DAP logger is always available (no session required)
+      - For session-specific logs, sessionId must be valid
+
+      SAFETY:
+      - Read-only operation (no state changes)
+      - Idempotent (same query returns same results)
+
+    parameter_hints:
+      sessionId:
+        description: "Debug session ID to retrieve logs from"
+        required: false
+        examples:
+          - "latest"
+          - "abc-123-def"
+          - "null (defaults to latest)"
+        note: "Defaults to most recent session if omitted"
+
+      count:
+        description: "Maximum number of log entries to return"
+        required: false
+        examples:
+          - "20"
+          - "50"
+          - "100"
+        note: "Default is 20, range is 1-10000"
+
+      category:
+        description: "Filter logs by output category"
+        required: false
+        examples:
+          - "stdout"
+          - "stderr"
+          - "console"
+        note: "Use 'all' to see all categories (default)"
+
+      search:
+        description: "Text or regex pattern to filter log entries"
+        required: false
+        examples:
+          - "ERROR"
+          - "user_id:\\s*\\d+"
+          - "TestCase"
+        note: "Supports JavaScript regex syntax"
+
+      since:
+        description: "Timestamp or negative offset for time-based filtering"
+        required: false
+        examples:
+          - "-2000 (last 2 seconds)"
+          - "1609459200000 (Unix timestamp)"
+          - "-5000 (last 5 seconds)"
+        pitfalls:
+          - "Negative values are relative to current time, not session start"
+
+      reverse:
+        description: "Show logs in chronological order (oldest first)"
+        required: false
+        examples:
+          - "true"
+          - "false"
+        note: "Default is false (most recent first)"
+
+      showSource:
+        description: "Include source file location (file:line:column) in output"
+        required: false
+        examples:
+          - "true"
+          - "false"
+        note: "Default is true"

@@ -1,0 +1,64 @@
+alias: debug.status
+name: Debug Session Status
+category: debug
+description: Query comprehensive debugger status including session info, pause state, threads, stack frames, and scopes
+dangerOnly: false
+params: {}
+response: query
+errors:
+  - E_NO_SESSION
+  - E_NOT_STOPPED
+cli:
+  command: debug status
+  description: Get current debug session status
+  examples:
+    - vscb script run debug.status
+mcp:
+  enabled: true
+  description: Get comprehensive debug session status including session info, pause state, threads, and scopes
+  timeout: 5000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+      - code: E_NOT_STOPPED
+        summary: "Program is running, cannot retrieve full status"
+        is_retryable: true
+        user_fix_hint: "Set breakpoint and wait for pause, or check if session is still active"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Checking if debug session is active and paused
+      - Getting comprehensive overview of current debug state
+      - Retrieving session metadata (ID, configuration, threads)
+      - Understanding execution state before other debug operations
+
+      DON'T USE FOR:
+      - Getting detailed stack trace (use debug.stack for better format)
+      - Listing all variables (use debug.list-variables instead)
+      - Evaluating expressions (use debug.evaluate instead)
+
+      PREREQUISITES:
+      - Active debug session must exist (debug.start)
+      - Some information only available when paused at breakpoint
+
+      SAFETY:
+      - Read-only operation (doesn't modify program state)
+      - Idempotent (returns same status at same execution point)
+
+    parameter_hints: {}

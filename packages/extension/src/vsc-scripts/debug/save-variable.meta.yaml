@@ -1,0 +1,160 @@
+alias: debug.save-variable
+name: Save Variable
+category: debug
+description: Save large variable data to file in JSON Lines format
+dangerOnly: false
+params:
+  outputPath:
+    type: string
+    required: true
+    description: Path to output file (JSONL format)
+  expression:
+    type: string
+    required: true
+    description: Expression to evaluate and save (e.g., "largeArray", "user")
+  pageSize:
+    type: number
+    required: false
+    default: 500
+    description: Number of items to fetch per page
+  maxItems:
+    type: number
+    required: false
+    description: Maximum number of items to save (omit for unlimited)
+  context:
+    type: string
+    required: false
+    default: watch
+    description: Evaluation context (watch, repl, hover, etc.)
+response: query
+result:
+  success:
+    type: boolean
+    description: Whether the operation succeeded
+  outputPath:
+    type: string
+    description: Path where variable data was saved
+  bytes:
+    type: number
+    description: Total bytes written to file
+  counts:
+    type: object
+    description: Count of named and indexed children saved
+errors:
+  - E_NO_SESSION
+  - E_NO_THREADS
+  - E_NO_STACK
+  - E_NOT_STOPPED
+  - E_EVALUATE_FAILED
+  - E_NOT_EXPANDABLE
+cli:
+  command: vscb script run debug.save-variable
+  description: Save large variable data to file
+  examples:
+    - vscb script run debug.save-variable --param expression="largeArray" --param outputPath="/tmp/vars.jsonl"
+    - vscb script run debug.save-variable --param expression="user" --param outputPath="./user.jsonl" --param pageSize=100
+    - vscb script run debug.save-variable --param expression="data" --param outputPath="/tmp/data.jsonl" --param maxItems=1000
+mcp:
+  enabled: true
+  description: Save large variable structures (arrays, objects) to disk as JSON Lines with pagination
+  timeout: 30000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: ["breakpoint.set"]
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+      - code: E_NOT_STOPPED
+        summary: "Program is running, cannot save variables"
+        is_retryable: true
+        user_fix_hint: "Set breakpoint and wait for pause before saving variables"
+      - code: E_EVALUATE_FAILED
+        summary: "Expression could not be evaluated or found"
+        is_retryable: false
+        user_fix_hint: "Verify expression syntax and that variable exists in current scope"
+
+  safety:
+    idempotent: false
+    read_only: false
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Saving large arrays or objects to file for offline analysis
+      - Exporting debug data that's too large for console display
+      - Creating snapshots of runtime state at specific execution points
+      - Analyzing data structures with external tools (jq, grep, etc.)
+
+      DON'T USE FOR:
+      - Reading small variables (use debug.list-variables or debug.evaluate)
+      - Modifying variable values (use debug.set-variable instead)
+      - Real-time variable inspection (use debug.get-variable with pagination)
+
+      PREREQUISITES:
+      - Active debug session must exist (debug.start)
+      - Program must be paused at breakpoint
+      - Expression must evaluate to expandable structure (object/array)
+      - Output path must be writable
+
+      SAFETY:
+      - Writes to filesystem (creates/overwrites file)
+      - Not idempotent (repeated calls overwrite file)
+      - Not destructive (only affects file, not program state)
+
+    parameter_hints:
+      outputPath:
+        description: "Path to output file (JSON Lines format, .jsonl extension)"
+        required: true
+        examples:
+          - "/tmp/vars.jsonl"
+          - "./debug-data.jsonl"
+          - "/Users/username/data.jsonl"
+        note: "File will be created or overwritten; use absolute or workspace-relative paths"
+        pitfalls:
+          - "Don't use paths without write permissions"
+          - "File is overwritten if it exists (no append mode)"
+
+      expression:
+        description: "Expression to evaluate and save (must resolve to object or array)"
+        required: true
+        examples:
+          - "largeArray"
+          - "user"
+          - "dataStructure"
+        note: "Expression must evaluate to expandable structure with children"
+        pitfalls:
+          - "Don't use primitive values (string, number, boolean) - must be object/array"
+
+      pageSize:
+        description: "Number of items to fetch per page (affects memory usage)"
+        required: false
+        examples:
+          - "100"
+          - "500"
+          - "1000"
+        note: "Default is 500; lower values reduce memory usage, higher values improve speed"
+
+      maxItems:
+        description: "Maximum number of items to save (omit for unlimited)"
+        required: false
+        examples:
+          - "1000"
+          - "5000"
+          - "10000"
+        note: "Use to limit output size when dealing with very large structures"
+
+      context:
+        description: "Evaluation context for expression (affects how debugger fetches data)"
+        required: false
+        examples:
+          - "watch"
+          - "repl"
+        note: "Default is 'watch'; use 'repl' for different formatting"

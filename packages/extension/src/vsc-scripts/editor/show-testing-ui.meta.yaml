@@ -1,0 +1,53 @@
+alias: editor.show-testing-ui
+name: Show Testing UI
+category: editor
+description: Show the Testing view to trigger test discovery (enables Python test discovery)
+dangerOnly: false
+params: {}
+response: action
+errors: []
+cli:
+  command: editor show-testing-ui
+  description: Show Testing view to trigger test discovery
+  examples:
+    - vscb script run editor.show-testing-ui
+mcp:
+  enabled: true
+  description: Open the VS Code Testing view to trigger automatic test discovery
+  timeout: 60000
+
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors: []
+
+  safety:
+    idempotent: false
+    read_only: false
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Triggering test discovery by opening the Testing UI
+      - Forcing VS Code to scan workspace for tests
+      - Enabling test functionality that requires the Testing view to be visible
+
+      DON'T USE FOR:
+      - Running or debugging tests (use tests.debug-single or debug.start)
+      - Listing tests via API (this is a UI trigger, not a query)
+      - Continuous test watching (this is a one-time UI open)
+
+      PREREQUISITES:
+      - Test framework configured in workspace (pytest, Jest, etc.)
+      - Test extensions installed and enabled
+
+      SAFETY:
+      - Non-idempotent (opening UI multiple times may have side effects)
+      - Triggers test discovery which scans filesystem
+
+    parameter_hints: {}

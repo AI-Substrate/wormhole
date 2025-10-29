@@ -1,0 +1,18 @@
+{
+  "ok": true,
+  "type": "success",
+  "data": {
+    "success": true,
+    "details": {
+      "session": {
+        "id": "session-001",
+        "name": "Python Debug",
+        "type": "python"
+      }
+    }
+  },
+  "meta": {
+    "requestId": "test-job-003",
+    "timestamp": "2025-10-11T10:00:02.000Z"
+  }
+}

@@ -1,0 +1,90 @@
+alias: debug.step-into
+name: Step Into
+category: debug
+description: Step into the function call and wait until stopped
+dangerOnly: false
+params:
+  sessionId:
+    type: string
+    required: false
+    description: Debug session ID (defaults to active session)
+  timeoutMs:
+    type: number
+    required: false
+    default: 5000
+    description: Maximum time to wait for step to complete (in milliseconds)
+response: waitable
+errors:
+  - E_TIMEOUT
+  - E_NO_SESSION
+cli:
+  command: debug step-into
+  description: Step into the function call
+  examples:
+    - vscb script run debug.step-into
+mcp:
+  enabled: true
+  description: "Execute current line and enter function calls, stopping at first line inside called function"
+  timeout: 10000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+      - code: E_TIMEOUT
+        summary: "Step operation did not complete within timeout"
+        is_retryable: true
+        user_fix_hint: "Increase timeoutMs parameter or verify program is not hanging"
+
+  safety:
+    idempotent: false
+    read_only: false
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Entering function calls to debug internal logic
+      - Diving deeper into call hierarchy
+      - Inspecting function implementation details
+
+      DON'T USE FOR:
+      - Staying in current scope (use debug.step-over instead)
+      - Exiting current function (use debug.step-out instead)
+      - Running to next breakpoint (use debug.continue instead)
+
+      PREREQUISITES:
+      - Active debug session from debug.start
+      - Session must be paused at line with function call
+
+      SAFETY:
+      - Not idempotent (stepping twice moves twice)
+      - Modifies execution state (advances program)
+      - Quick operation (10s timeout)
+
+    parameter_hints:
+      sessionId:
+        description: "ID of debug session (defaults to active session)"
+        required: false
+        examples:
+          - "abc-123"
+          - ""
+          - "session-456"
+        note: "Omit to use currently active session"
+
+      timeoutMs:
+        description: "Maximum milliseconds to wait for step to complete"
+        required: false
+        examples:
+          - "5000"
+          - "10000"
+          - "15000"
+        note: "Default 5000ms, increase if entering slow function"

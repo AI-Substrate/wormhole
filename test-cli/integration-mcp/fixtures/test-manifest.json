@@ -1,0 +1,291 @@
+{
+  "_comment": "METADATA QUALITY GUIDE: This test fixture serves as the gold standard for Phase 6 metadata enhancement. Each tool demonstrates comprehensive P0+P1 metadata patterns.",
+  "version": 2,
+  "generatedAt": "2025-10-11T00:00:00.000Z",
+  "scripts": {
+    "breakpoint.set": {
+      "metadata": {
+        "alias": "breakpoint.set",
+        "name": "Set Breakpoint",
+        "category": "breakpoint",
+        "description": "Set a breakpoint with optional conditions and log messages",
+        "dangerOnly": false,
+        "params": {
+          "path": {
+            "type": "string",
+            "required": true,
+            "description": "File path (absolute or relative to current directory)",
+            "resolve": "cwd-relative"
+          },
+          "line": {
+            "type": "number",
+            "required": true,
+            "description": "Line number (1-indexed)",
+            "min": 1
+          },
+          "condition": {
+            "type": "string",
+            "required": false,
+            "description": "Conditional expression for breakpoint"
+          }
+        },
+        "response": "action",
+        "errors": ["E_FILE_NOT_FOUND", "E_INVALID_LINE"],
+        "cli": {
+          "command": "bp set",
+          "description": "Set a breakpoint",
+          "examples": [
+            "vscb script run breakpoint.set --param path=test.js --param line=42"
+          ]
+        },
+        "mcp": {
+          "tool": "add_breakpoint",
+          "description": "Adds a breakpoint to the specified file and line",
+          "timeout": 5000,
+          "llm": {
+            "when_to_use": "Use when you need to pause execution at a specific line of code. Essential for debugging workflows before starting a debug session.",
+            "parameter_hints": {
+              "path": {
+                "description": "Absolute or workspace-relative file path",
+                "examples": [
+                  "src/main.js",
+                  "/absolute/path/to/file.py",
+                  "test/integration/api.test.ts"
+                ]
+              },
+              "line": {
+                "description": "1-indexed line number where breakpoint should be set",
+                "examples": ["42", "1", "100"]
+              },
+              "condition": {
+                "description": "Expression evaluated in the context of the breakpoint location",
+                "examples": [
+                  "x > 10",
+                  "user.name === 'admin'",
+                  "len(items) > 0"
+                ],
+                "language_specific": {
+                  "python": "Use Python syntax (e.g., 'len(items) > 0')",
+                  "javascript": "Use JavaScript syntax (e.g., 'items.length > 0')",
+                  "csharp": "Use C# syntax (e.g., 'items.Count > 0')"
+                }
+              }
+            }
+          },
+          "tags": ["debugging", "breakpoints"],
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "readOnlyHint": false
+        }
+      },
+      "scriptRelPath": "breakpoint/set.js"
+    },
+    "debug.evaluate": {
+      "metadata": {
+        "alias": "debug.evaluate",
+        "name": "Evaluate Expression",
+        "category": "debug",
+        "description": "Evaluate an expression in the current debug context",
+        "params": {
+          "expression": {
+            "type": "string",
+            "required": true,
+            "description": "Expression to evaluate"
+          },
+          "context": {
+            "type": "enum",
+            "required": false,
+            "description": "Evaluation context",
+            "values": ["repl", "watch", "hover"],
+            "default": "repl"
+          },
+          "frameId": {
+            "type": "number",
+            "required": false,
+            "description": "Stack frame ID (defaults to current frame)"
+          }
+        },
+        "response": "query",
+        "errors": ["E_NO_SESSION", "E_INVALID_EXPRESSION"],
+        "mcp": {
+          "description": "Evaluates an expression in the current debug session",
+          "timeout": 10000,
+          "llm": {
+            "when_to_use": "Use when you need to inspect variable values or evaluate expressions during a debug session. PREREQUISITE: Active debug session required.",
+            "parameter_hints": {
+              "expression": {
+                "description": "Language-specific expression to evaluate",
+                "examples": [
+                  "user.name",
+                  "items[0].value",
+                  "2 + 2"
+                ],
+                "prerequisites": ["Active debug session", "Valid stack frame"]
+              },
+              "context": {
+                "description": "Where to evaluate the expression",
+                "examples": ["repl", "watch", "hover"]
+              }
+            }
+          }
+        }
+      },
+      "scriptRelPath": "debug/evaluate.js"
+    },
+    "test.debug-single": {
+      "metadata": {
+        "alias": "test.debug-single",
+        "name": "Debug Single Test",
+        "category": "test",
+        "description": "Start debugging a single test at the specified location",
+        "params": {
+          "path": {
+            "type": "string",
+            "required": true,
+            "description": "Test file path"
+          },
+          "line": {
+            "type": "number",
+            "required": true,
+            "description": "Line number within test file"
+          }
+        },
+        "response": "waitable",
+        "mcp": {
+          "description": "Starts a debug session for a single test case",
+          "timeout": 60000,
+          "llm": {
+            "when_to_use": "Use when you need to debug a specific test case. This performs test discovery which may take 30-60 seconds.",
+            "parameter_hints": {
+              "path": {
+                "examples": ["test/unit/parser.test.js", "tests/test_api.py"]
+              }
+            }
+          }
+        }
+      },
+      "scriptRelPath": "tests/debug-single.js"
+    },
+    "dap.logs": {
+      "metadata": {
+        "alias": "dap.logs",
+        "name": "DAP Logs",
+        "category": "dap",
+        "description": "View Debug Adapter Protocol logs",
+        "params": {
+          "category": {
+            "type": "enum",
+            "required": false,
+            "values": ["all", "request", "response", "event"],
+            "default": "all",
+            "description": "Log category to filter"
+          },
+          "limit": {
+            "type": "number",
+            "required": false,
+            "min": 1,
+            "max": 1000,
+            "default": 100,
+            "description": "Maximum number of log entries"
+          }
+        },
+        "response": "query",
+        "mcp": {
+          "description": "Retrieve DAP protocol logs for debugging the debugger",
+          "llm": {
+            "when_to_use": "Use when debugging issues with the debug adapter itself. Helpful for understanding protocol-level communication."
+          },
+          "readOnlyHint": true,
+          "tags": ["diagnostics", "dap"]
+        }
+      },
+      "scriptRelPath": "dap/logs.js"
+    },
+    "debug.list-variables": {
+      "metadata": {
+        "alias": "debug.list-variables",
+        "name": "List Variables",
+        "category": "debug",
+        "description": "List variables in the specified scope",
+        "params": {
+          "scope": {
+            "type": "string",
+            "required": true,
+            "description": "Scope name (local, global, etc.)"
+          },
+          "filters": {
+            "type": "object",
+            "required": false,
+            "description": "Filtering options for variables"
+          }
+        },
+        "response": "query",
+        "mcp": {
+          "description": "Lists all variables in the specified debug scope"
+        }
+      },
+      "scriptRelPath": "debug/list-variables.js"
+    },
+    "disabled.tool": {
+      "metadata": {
+        "alias": "disabled.tool",
+        "name": "Disabled Tool",
+        "category": "test",
+        "description": "This tool is disabled and should not appear in MCP",
+        "params": {},
+        "response": "action",
+        "mcp": {
+          "enabled": false,
+          "description": "This tool is intentionally disabled for testing mcp.enabled filtering"
+        }
+      },
+      "scriptRelPath": "test/disabled.js"
+    },
+    "breakpoint.list": {
+      "metadata": {
+        "alias": "breakpoint.list",
+        "name": "List Breakpoints",
+        "category": "breakpoint",
+        "description": "List all active breakpoints in the workspace",
+        "params": {},
+        "response": "query",
+        "mcp": {
+          "description": "Lists all active breakpoints with their locations and conditions",
+          "readOnlyHint": true,
+          "idempotentHint": true
+        }
+      },
+      "scriptRelPath": "breakpoint/list.js"
+    },
+    "debug.step-over": {
+      "metadata": {
+        "alias": "debug.step-over",
+        "name": "Step Over",
+        "category": "debug",
+        "description": "Step over the current line",
+        "params": {},
+        "response": "action",
+        "mcp": {
+          "description": "Steps over the current line without entering function calls",
+          "llm": {
+            "when_to_use": "Use during active debugging to execute the current line and move to the next line in the same scope. PREREQUISITE: Debug session must be paused at a breakpoint.",
+            "prerequisites": ["Active debug session", "Execution paused at breakpoint"]
+          },
+          "destructiveHint": false,
+          "idempotentHint": false
+        }
+      },
+      "scriptRelPath": "debug/step-over.js"
+    }
+  },
+  "_patterns": {
+    "_comment": "PATTERN INDEX - Reference these examples when enhancing metadata in Phase 6",
+    "string_params": "breakpoint.set (path, condition)",
+    "number_params": "breakpoint.set (line with min constraint), dap.logs (limit with min/max)",
+    "enum_params": "debug.evaluate (context), dap.logs (category)",
+    "required_vs_optional": "All tools demonstrate mix of required/optional parameters",
+    "tool_name_override": "breakpoint.set uses 'add_breakpoint' instead of 'breakpoint_set'",
+    "annotations": "All tools demonstrate MCP spec annotations (readOnlyHint, destructiveHint, idempotentHint)",
+    "disabled_tool": "disabled.tool demonstrates mcp.enabled=false filtering"
+  }
+}

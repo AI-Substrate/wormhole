@@ -1,0 +1,108 @@
+{
+  "name": "vsc-bridge",
+  "version": "1.2.0",
+  "description": "Bridge for debugging and development tools integration",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "vscb": "./dist/index.js"
+  },
+  "files": [
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+  "private": false,
+  "workspaces": [
+    "packages/extension",
+    "packages/shared-test"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AI-Substrate/wormhole.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AI-Substrate/wormhole/issues"
+  },
+  "homepage": "https://github.com/AI-Substrate/wormhole#readme",
+  "license": "MIT",
+  "dependencies": {
+    "@inkjs/ui": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.20.0",
+    "@oclif/core": "^3.18.1",
+    "chalk": "^5.3.0",
+    "fs-extra": "^11.2.0",
+    "ink": "^4.4.1",
+    "ink-select-input": "^5.0.0",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^5.0.1",
+    "js-yaml": "^4.1.0",
+    "react": "^18.2.0",
+    "zod": "^3.22.4"
+  },
+  "scripts": {
+    "build": "npm run build:manifest && npm run build:extension && npm run build:cli && npm run build:shared-test",
+    "build:extension": "cd packages/extension && npm run compile",
+    "build:cli": "tsc -p tsconfig.json && npm run copy-manifest",
+    "copy-manifest": "shx cp packages/extension/src/vsc-scripts/manifest.json dist/manifest.json",
+    "prepare": "tsx ci/scripts/prepare-cli.ts",
+    "dev": "tsx src/index.ts",
+    "build:shared-test": "cd packages/shared-test && npm run build",
+    "build:manifest": "tsx scripts/build-manifest.cts",
+    "watch:manifest": "chokidar 'packages/extension/src/vsc-scripts/**/*.meta.yaml' -c 'npm run build:manifest'",
+    "test": "xvfb-run -a vscode-test",
+    "test:extension": "xvfb-run -a vscode-test",
+    "test:extension:old": "cd packages/extension && npm test",
+    "test:integration": "vitest run test/integration/unified-debug.test.ts",
+    "test:integration:cli": "vitest run test/integration/unified-debug.test.ts -t 'CLI'",
+    "test:integration:mcp": "vitest run test/integration/unified-debug.test.ts -t 'MCP'",
+    "test:integration:old": "vitest run test/integration/cross-language-debug.test.ts",
+    "lint": "npm run lint:extension",
+    "lint:extension": "cd packages/extension && npm run lint",
+    "clean": "npm run clean --workspaces --if-present",
+    "semantic-release": "semantic-release",
+    "commit": "cz",
+    "commit-lint": "commitlint --from HEAD~1 --to HEAD --verbose"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.4.4",
+    "@commitlint/config-conventional": "^18.4.4",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^11.1.0",
+    "@semantic-release/exec": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^9.2.6",
+    "@semantic-release/npm": "^11.0.2",
+    "@semantic-release/release-notes-generator": "^12.1.0",
+    "@types/chai": "^5.2.2",
+    "@types/fs-extra": "^11.0.4",
+    "@types/glob": "^8.1.0",
+    "@types/react": "^18.2.48",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "glob": "^11.0.3",
+    "oclif": "^4.1.0",
+    "semantic-release": "^22.0.12",
+    "shx": "^0.3.4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "overrides": {
+    "esbuild": "0.21.5"
+  },
+  "oclif": {
+    "bin": "vscb",
+    "dirname": "vscb",
+    "commands": "./dist/commands",
+    "plugins": [],
+    "topicSeparator": " ",
+    "topics": {}
+  }
+}

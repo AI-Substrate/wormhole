@@ -1,0 +1,87 @@
+alias: debug.wait-for-hit
+category: debug
+description: Wait for a breakpoint to be hit
+dangerOnly: false
+params:
+  timeoutMs:
+    type: number
+    required: false
+    default: 30000
+    description: Maximum time to wait in milliseconds
+response: waitable
+errors:
+  - E_TIMEOUT
+  - E_NO_SESSION
+  - E_ABORTED
+cli:
+  command: vscb script run debug.wait-for-hit
+  description: Wait for breakpoint hit
+  examples:
+    - vscb script run debug.wait-for-hit
+    - vscb script run debug.wait-for-hit --param timeout=60000
+mcp:
+  enabled: true
+  description: Wait for execution to hit any breakpoint (blocks until pause or timeout)
+  timeout: 90000
+
+  relationships:
+    requires: ["debug.start"]
+    recommended: ["breakpoint.set"]
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_TIMEOUT
+        summary: "Timeout reached before breakpoint was hit"
+        is_retryable: true
+        user_fix_hint: "Increase timeoutMs parameter or verify breakpoint is on executable line and will be reached"
+      - code: E_NO_SESSION
+        summary: "No active debug session"
+        is_retryable: false
+        user_fix_hint: "Call debug.start first to create debug session"
+      - code: E_ABORTED
+        summary: "Wait was aborted by user or session ended"
+        is_retryable: false
+        user_fix_hint: "Debug session was terminated, restart session and retry"
+
+  safety:
+    idempotent: false
+    read_only: false
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Waiting for execution to reach a breakpoint after starting/continuing
+      - Synchronizing workflow after debug.start or debug.continue
+      - Blocking until program pauses at specific execution point
+      - Automating debug workflows that require pause before inspection
+
+      DON'T USE FOR:
+      - Checking if session is paused (use debug.status instead)
+      - Setting breakpoints (use breakpoint.set first)
+      - Inspecting variables (do after wait completes)
+
+      PREREQUISITES:
+      - Active debug session must exist (debug.start)
+      - At least one breakpoint should be set (recommended: breakpoint.set)
+      - Program execution must reach breakpoint within timeout
+
+      SAFETY:
+      - Not idempotent (each call waits for next breakpoint hit)
+      - Not read-only (advances execution state by waiting)
+      - Not destructive (normal debug operation)
+
+    parameter_hints:
+      timeoutMs:
+        description: "Maximum time to wait in milliseconds (default 30000)"
+        required: false
+        examples:
+          - "30000"
+          - "60000"
+          - "120000"
+        note: "Use longer timeouts for slow code paths or user interaction"
+        pitfalls:
+          - "Don't use very short timeouts (< 5000ms) for complex code"
+          - "Remember timeout is per call, not total workflow time"

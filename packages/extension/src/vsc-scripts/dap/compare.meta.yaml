@@ -1,0 +1,107 @@
+alias: dap.compare
+category: dap
+description: Compare two debug sessions to find differences and regressions
+dangerOnly: false
+params:
+  sessionA:
+    type: string
+    required: true
+    description: First debug session ID
+  sessionB:
+    type: string
+    required: true
+    description: Second debug session ID to compare against
+  compareBy:
+    type: enum
+    values: [counts, exceptions, timeline, outputs]
+    required: false
+    default: counts
+    description: What aspect to compare (counts=numeric deltas, exceptions=diff, timeline=divergence point, outputs=detailed breakdown)
+response: query
+errors:
+  - E_SESSION_NOT_FOUND
+  - E_INSUFFICIENT_DATA
+cli:
+  command: dap compare
+  description: Compare two debug sessions
+  examples:
+    - vscb script run dap.compare --param sessionA=abc-123 --param sessionB=def-456
+    - vscb script run dap.compare --param sessionA=abc --param sessionB=def --param compareBy=exceptions
+# Hidden from MCP by default - session comparison, extremely rare
+# Still available via CLI: vscb script run dap.compare
+mcp:
+  enabled: false
+  description: Side-by-side comparison of two debug sessions for regression testing and divergence analysis
+  timeout: 30000
+
+  relationships:
+    requires: []
+    recommended: []
+    provides: []
+    conflicts: []
+
+  error_contract:
+    errors:
+      - code: E_SESSION_NOT_FOUND
+        summary: "One or both session IDs do not exist"
+        is_retryable: false
+        user_fix_hint: "Verify both sessionA and sessionB are valid session IDs"
+      - code: E_INSUFFICIENT_DATA
+        summary: "One or both sessions have insufficient data for comparison"
+        is_retryable: false
+        user_fix_hint: "Ensure both sessions have completed and captured events"
+
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Comparing two debug sessions to find differences
+      - Regression testing (before/after code changes)
+      - Identifying divergence points in execution paths
+      - Analyzing output count changes or exception differences
+
+      DON'T USE FOR:
+      - Viewing single session data (use dap.logs or dap.summary)
+      - Searching across sessions (use dap.search with sessionId=all)
+      - Statistical analysis (use dap.stats)
+      - Exception analysis in single session (use dap.exceptions)
+
+      PREREQUISITES:
+      - Both sessionA and sessionB must be valid session IDs
+      - Both sessions should have completed and captured data
+
+      SAFETY:
+      - Read-only operation (no state changes)
+      - Idempotent (same comparison returns same results)
+
+    parameter_hints:
+      sessionA:
+        description: "First debug session ID to compare"
+        required: true
+        examples:
+          - "abc-123-def"
+          - "baseline-session"
+          - "session-before-fix"
+        note: "Must be a valid session ID"
+
+      sessionB:
+        description: "Second debug session ID to compare against"
+        required: true
+        examples:
+          - "xyz-789-ghi"
+          - "current-session"
+          - "session-after-fix"
+        note: "Must be a valid session ID"
+
+      compareBy:
+        description: "Aspect of sessions to compare"
+        required: false
+        examples:
+          - "counts"
+          - "exceptions"
+          - "timeline"
+        note: "counts=numeric deltas, exceptions=diff, timeline=divergence point, outputs=detailed breakdown"
