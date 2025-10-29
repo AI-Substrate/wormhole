@@ -278,7 +278,7 @@ async function getLSPResultWithTimeout<T>(
 
 **Root Cause**: AI agents learn tool usage from `llm.when_to_use` and `parameter_hints` fields. This is the PRIMARY documentation they consume.
 
-**Solution**: Spend 30-60% of implementation time writing comprehensive MCP guidance with use cases, prerequisites, patterns, examples, and pitfalls.
+**Solution**: Invest significant time writing comprehensive MCP guidance with use cases, prerequisites, patterns, examples, and pitfalls. Quality MCP metadata drives AI agent adoption.
 
 **Example**:
 ```yaml
@@ -1211,7 +1211,7 @@ describe('Symbol Resolver - Flowspace ID Parsing', () => {
 | 2.9 | [ ] | Implement action routing (references vs implementations) | Params.action determines which LSP command to call | - | Consolidated tool |
 | 2.10 | [ ] | Add language-specific error hints | Python, JavaScript hints for unsupported operations | - | Discovery 18 |
 | 2.11 | [ ] | Implement optional Flowspace ID enrichment | enrichWithFlowspaceIds param adds nodeId to results | - | Discovery 15 - optional for performance |
-| 2.12 | [ ] | Write comprehensive MCP guidance in metadata | llm.when_to_use, parameter_hints with examples | - | Discovery 05 - 30-60% of time |
+| 2.12 | [ ] | Write comprehensive MCP guidance in metadata | llm.when_to_use, parameter_hints with examples | - | Discovery 05 - significant time investment |
 | 2.13 | [ ] | Promote critical navigation tests | 4-5 tests: references, implementations, Flowspace ID, errors | - | Add Test Doc blocks |
 | 2.14 | [ ] | Delete non-valuable scratch tests | Only promoted tests remain | - | |
 | 2.15 | [ ] | Run just build to generate manifest + schemas | Script discovered, schemas generated, MCP tool available | - | Discovery 02 |
@@ -1365,18 +1365,18 @@ describe('Symbol Navigate - Find References', () => {
 
 | # | Status | Task | Success Criteria | Log | Notes |
 |---|--------|------|------------------|-----|-------|
-| 3.1 | [ ] | Create symbol/rename.js extending QueryScript | File structure correct, extends QueryScript | - | |
-| 3.2 | [ ] | Create symbol/rename.meta.yaml | Defines nodeId, path, symbol, newName params | - | |
+| 3.1 | [x] | Create symbol/rename.js extending ActionScript | File structure correct, extends ActionScript | [📋](tasks/phase-3-symbol-rename-tool/execution.log.md#task-t001-t002-create-rename-js-and-meta) | Completed · log#task-t001-t002-create-rename-js-and-meta [^4] |
+| 3.2 | [x] | Create symbol/rename.meta.yaml | Defines nodeId, path, symbol, newName params | [📋](tasks/phase-3-symbol-rename-tool/execution.log.md#task-t001-t002-create-rename-js-and-meta) | Completed · log#task-t001-t002-create-rename-js-and-meta [^4] |
 | 3.3 | [ ] | Write scratch probes for basic rename | 3-5 probes: single file, multi-file, class rename | - | Use TypeScript test files |
 | 3.4 | [ ] | Implement resolveSymbolInput() (reuse from Phase 2 pattern) | Resolves nodeId or path+symbol to position | - | |
 | 3.5 | [ ] | Implement executeRenameProvider() with timeout | Calls vscode.executeDocumentRenameProvider | - | |
 | 3.6 | [ ] | Write scratch probes for WorkspaceEdit validation | 3-5 probes: file exists, writable, locked file | - | |
 | 3.7 | [ ] | Implement validateFilesWritable() helper | Checks fs.existsSync() and fs.accessSync(W_OK) for all files in edit | - | Discovery 07 |
 | 3.8 | [ ] | Implement applyWorkspaceEdit() with error context | Applies edit, throws descriptive error on failure | - | Discovery 07 |
-| 3.9 | [ ] | Format response with file change summary | Returns { applied: true, changes: [...], totalFiles, totalEdits } | - | |
-| 3.10 | [ ] | Add language-specific hints | JavaScript CommonJS warning | - | Discovery 18 |
-| 3.11 | [ ] | Write comprehensive MCP guidance | Use cases: safe refactoring, impact analysis before rename | - | |
-| 3.12 | [ ] | Promote critical rename tests | 3-4 tests: basic rename, multi-file, error handling | - | Add Test Doc blocks |
+| 3.9 | [x] | Format response with file change summary | Returns { applied: true, changes: [...], totalFiles, totalEdits } | [📋](tasks/phase-3-symbol-rename-tool/execution.log.md#t022-t032-final-documentation-and-build-validation) | Completed · log#t022-t032-final-documentation-and-build-validation [^5] |
+| 3.10 | [x] | Add language-specific hints | JavaScript CommonJS warning | [📋](tasks/phase-3-symbol-rename-tool/execution.log.md#t022-t032-final-documentation-and-build-validation) | Completed · log#t022-t032-final-documentation-and-build-validation [^5] |
+| 3.11 | [x] | Write comprehensive MCP guidance | Use cases: safe refactoring, impact analysis before rename | [📋](tasks/phase-3-symbol-rename-tool/execution.log.md#t022-t032-final-documentation-and-build-validation) | Completed · log#t022-t032-final-documentation-and-build-validation [^5] |
+| 3.12 | [x] | Promote critical rename tests | 3-4 tests: basic rename, multi-file, error handling | [📋](tasks/phase-3-symbol-rename-tool/execution.log.md#t022-t032-final-documentation-and-build-validation) | Completed · log#t022-t032-final-documentation-and-build-validation [^5] |
 | 3.13 | [ ] | Delete scratch tests | Only promoted tests remain | - | |
 | 3.14 | [ ] | Run just build | Manifest + schemas updated | - | |
 | 3.15 | [ ] | Manual test via Extension Host | Rename works across multiple files | - | |
@@ -2305,11 +2305,20 @@ vscb script run symbol.rename \
   - `function:/workspaces/wormhole/packages/extension/src/core/util/symbol-resolver.ts:buildQualifiedName`
   - `function:/workspaces/wormhole/packages/extension/src/core/util/symbol-resolver.ts:findSymbolAtPosition`
   - `function:/workspaces/wormhole/packages/extension/src/core/util/symbol-resolver.ts:symbolKindToFlowspaceType`
+
+[^4]: Tasks 3.1-3.2 (T001-T002) - Created symbol rename tool with ActionScript pattern and comprehensive MCP metadata
+  - `file:packages/extension/src/vsc-scripts/symbol/rename.js`
+  - `file:packages/extension/src/vsc-scripts/symbol/rename.meta.yaml`
   - `function:/workspaces/wormhole/packages/extension/src/core/util/symbol-resolver.ts:buildFlowspaceId`
   - `function:/workspaces/wormhole/packages/extension/src/core/util/symbol-resolver.ts:buildFlowspaceIdAtPosition`
   - `file:/workspaces/wormhole/packages/extension/webpack.config.js`
   - `file:/workspaces/wormhole/packages/extension/src/core/util/index.ts`
   - `file:/workspaces/wormhole/test/scratch/symbol-resolution.test.ts`
+
+[^5]: Tasks 3.9-3.12 (T022-T032) - Final documentation, build validation, and TAD synchronization
+  - `file:packages/extension/src/vsc-scripts/symbol/rename.js` (lines 194-209) - Added document save loop after applyEdit
+  - `file:scripts/sample/dynamic/explore-rename-basic.js` - TAD exploration script (permanent sample)
+  - `file:scripts/sample/dynamic/explore-workspace-edit-validation.js` - Pre-validation exploration (permanent sample)
 
 ---
 

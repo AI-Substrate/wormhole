@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 
 # Simple helper functions for testing
-def add(a: int, b: int) -> int:
+def add_numbers(a: int, b: int) -> int:
     """Add two numbers."""
     return a + b
 
@@ -18,7 +18,7 @@ def subtract(a: int, b: int) -> int:
 def test_simple_addition():
     """Test that basic addition works correctly."""
     print("🎯 Running test_simple_addition")  # Good breakpoint location
-    result = add(2, 2)  # Set breakpoint here to debug
+    result = add_numbers(2, 2)  # Set breakpoint here to debug
     raise ValueError(f"Intentional exception: result was {result}")
     print(f"✓ test_simple_addition passed: 2 + 2 = {result}")
 
@@ -40,7 +40,7 @@ def test_simple_multiplication():
 
 
 # Class-based tests
-class TestCalculator:
+class TestMathCalculator:
     """Test suite for calculator operations."""
 
     def test_addition(self):

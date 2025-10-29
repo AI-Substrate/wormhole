@@ -1,0 +1,207 @@
+alias: symbol.navigate
+name: Symbol Navigation
+category: symbol
+description: Find references or implementations for symbols using Flowspace IDs or symbol names
+dangerOnly: false
+params:
+  nodeId:
+    type: string
+    required: false
+    description: Flowspace ID (e.g., "method:src/Calculator.ts:Calculator.add")
+  path:
+    type: string
+    required: false
+    description: File path (required with symbol parameter, alternative to nodeId)
+    resolve: cwd-relative
+  symbol:
+    type: string
+    required: false
+    description: Symbol name (e.g., "Calculator.add", required with path parameter)
+  action:
+    type: string
+    required: false
+    default: "references"
+    description: Navigation action - "references" or "implementations"
+  includeDeclaration:
+    type: boolean
+    required: false
+    description: Include declaration in references results (undefined uses provider default)
+  enrichWithFlowspaceIds:
+    type: boolean
+    required: false
+    default: false
+    description: Add Flowspace IDs to each location (slower, requires symbol resolution)
+response: query
+result:
+  action:
+    type: string
+    description: Action performed (references or implementations)
+  input:
+    type: object
+    description: Input used (type and value)
+  locations:
+    type: array
+    description: Array of location results
+  total:
+    type: number
+    description: Total number of locations found
+  timeout:
+    type: boolean
+    description: True if LSP provider timed out (optional field)
+  message:
+    type: string
+    description: Additional context message (optional field)
+errors:
+  - E_NOT_FOUND
+  - E_AMBIGUOUS_SYMBOL
+  - E_INVALID_INPUT
+  - E_NO_LANGUAGE_SERVER
+cli:
+  command: symbol navigate
+  description: Find references or implementations for a symbol
+  examples:
+    - vscb script run symbol.navigate --param nodeId="method:src/Calculator.ts:Calculator.add" --param action="references"
+    - vscb script run symbol.navigate --param path="src/Calculator.ts" --param symbol="Calculator.add" --param action="implementations"
+    - vscb script run symbol.navigate --param nodeId="function:src/utils.js:formatDate" --param action="references" --param includeDeclaration=false
+    - vscb script run symbol.navigate --param path="src/UserService.ts" --param symbol="UserService.findUser" --param enrichWithFlowspaceIds=true
+mcp:
+  # P0: Must-Have Fields
+  enabled: true
+  description: "Find references or implementations for symbols using semantic identifiers (Flowspace IDs or symbol names)"
+  timeout: 15000
+
+  # P0: Tool Relationships
+  relationships:
+    requires: []
+    recommended: ["search.symbol-search"]
+    provides: []
+    conflicts: []
+
+  # P0: Structured Error Contract
+  error_contract:
+    errors:
+      - code: E_NOT_FOUND
+        summary: "Symbol not found at specified location"
+        is_retryable: false
+        user_fix_hint: "Verify symbol name/Flowspace ID is correct and symbol exists in file"
+      - code: E_AMBIGUOUS_SYMBOL
+        summary: "Multiple symbols match the given name"
+        is_retryable: true
+        user_fix_hint: "Use more specific qualified name (e.g., 'ClassName.methodName' instead of 'methodName')"
+      - code: E_INVALID_INPUT
+        summary: "Must provide either nodeId OR both path and symbol"
+        is_retryable: true
+        user_fix_hint: "Check parameter combination - use nodeId alone OR path+symbol together"
+      - code: E_NO_LANGUAGE_SERVER
+        summary: "No language server available for this file type"
+        is_retryable: false
+        user_fix_hint: "Install appropriate language extension (Python: Pylance, Java: Java Language Support, etc.)"
+
+  # P0: Safety Flags
+  safety:
+    idempotent: true
+    read_only: true
+    destructive: false
+
+  # P1: LLM Guidance
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Finding all references to a function, method, class, or variable
+      - Discovering implementations of an interface or abstract class
+      - Semantic code navigation using Flowspace IDs (position-independent)
+      - Cross-file dependency analysis
+      - Refactoring planning (understanding impact of changes)
+      - Navigating from symbol name without knowing cursor position
+
+      DON'T USE FOR:
+      - Text search (use workspace text search)
+      - Symbol definitions (use search.symbol-search with document mode)
+      - Finding callers/callees (use hierarchy.calls if available)
+      - Renaming symbols (use symbol.rename)
+
+      PREREQUISITES:
+      - File must exist and be indexed by VS Code
+      - Symbol must exist at specified location
+      - Language server must support references/implementations (TypeScript, Python, Java, C#, Go, Rust)
+      - For Flowspace IDs: Use forward slashes in paths (C:/Users/ not C:\Users\)
+
+      SAFETY:
+      - Read-only operation (no file modifications)
+      - Idempotent (safe to call multiple times)
+      - First call may be slow (3-10s) if workspace not indexed yet
+
+      PERFORMANCE NOTES:
+      - First workspace call: 3-10s (cold start indexing)
+      - Subsequent calls: <1s (cached index)
+      - enrichWithFlowspaceIds=true adds ~50-200ms per location
+      - Timeout protection: 15s max (returns partial results)
+
+    parameter_hints:
+      nodeId:
+        description: "Flowspace ID for semantic, position-independent navigation"
+        required: false
+        examples:
+          - "method:src/Calculator.ts:Calculator.add"
+          - "function:src/utils.js:formatDate"
+          - "class:src/models/User.py:User"
+        note: "Preferred for automation - no cursor position needed, works across file moves"
+        pitfalls:
+          - "Use forward slashes in Windows paths (C:/Users/ not C:\\Users\\)"
+          - "Qualified names must match exact symbol hierarchy"
+
+      path:
+        description: "File path for symbol name lookup (alternative to nodeId)"
+        required: false
+        examples:
+          - "src/Calculator.ts"
+          - "src/services/UserService.py"
+          - "/absolute/path/to/file.js"
+        note: "Required when using symbol parameter, ignored when nodeId provided"
+
+      symbol:
+        description: "Symbol qualified name within file (alternative to nodeId)"
+        required: false
+        examples:
+          - "Calculator.add"
+          - "UserService.findUser"
+          - "formatDate"
+        note: "Required when using path parameter, supports hierarchical names (Class.method)"
+        pitfalls:
+          - "Must be qualified for nested symbols (use 'Outer.Inner.method' not just 'method')"
+          - "Case-sensitive matching"
+
+      action:
+        description: "Type of navigation to perform"
+        required: false
+        examples:
+          - "references"
+          - "implementations"
+        note: "Default is 'references'. Use 'implementations' for interfaces/abstract classes"
+        language_specific:
+          typescript: "Both actions supported (interfaces, abstract classes)"
+          python: "References supported; implementations limited (Python is dynamic)"
+          java: "Both actions fully supported"
+          javascript: "References supported; implementations not applicable (no interfaces)"
+
+      includeDeclaration:
+        description: "Whether to include symbol declaration in references results (tri-state)"
+        required: false
+        examples:
+          - "true"
+          - "false"
+          - "undefined"
+        note: "undefined (omit parameter) uses language server default; explicit true/false overrides"
+        pitfalls:
+          - "Only affects 'references' action, ignored for 'implementations'"
+          - "Behavior differs by language server (some always include, some never)"
+
+      enrichWithFlowspaceIds:
+        description: "Add Flowspace IDs to each location in results"
+        required: false
+        examples:
+          - "true"
+          - "false"
+        note: "Default false for performance. Enable when you need semantic IDs for automation"
+        performance_impact: "Adds 50-200ms per location (requires symbol resolution)"
+

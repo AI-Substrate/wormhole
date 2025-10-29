@@ -199,6 +199,22 @@ export const scriptSchemas = {
     includeContainer: z.coerce.boolean().default(true).optional(),
   }).strict(),
 
+  "symbol.navigate": z.object({
+    nodeId: z.string().optional(),
+    path: z.string().optional(),
+    symbol: z.string().optional(),
+    action: z.string().default("references").optional(),
+    includeDeclaration: z.coerce.boolean().optional(),
+    enrichWithFlowspaceIds: z.coerce.boolean().default(false).optional(),
+  }).strict(),
+
+  "symbol.rename": z.object({
+    nodeId: z.string().optional(),
+    path: z.string().optional(),
+    symbol: z.string().optional(),
+    newName: z.string(),
+  }).strict(),
+
   "test.debug-single": z.object({
     path: z.string(),
     line: z.coerce.number(),

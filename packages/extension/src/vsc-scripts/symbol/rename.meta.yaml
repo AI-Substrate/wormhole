@@ -1,0 +1,226 @@
+alias: symbol.rename
+name: Symbol Rename
+category: symbol
+description: "Rename symbols (variables, functions, classes, methods) workspace-wide using LSP. Updates all references and imports atomically."
+dangerOnly: false
+params:
+  nodeId:
+    type: string
+    required: false
+    description: Flowspace ID (e.g., "method:src/Calculator.ts:Calculator.add")
+  path:
+    type: string
+    required: false
+    description: File path (required with symbol parameter, alternative to nodeId)
+    resolve: cwd-relative
+  symbol:
+    type: string
+    required: false
+    description: Symbol name (e.g., "Calculator.add", required with path parameter)
+  newName:
+    type: string
+    required: true
+    description: New name for the symbol (must be non-empty, language-specific naming rules apply)
+response: action
+result:
+  success:
+    type: boolean
+    description: True if rename applied successfully
+  details:
+    type: object
+    description: Rename operation details
+    properties:
+      applied:
+        type: boolean
+        description: True if WorkspaceEdit was applied
+      changes:
+        type: array
+        description: Files modified with edit counts
+      totalFiles:
+        type: number
+        description: Total number of files modified
+      totalEdits:
+        type: number
+        description: Total number of text edits applied
+      input:
+        type: object
+        description: Input parameters used
+errors:
+  - E_NOT_FOUND
+  - E_AMBIGUOUS_SYMBOL
+  - E_INVALID_INPUT
+  - E_NO_LANGUAGE_SERVER
+  - E_FILE_READ_ONLY
+  - E_OPERATION_FAILED
+  - E_TIMEOUT
+cli:
+  command: symbol rename
+  description: Rename a symbol workspace-wide with automatic reference updates
+  examples:
+    - vscb script run symbol.rename --param nodeId="method:src/Calculator.ts:Calculator.add" --param newName="addNumbers"
+    - vscb script run symbol.rename --param path="src/Calculator.ts" --param symbol="Calculator.add" --param newName="sum"
+    - vscb script run symbol.rename --param nodeId="class:src/User.ts:User" --param newName="UserModel"
+mcp:
+  # P0: Must-Have Fields
+  enabled: true
+  description: "Rename symbols (variables, functions, classes, methods) workspace-wide using LSP. Updates all references and imports atomically."
+  timeout: 15000
+
+  # P0: Tool Relationships
+  relationships:
+    requires: []
+    recommended:
+      - tool: "search.symbol-search"
+        note: "Find symbols before renaming"
+      - tool: "symbol.navigate"
+        note: "⚠️ Different response format: navigate returns direct data {action, locations}, rename returns ActionScript envelope {success, data}"
+    provides: []
+    conflicts: []
+
+  # P0: Structured Error Contract
+  error_contract:
+    errors:
+      - code: E_NOT_FOUND
+        summary: "Symbol not found at specified location"
+        is_retryable: false
+        user_fix_hint: "Verify symbol name/Flowspace ID is correct and symbol exists in file"
+      - code: E_AMBIGUOUS_SYMBOL
+        summary: "Multiple symbols match the given name"
+        is_retryable: true
+        user_fix_hint: "Use more specific qualified name (e.g., 'ClassName.methodName' instead of 'methodName')"
+      - code: E_INVALID_INPUT
+        summary: "Invalid parameters: must provide either nodeId OR both path and symbol, and newName must be non-empty"
+        is_retryable: true
+        user_fix_hint: "Check parameter combination - use nodeId alone OR path+symbol together, ensure newName is non-empty string"
+      - code: E_NO_LANGUAGE_SERVER
+        summary: "No language server available for this file type"
+        is_retryable: false
+        user_fix_hint: "Install appropriate language extension (Python: Pylance, Java: Java Language Support, etc.)"
+      - code: E_FILE_READ_ONLY
+        summary: "One or more files are read-only or permission denied"
+        is_retryable: false
+        user_fix_hint: "Check file permissions using chmod/attrib; ensure files are not locked by another application"
+      - code: E_OPERATION_FAILED
+        summary: "WorkspaceEdit application failed"
+        is_retryable: true
+        user_fix_hint: "Common causes: (1) File locked by another application, (2) File modified concurrently, (3) File deleted after validation. Ensure files are saved and not open in other editors. Try again after closing other editors."
+      - code: E_TIMEOUT
+        summary: "LSP rename provider timeout (10s)"
+        is_retryable: true
+        user_fix_hint: "Try again; if persists, check language server is responding (large workspaces may be slow)"
+
+  # P0: Safety Flags
+  safety:
+    idempotent: false
+    read_only: false
+    destructive: true
+
+  # P1: LLM Guidance
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Renaming variables, functions, classes, methods, or type aliases safely
+      - Refactoring code to use better identifier names
+      - Updating symbol names across multiple files atomically
+      - Changing class names and updating all imports/exports
+      - Renaming interface implementations across codebase
+
+      DON'T USE FOR:
+      - Text-based find-and-replace (use workspace search)
+      - Renaming files (use file system operations)
+      - Refactoring without LSP support (manual edits safer)
+      - Preview/dry-run (no preview mode - use symbol.navigate first to check references)
+
+      PREREQUISITES:
+      - File must exist and be indexed by VS Code
+      - Symbol must exist at specified location
+      - Language server must support rename (TypeScript, Python, Java, C#, Go, Rust)
+      - All affected files must be writable (not read-only)
+      - Files should be saved before rename
+      - For Flowspace IDs: Use forward slashes in paths (C:/Users/ not C:\Users\)
+
+      SAFETY:
+      - ⚠️ DESTRUCTIVE OPERATION: Modifies files immediately (cannot undo via API)
+      - Atomic guarantee: All files updated or none (WorkspaceEdit.applyEdit atomicity)
+      - Pre-validation checks file permissions before applying changes
+      - NOT idempotent (running twice renames to newName twice)
+      - Commit changes to version control before renaming for easy rollback
+
+      WORKFLOW:
+      1. (Recommended) Call symbol.navigate first to preview impact
+      2. (Optional) Commit current changes to git for easy rollback
+      3. Call symbol.rename with new name
+      4. Check result.data.changes to verify expected files modified
+      5. Test the changes before committing
+
+      PERFORMANCE NOTES:
+      - First workspace call: 3-10s (cold start indexing)
+      - Subsequent calls: <1s for single-file, 1-3s for multi-file
+      - Pre-validation adds ~10-50ms (file permission checks)
+      - Timeout protection: 15s max
+
+      RESPONSE FORMAT:
+      - This tool returns ActionScript envelope: {success: true, details: {...}} or {success: false, reason: "..."}
+      - Unlike symbol.navigate (QueryScript), results are wrapped in success/error envelope
+      - Access results via: result.details.changes (NOT result.changes directly)
+      - Check operation success: result.success === true before accessing result.details
+
+      COMPARISON WITH symbol.navigate:
+      - symbol.navigate returns: {action, input, locations, total} (direct data)
+      - symbol.rename returns: {success, details: {applied, changes, totalFiles, totalEdits}} (wrapped)
+      - Reason: navigate is read-only, rename is destructive (needs success/error semantics)
+      - Both use same input format (nodeId OR path+symbol)
+
+    parameter_hints:
+      nodeId:
+        description: "Flowspace ID for semantic, position-independent navigation"
+        required: false
+        examples:
+          - "method:src/Calculator.ts:Calculator.add"
+          - "function:src/utils.js:formatDate"
+          - "class:src/models/User.py:User"
+        note: "Preferred for automation - no cursor position needed, works across file moves"
+        pitfalls:
+          - "Use forward slashes in Windows paths (C:/Users/ not C:\\Users\\)"
+          - "Qualified names must match exact symbol hierarchy"
+
+      path:
+        description: "File path for symbol name lookup (alternative to nodeId)"
+        required: false
+        examples:
+          - "src/Calculator.ts"
+          - "src/services/UserService.py"
+          - "/absolute/path/to/file.js"
+        note: "Required when using symbol parameter, ignored when nodeId provided"
+
+      symbol:
+        description: "Symbol qualified name within file (alternative to nodeId)"
+        required: false
+        examples:
+          - "Calculator.add"
+          - "UserService.findUser"
+          - "formatDate"
+        note: "Required when using path parameter, supports hierarchical names (Class.method)"
+        pitfalls:
+          - "Must be qualified for nested symbols (use 'Outer.Inner.method' not just 'method')"
+          - "Case-sensitive matching"
+
+      newName:
+        description: "New name for the symbol (language-specific naming rules apply)"
+        required: true
+        examples:
+          - "addNumbers"
+          - "UserModel"
+          - "calculateTotal"
+        note: "Must be non-empty; LSP provider may validate naming conventions"
+        language_specific:
+          typescript: "camelCase for variables/functions, PascalCase for classes/interfaces"
+          python: "snake_case for functions/variables, PascalCase for classes"
+          java: "camelCase for methods/variables, PascalCase for classes"
+          javascript: "camelCase for functions/variables, PascalCase for classes; CommonJS require() may not update all imports (use ES6 modules for full rename support)"
+        pitfalls:
+          - "No validation of naming conventions beyond non-empty check"
+          - "Some languages have reserved keywords - LSP provider may reject"
+          - "JavaScript CommonJS: require() imports may not update automatically"
+          - "Python dynamic typing: runtime string references (getattr) won't be renamed"
+
