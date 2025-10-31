@@ -2294,6 +2294,10 @@ vscb script run symbol.rename \
   - `file:/workspaces/wormhole/test/scratch/symbol-resolution.test.ts`
 
 [^5]: Tasks 3.9-3.12 (T022-T032) - Final documentation, build validation, and TAD synchronization
+
+[^6]: Subtask 003 (ST001-ST005) - Fixed ScriptEnvelope double-wrapping in ScriptRegistry
+  - `method:packages/extension/src/core/registry/ScriptRegistry.ts:ScriptRegistry.executeScript` - Added success case handling at lines 489-501
+  - `file:packages/extension/test/core/registry/ScriptRegistry.test.ts` - Comprehensive regression test suite (8 tests)
   - `file:packages/extension/src/vsc-scripts/symbol/rename.js` (lines 194-209) - Added document save loop after applyEdit
   - `file:scripts/sample/dynamic/explore-rename-basic.js` - TAD exploration script (permanent sample)
   - `file:scripts/sample/dynamic/explore-workspace-edit-validation.js` - Pre-validation exploration (permanent sample)

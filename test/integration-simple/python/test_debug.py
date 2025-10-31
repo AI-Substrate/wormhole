@@ -28,8 +28,8 @@ def test_debug_simple_arithmetic():
     y = 3
 
     # VSCB_BREAKPOINT_NEXT_LINE
-a    sum_result = add(x, y)     # Expected: sum_result = 8 (Breakpoint 1 - step-in target)
-da    diff = subtract(x, y)      # Expected: diff = 2
+    sum_result = add(x, y)     # Expected: sum_result = 8 (Breakpoint 1 - step-in target)
+    diff = subtract(x, y)      # Expected: diff = 2
 
     assert sum_result == 8
     # VSCB_BREAKPOINT_2_NEXT_LINE

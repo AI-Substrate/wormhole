@@ -485,6 +485,20 @@ export class ScriptRegistry {
                     }
                     return failureEnvelope;
                 }
+
+                // SUCCESS case: ScriptEnvelope from ScriptResult.success()
+                if (envelope.ok === true && envelope.type === 'success') {
+                    // Unwrap the inner data - ScriptResult.success() already wrapped it
+                    // We just need to extract envelope.data and wrap in ResponseEnvelope with meta
+                    const successEnvelope = ok(envelope.data, finalMeta);
+
+                    // Inject editorContext at the correct level (same pattern as line 585-587)
+                    if (editorContext) {
+                        successEnvelope.editorContext = editorContext;
+                    }
+
+                    return successEnvelope;
+                }
             }
 
             // Check if this is an ActionScript failure response (OLD PATTERN - backward compatibility)
