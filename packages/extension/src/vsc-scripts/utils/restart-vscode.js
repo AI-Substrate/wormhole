@@ -1,4 +1,6 @@
 const { ActionScript } = require('@script-base');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * Restart VS Code Script
@@ -35,7 +37,7 @@ class RestartVSCodeScript extends ActionScript {
             // This line may not execute if reload happens immediately
             bridgeContext.logger.info('Window reload triggered successfully');
 
-            return this.success({
+            return ScriptResult.success({
                 message: 'VS Code window reload triggered - window will restart momentarily',
                 timestamp: new Date().toISOString()
             });
@@ -43,9 +45,10 @@ class RestartVSCodeScript extends ActionScript {
             // This is expected! The window reload kills the extension before it can respond
             bridgeContext.logger.error(`⚠️  Connection lost during reload (this is expected): ${error.message}`);
 
-            return this.failure(
-                'COMMAND_FAILED',
-                `Failed to trigger window reload: ${error.message}`
+            return ScriptResult.failure(
+                `Failed to trigger window reload: ${error.message}`,
+                ErrorCode.E_OPERATION_FAILED,
+                { originalError: error.message }
             );
         }
     }

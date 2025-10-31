@@ -74,6 +74,8 @@ const scriptsConfig = {
       '@core/testing/test-executor': path.resolve(__dirname, 'src/core/testing/test-executor.ts'),
       '@core/testing/availability': path.resolve(__dirname, 'src/core/testing/availability.ts'),
       '@core/errors/debug-errors': path.resolve(__dirname, 'src/core/errors/debug-errors.ts'),
+      '@core/response/errorTaxonomy': path.resolve(__dirname, 'src/core/response/errorTaxonomy.ts'),
+      '@core/scripts/ScriptResult': path.resolve(__dirname, 'src/core/scripts/ScriptResult.ts'),
       '@core/runtime-inspection/RuntimeInspectionService': path.resolve(__dirname, 'src/core/runtime-inspection/RuntimeInspectionService.ts'),
       '@core/test-environments/detectors/JavaScriptTestDetector': path.resolve(__dirname, 'src/core/test-environments/detectors/JavaScriptTestDetector.ts'),
       '@core/util/symbol-resolver': path.resolve(__dirname, 'src/core/util/symbol-resolver.ts')
@@ -85,20 +87,10 @@ const scriptsConfig = {
     ]
   },
   optimization: {
-    // Share zod + shared code across scripts in a single chunk
-    splitChunks: {
-      chunks: 'all',
-      minSize: 0,
-      cacheGroups: {
-        scriptsShared: {
-          test: /[\\/]node_modules[\\/](zod)[\\/]|[\\/]src[\\/]vsc-scripts[\\/]generated[\\/]/,
-          name: '_shared',
-          enforce: true,
-          chunks: 'all'
-        }
-      }
-    },
-    // Keep each script self-executing; no separate runtime chunk
+    // Disable code splitting to allow dynamic loading from disk
+    // (scripts with dependencies on @core/util/symbol-resolver were failing
+    // because webpack chunk 43 wasn't loading in the CommonJS require context)
+    splitChunks: false,
     runtimeChunk: false
   },
   plugins: [

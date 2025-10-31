@@ -1,5 +1,6 @@
 const { z } = require('zod');
-const { QueryScript } = require('@script-base');
+const { QueryScript, ScriptResult } = require('@script-base');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 const {
     resolveSymbolInput,
     buildFlowspaceIdAtPosition,
@@ -60,13 +61,15 @@ class NavigateScript extends QueryScript {
             });
 
             if (!resolution) {
-                const error = new Error(
+                return ScriptResult.failure(
                     params.nodeId
-                        ? `E_NOT_FOUND: Symbol not found for Flowspace ID "${params.nodeId}"`
-                        : `E_NOT_FOUND: Symbol "${params.symbol}" not found in ${params.path}`
+                        ? `Symbol not found for Flowspace ID "${params.nodeId}"`
+                        : `Symbol "${params.symbol}" not found in ${params.path}`,
+                    ErrorCode.E_SYMBOL_NOT_FOUND,
+                    {
+                        input: this._formatInput(params)
+                    }
                 );
-                error.code = 'E_NOT_FOUND';
-                throw error;
             }
 
             // Step 2: Execute appropriate LSP command
@@ -88,24 +91,24 @@ class NavigateScript extends QueryScript {
 
             // Step 3: Handle timeout and null results
             if (locations === 'timeout') {
-                return {
+                return ScriptResult.success({
                     action: params.action,
                     input: this._formatInput(params),
                     locations: [],
                     total: 0,
                     timeout: true,
                     message: 'LSP provider timed out after 10s (language server may be indexing)'
-                };
+                });
             }
 
             if (!locations || locations.length === 0) {
                 // Empty result is valid (e.g., no references, concrete class has no implementations)
-                return {
+                return ScriptResult.success({
                     action: params.action,
                     input: this._formatInput(params),
                     locations: [],
                     total: 0
-                };
+                });
             }
 
             // Step 4: Normalize Location/LocationLink polymorphism
@@ -118,33 +121,42 @@ class NavigateScript extends QueryScript {
             }
 
             // Step 6: Format and return
-            return {
+            return ScriptResult.success({
                 action: params.action,
                 input: this._formatInput(params),
                 locations: enriched,
                 total: enriched.length
-            };
+            });
 
         } catch (error) {
-            // Handle known error codes
-            if (error.code === 'E_NOT_FOUND' ||
-                error.code === 'E_AMBIGUOUS_SYMBOL' ||
-                error.code === 'E_INVALID_INPUT') {
-                throw error;
+            // Handle known error codes from symbol-resolver
+            if (error.code === 'E_AMBIGUOUS_SYMBOL') {
+                return ScriptResult.failure(
+                    error.message,
+                    ErrorCode.E_AMBIGUOUS_SYMBOL,
+                    {
+                        input: this._formatInput(params)
+                    }
+                );
             }
 
             // Check for language server issues
             if (error.message.includes('no language server') ||
                 error.message.includes('not supported')) {
-                const langError = new Error(
-                    `E_NO_LANGUAGE_SERVER: ${error.message}. ${this._getLanguageHint(params.path)}`
+                return ScriptResult.failure(
+                    `${error.message}. ${this._getLanguageHint(params.path)}`,
+                    ErrorCode.E_NO_LANGUAGE_SERVER,
+                    {
+                        input: this._formatInput(params)
+                    }
                 );
-                langError.code = 'E_NO_LANGUAGE_SERVER';
-                throw langError;
             }
 
-            // Generic error
-            throw new Error(`Symbol navigation failed: ${error.message}`);
+            // Catch unexpected errors
+            return ScriptResult.fromError(
+                error,
+                ErrorCode.E_OPERATION_FAILED
+            );
         }
     }
 

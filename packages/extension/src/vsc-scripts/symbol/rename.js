@@ -1,5 +1,7 @@
 const { z } = require('zod');
 const { ActionScript } = require('@script-base');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 const {
     resolveSymbolInput,
     getLSPResultWithTimeout
@@ -60,8 +62,8 @@ class RenameScript extends ActionScript {
             if (!resolution) {
                 const error = new Error(
                     params.nodeId
-                        ? `E_NOT_FOUND: Symbol not found for Flowspace ID "${params.nodeId}"`
-                        : `E_NOT_FOUND: Symbol "${params.symbol}" not found in ${params.path}`
+                        ? `Symbol not found for Flowspace ID "${params.nodeId}"`
+                        : `Symbol "${params.symbol}" not found in ${params.path}`
                 );
                 error.code = 'E_NOT_FOUND';
                 throw error;
@@ -76,7 +78,7 @@ class RenameScript extends ActionScript {
             );
 
             if (!workspaceEdit) {
-                const error = new Error('E_NO_LANGUAGE_SERVER: No rename provider available for this file type');
+                const error = new Error('No rename provider available for this file type');
                 error.code = 'E_NO_LANGUAGE_SERVER';
                 throw error;
             }
@@ -90,7 +92,7 @@ class RenameScript extends ActionScript {
 
             if (!applied) {
                 const error = new Error(
-                    'E_OPERATION_FAILED: Cannot apply rename. Common causes: ' +
+                    'Cannot apply rename. Common causes: ' +
                     '(1) File locked by another application, ' +
                     '(2) File modified concurrently, ' +
                     '(3) File deleted after validation. ' +
@@ -104,7 +106,7 @@ class RenameScript extends ActionScript {
             const summary = this._formatChangeSummary(workspaceEdit);
 
             // Return success with details
-            return this.success({
+            return ScriptResult.success({
                 applied: true,
                 ...summary,
                 input: {
@@ -118,19 +120,15 @@ class RenameScript extends ActionScript {
 
         } catch (error) {
             // Handle errors with appropriate error codes
-            if (error.code === 'E_NOT_FOUND' ||
-                error.code === 'E_AMBIGUOUS_SYMBOL' ||
-                error.code === 'E_NO_LANGUAGE_SERVER' ||
-                error.code === 'E_FILE_READ_ONLY' ||
-                error.code === 'E_OPERATION_FAILED' ||
-                error.code === 'E_TIMEOUT') {
-                throw error;
-            }
+            const errorCode = error.code || ErrorCode.E_INTERNAL;
+            const details = {
+                message: error.message,
+                stack: error.stack,
+                name: error.name,
+                code: error.code
+            };
 
-            // Generic error
-            const wrappedError = new Error(`E_INVALID_INPUT: ${error.message}`);
-            wrappedError.code = 'E_INVALID_INPUT';
-            throw wrappedError;
+            return ScriptResult.failure(error.message, errorCode, details);
         }
     }
 
@@ -146,7 +144,7 @@ class RenameScript extends ActionScript {
         );
 
         if (result === 'timeout') {
-            const error = new Error('E_TIMEOUT: LSP rename provider timeout (10s)');
+            const error = new Error('LSP rename provider timeout (10s)');
             error.code = 'E_TIMEOUT';
             throw error;
         }
@@ -172,7 +170,7 @@ class RenameScript extends ActionScript {
         for (const file of files) {
             // Check file exists
             if (!fs.existsSync(file)) {
-                const error = new Error(`E_NOT_FOUND: Cannot apply edit: ${file} does not exist`);
+                const error = new Error(`Cannot apply edit: ${file} does not exist`);
                 error.code = 'E_NOT_FOUND';
                 throw error;
             }
@@ -181,7 +179,7 @@ class RenameScript extends ActionScript {
             try {
                 fs.accessSync(file, fs.constants.W_OK);
             } catch {
-                const error = new Error(`E_FILE_READ_ONLY: Cannot apply edit: ${file} is read-only`);
+                const error = new Error(`Cannot apply edit: ${file} is read-only`);
                 error.code = 'E_FILE_READ_ONLY';
                 throw error;
             }
@@ -231,4 +229,4 @@ class RenameScript extends ActionScript {
     }
 }
 
-module.exports = RenameScript;
+module.exports = { RenameScript };

@@ -2,6 +2,8 @@ const { z } = require('zod');
 
 // Dynamic loading - scripts are loaded from src but base classes are compiled to out
 const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * Debug Status Query Script
@@ -43,11 +45,11 @@ class DebugStatusScript extends QueryScript {
 
         // No active session
         if (!session) {
-            return {
+            return ScriptResult.success({
                 isActive: false,
                 isPaused: false,
                 message: "No active debug session"
-            };
+            });
         }
 
         // Basic session info
@@ -117,7 +119,7 @@ class DebugStatusScript extends QueryScript {
                     status.error = `Thread ${status.currentThread.id} is not paused`;
                     status.errorExplanation = "Unable to query debug status. See error message.";
                     console.log(`[DEBUG-STATUS] No paused thread found with source code`);
-                    return status;
+                    return ScriptResult.success(status);
                 }
 
                 // Extract current location from top frame
@@ -212,7 +214,7 @@ class DebugStatusScript extends QueryScript {
         // Log to output channel
         bridgeContext.logger.info('Debug status query complete:', JSON.stringify(status, null, 2));
 
-        return status;
+        return ScriptResult.success(status);
     }
 }
 

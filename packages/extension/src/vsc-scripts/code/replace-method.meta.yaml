@@ -1,0 +1,245 @@
+alias: code.replace-method
+name: Method Replacement
+category: code
+description: "Replace entire method declarations using whole-symbol replacement (signature + body). Supports async conversion, parameter changes, and deletion via empty string."
+dangerOnly: false
+params:
+  nodeId:
+    type: string
+    required: false
+    description: Flowspace ID (e.g., "method:src/Calculator.ts:Calculator.add")
+  path:
+    type: string
+    required: false
+    description: File path (required with symbol parameter, alternative to nodeId)
+    resolve: cwd-relative
+  symbol:
+    type: string
+    required: false
+    description: Symbol name (e.g., "Calculator.add", required with path parameter)
+  replacement:
+    type: string
+    required: true
+    description: Replacement text (entire method declaration; empty string deletes method)
+response: action
+result:
+  success:
+    type: boolean
+    description: True if replacement applied successfully
+  details:
+    type: object
+    description: Replacement operation details
+    properties:
+      applied:
+        type: boolean
+        description: True if WorkspaceEdit was applied
+      changes:
+        type: array
+        description: Details of method replacement (range, old/new text)
+      succeeded:
+        type: array
+        description: Files saved successfully
+      failed:
+        type: array
+        description: Files that failed to save (best-effort)
+      totalFiles:
+        type: number
+        description: Total number of files modified (always 1)
+      totalEdits:
+        type: number
+        description: Total number of text edits applied (always 1)
+      input:
+        type: object
+        description: Input parameters used
+errors:
+  - E_NOT_FOUND
+  - E_AMBIGUOUS_SYMBOL
+  - E_INVALID_INPUT
+  - E_NO_LANGUAGE_SERVER
+  - E_FILE_READ_ONLY
+  - E_OPERATION_FAILED
+  - E_TIMEOUT
+cli:
+  command: code replace-method
+  description: Replace entire method declaration using whole-symbol replacement
+  examples:
+    - 'vscb script run code.replace-method --param nodeId="method:test/python/test_example.py:add_numbers" --param replacement="def add_numbers(a, b): return a + b"'
+    - 'vscb script run code.replace-method --param path="src/Calculator.ts" --param symbol="Calculator.add" --param replacement="add(a: number, b: number): number { return a + b; }"'
+    - 'vscb script run code.replace-method --param nodeId="method:src/User.py:User.validate" --param replacement=""'
+mcp:
+  # P0: Must-Have Fields
+  enabled: true
+  description: "Replace entire method declarations using whole-symbol replacement (signature + body). Supports async conversion, parameter changes, and deletion via empty string."
+  timeout: 15000
+
+  # P0: Tool Relationships
+  relationships:
+    requires: []
+    recommended:
+      - tool: "search.symbol-search"
+        note: "Find methods before replacing"
+      - tool: "symbol.navigate"
+        note: "Preview references before making changes"
+      - tool: "symbol.rename"
+        note: "⚠️ Different operation: rename updates all references, replace only changes declaration"
+    provides: []
+    conflicts:
+      - tool: "symbol.rename"
+        note: "Use rename for identifier changes (updates references), use replace-method for signature/body changes (no reference updates)"
+
+  # P0: Structured Error Contract
+  error_contract:
+    errors:
+      - code: E_NOT_FOUND
+        summary: "Symbol not found at specified location"
+        is_retryable: false
+        user_fix_hint: "Verify symbol name/Flowspace ID is correct and symbol exists in file. Use search.symbol-search to find available symbols."
+      - code: E_AMBIGUOUS_SYMBOL
+        summary: "Multiple symbols match the given name"
+        is_retryable: true
+        user_fix_hint: "Use more specific qualified name (e.g., 'ClassName.methodName' instead of 'methodName') or use Flowspace ID for exact positioning."
+      - code: E_INVALID_INPUT
+        summary: "Invalid parameters: must provide either nodeId OR both path and symbol, replacement is required"
+        is_retryable: true
+        user_fix_hint: "Check parameter combination - use nodeId alone OR path+symbol together, ensure replacement is provided (empty string is valid for deletion)"
+      - code: E_NO_LANGUAGE_SERVER
+        summary: "No document symbol provider available for this file type"
+        is_retryable: false
+        user_fix_hint: "Install appropriate language extension (Python: Pylance, JavaScript/TypeScript: built-in, Java: Java Language Support, etc.)"
+      - code: E_FILE_READ_ONLY
+        summary: "File is read-only or permission denied"
+        is_retryable: false
+        user_fix_hint: "Check file permissions using chmod/attrib; ensure file is not locked by another application"
+      - code: E_OPERATION_FAILED
+        summary: "WorkspaceEdit application failed"
+        is_retryable: true
+        user_fix_hint: "Common causes: (1) File locked by another application, (2) File modified concurrently, (3) File deleted after validation. Ensure file is saved and not open in other editors. Try again after closing other editors."
+      - code: E_TIMEOUT
+        summary: "LSP document symbol provider timeout (10s)"
+        is_retryable: true
+        user_fix_hint: "Try again; if persists, check language server is responding (large files may be slow to index)"
+
+  # P0: Safety Flags
+  safety:
+    idempotent: false
+    read_only: false
+    destructive: true
+
+  # P1: LLM Guidance
+  llm:
+    when_to_use: |
+      USE FOR:
+      - Replacing entire method declarations (signature + body)
+      - Converting methods to async/await patterns
+      - Adding/removing/reordering parameters with body changes
+      - Changing return types with implementation updates
+      - Deleting methods entirely (empty string replacement)
+      - Refactoring method implementations while keeping same name
+      - Adding error handling, logging, or validation to methods
+
+      DON'T USE FOR:
+      - Renaming methods (use symbol.rename - updates all references)
+      - Partial edits within method body (use text editor or Edit tool)
+      - Refactoring across multiple methods (call once per method)
+      - Preview/dry-run (no preview mode - operation is destructive)
+      - Formatting only (use language formatter)
+
+      PREREQUISITES:
+      - File must exist and be indexed by VS Code
+      - Symbol must exist at specified location (function, method, or class method)
+      - Language server must provide document symbols (TypeScript, Python, Java, JavaScript, C#, Go, Rust)
+      - File must be writable (not read-only)
+      - File should be saved before replacement
+
+      SAFETY:
+      - ⚠️ DESTRUCTIVE OPERATION: Modifies file immediately (cannot undo via API)
+      - NOT atomic with document save: WorkspaceEdit applies atomically, but save is best-effort
+      - Check result.details.failed array for save failures
+      - NOT idempotent (running twice replaces with same text twice)
+      - Commit changes to version control before replacement for easy rollback
+      - Empty string replacement deletes entire method (may leave blank lines)
+
+      WORKFLOW:
+      1. (Recommended) Commit current changes to git for easy rollback
+      2. (Optional) Call symbol.navigate to preview references (replacement doesn't update them)
+      3. Call code.replace-method with new method text
+      4. Check result.details.succeeded/failed to verify save status
+      5. Test the changes before committing
+
+      PERFORMANCE NOTES:
+      - First workspace call: 3-10s (cold start indexing)
+      - Subsequent calls: <1s for method replacement
+      - Pre-validation adds ~10-50ms (file permission checks)
+      - Timeout protection: 15s max
+
+      RESPONSE FORMAT:
+      - This tool returns ActionScript envelope: {success: true, details: {...}} or {success: false, reason: "..."}
+      - Access results via: result.details.changes (NOT result.changes directly)
+      - Check operation success: result.success === true before accessing result.details
+      - Check save status: result.details.failed array may contain files that failed to save
+
+      COMPARISON WITH symbol.rename:
+      - symbol.rename: Changes identifier name, updates ALL references workspace-wide
+      - code.replace-method: Replaces entire declaration, does NOT update references
+      - Use rename for identifier changes (foo → bar)
+      - Use replace-method for signature/body changes (async conversion, parameter changes)
+
+      EMPTY STRING REPLACEMENT (DELETION):
+      - replacement="" deletes entire method
+      - May leave blank lines (no smart whitespace handling)
+      - Simple, predictable behavior
+      - Caller must format indentation correctly
+
+    parameter_hints:
+      nodeId:
+        description: "Flowspace ID for semantic, position-independent method identification"
+        required: false
+        examples:
+          - "method:src/Calculator.ts:Calculator.add"
+          - "function:src/utils.js:formatDate"
+          - "method:test/python/test_example.py:TestMathCalculator.test_addition"
+        note: "Preferred for automation - no cursor position needed, works across file moves"
+        pitfalls:
+          - "Use forward slashes in Windows paths (C:/Users/ not C:\\Users\\)"
+          - "Qualified names must match exact symbol hierarchy"
+          - "Only works for functions/methods, not variables or classes"
+
+      path:
+        description: "File path for symbol name lookup (alternative to nodeId)"
+        required: false
+        examples:
+          - "src/Calculator.ts"
+          - "test/python/test_example.py"
+          - "/absolute/path/to/file.js"
+        note: "Required when using symbol parameter, ignored when nodeId provided"
+
+      symbol:
+        description: "Symbol qualified name within file (alternative to nodeId)"
+        required: false
+        examples:
+          - "Calculator.add"
+          - "TestMathCalculator.test_addition"
+          - "formatDate"
+        note: "Required when using path parameter, supports hierarchical names (Class.method)"
+        pitfalls:
+          - "Must be qualified for nested symbols (use 'Outer.Inner.method' not just 'method')"
+          - "Case-sensitive matching"
+
+      replacement:
+        description: "Complete method declaration text (signature + body)"
+        required: true
+        examples:
+          - "def add_numbers(a: int, b: int) -> int:\n    return a + b"
+          - "async def fetch_data(url: str) -> dict:\n    response = await aiohttp.get(url)\n    return await response.json()"
+          - ""
+        note: "Must include correct indentation for the target language; empty string deletes method"
+        language_specific:
+          python: "Use consistent indentation (4 spaces standard), include type hints if original had them"
+          typescript: "Match surrounding code style (tabs vs spaces), include access modifiers (public/private)"
+          javascript: "Match surrounding code style, consider CommonJS vs ES6 syntax"
+          java: "Include access modifiers (public/private/protected), match bracing style"
+        pitfalls:
+          - "Caller must format indentation correctly (no auto-formatting)"
+          - "Empty string leaves blank lines (no smart whitespace handling)"
+          - "Does NOT update callers if signature changes (manual fixes required)"
+          - "Must preserve language-specific syntax (async/await, return types, etc.)"

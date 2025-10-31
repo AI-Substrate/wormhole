@@ -1,5 +1,6 @@
 const { z } = require('zod');
-const { QueryScript } = require('@script-base');
+const { QueryScript, ScriptResult } = require('@script-base');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * DAP Summary Script - Session Overview Dashboard
@@ -27,22 +28,30 @@ class DapSummaryScript extends QueryScript {
         // Access the global capture service
         const service = global.debugSessionCaptureService;
         if (!service) {
-            return { error: 'Debug session capture service not available' };
+            return ScriptResult.failure(
+                'Debug session capture service not available',
+                ErrorCode.E_NO_SESSION,
+                { reason: 'Service not initialized' }
+            );
         }
 
         // Get session (latest if no ID provided)
         const sessionId = params.sessionId || service.getLastSessionId();
         if (!sessionId) {
-            return { error: 'No debug sessions captured yet' };
+            return ScriptResult.failure(
+                'No debug sessions captured yet',
+                ErrorCode.E_NO_SESSION,
+                { reason: 'No session history' }
+            );
         }
 
         const session = service.getSession(sessionId);
         if (!session) {
-            return {
-                error: 'Session not found',
-                sessionId,
-                hint: 'Session may have been cleared or never existed'
-            };
+            return ScriptResult.failure(
+                `Session "${sessionId}" not found - may have been cleared or never existed`,
+                ErrorCode.E_NOT_FOUND,
+                { sessionId }
+            );
         }
 
         // Calculate metrics
@@ -125,13 +134,13 @@ class DapSummaryScript extends QueryScript {
 
         // Compact mode: one-line summary
         if (params.compact) {
-            return {
+            return ScriptResult.success({
                 summary: `Session ${session.sessionId.slice(0, 8)}: ${totalOutputs} outputs, ${session.exceptions.length} exceptions, exit=${session.exitCode ?? 'none'}, ${session.isActive ? 'active' : 'ended'}`,
                 ...result
-            };
+            });
         }
 
-        return result;
+        return ScriptResult.success(result);
     }
 }
 

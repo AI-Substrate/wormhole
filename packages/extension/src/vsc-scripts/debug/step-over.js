@@ -7,6 +7,8 @@ const {
     getStepStrategies,
     EventDrivenWaitStrategy
 } = require('@core/debug/step-strategies');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * @typedef {any} ScriptContext
@@ -33,27 +35,35 @@ class StepOverDebugScript extends WaitableScript {
      * @returns {Promise<{event: string, file: string, line: number, sessionId: string}>}
      */
     async wait(bridgeContext, params) {
-        const vscode = bridgeContext.vscode;
-        const session = params.sessionId
-            ? vscode.debug.activeDebugSession?.id === params.sessionId
-                ? vscode.debug.activeDebugSession
-                : undefined
-            : vscode.debug.activeDebugSession;
+        try {
+            const vscode = bridgeContext.vscode;
+            const session = params.sessionId
+                ? vscode.debug.activeDebugSession?.id === params.sessionId
+                    ? vscode.debug.activeDebugSession
+                    : undefined
+                : vscode.debug.activeDebugSession;
 
-        if (!session) {
-            throw new Error(`E_NO_SESSION: No active debug session${params.sessionId ? ` with ID ${params.sessionId}` : ''}`);
+            if (!session) {
+                const error = new Error(`No active debug session${params.sessionId ? ` with ID ${params.sessionId}` : ''}`);
+                error.code = ErrorCode.E_NO_SESSION;
+                throw error;
+            }
+
+            // Get language-appropriate strategies based on session type
+            const { threadResolver, stepExecutor } = getStepStrategies(session.type, 'next');
+
+            // Use unified step operation architecture
+            const result = await executeStepOperation(bridgeContext, params, {
+                threadResolver,
+                stepExecutor,
+                waitStrategy: new EventDrivenWaitStrategy(),
+                commandName: 'debug.step-over'
+            });
+
+            return ScriptResult.success(result);
+        } catch (error) {
+            return ScriptResult.fromError(error, ErrorCode.E_OPERATION_FAILED);
         }
-
-        // Get language-appropriate strategies based on session type
-        const { threadResolver, stepExecutor } = getStepStrategies(session.type, 'next');
-
-        // Use unified step operation architecture
-        return await executeStepOperation(bridgeContext, params, {
-            threadResolver,
-            stepExecutor,
-            waitStrategy: new EventDrivenWaitStrategy(),
-            commandName: 'debug.step-over'
-        });
     }
 }
 

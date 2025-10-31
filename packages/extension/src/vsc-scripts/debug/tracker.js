@@ -1,7 +1,8 @@
 const { z } = require('zod');
 
 // Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
+const { QueryScript, ActionScript, WaitableScript, ScriptResult } = require('@script-base');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * Debug Adapter Protocol (DAP) Tracker
@@ -267,7 +268,6 @@ class DebugTrackerScript extends QueryScript {
 
         // Return status and any previously captured data
         const result = {
-            success: true,
             message: "DAP tracker registered successfully",
             instructions: [
                 "1. Tracker is now active and will capture all DAP messages",
@@ -289,7 +289,7 @@ class DebugTrackerScript extends QueryScript {
         console.log("");
         console.log("=" + "=".repeat(58) + "=");
 
-        return result;
+        return ScriptResult.success(result);
     }
 }
 

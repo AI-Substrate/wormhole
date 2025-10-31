@@ -1,4 +1,6 @@
 const { ActionScript } = require('@script-base');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * Show Testing UI Script
@@ -27,16 +29,17 @@ class ShowTestingUIScript extends ActionScript {
 
             bridgeContext.logger.info('Testing view shown successfully');
 
-            return this.success({
+            return ScriptResult.success({
                 message: 'Testing view shown - test discovery triggered',
                 timestamp: new Date().toISOString()
             });
         } catch (error) {
             bridgeContext.logger.error(`Failed to show Testing view: ${error.message}`);
 
-            return this.failure(
-                'COMMAND_FAILED',
-                `Failed to show Testing view: ${error.message}`
+            return ScriptResult.failure(
+                `Failed to show Testing view: ${error.message}`,
+                ErrorCode.E_OPERATION_FAILED,
+                { originalError: error.message }
             );
         }
     }

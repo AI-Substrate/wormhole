@@ -8,6 +8,8 @@ const {
     MultiThreadStepExecutor,
     EventDrivenWaitStrategy
 } = require('@core/debug/step-strategies');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * @typedef {any} ScriptContext
@@ -34,13 +36,19 @@ class ContinueDebugScript extends WaitableScript {
      * @returns {Promise<{event: string, file?: string, line?: number, sessionId: string}>}
      */
     async wait(bridgeContext, params) {
-        // Use unified step operation architecture
-        return await executeStepOperation(bridgeContext, params, {
-            threadResolver: new MultiThreadResolver(),
-            stepExecutor: new MultiThreadStepExecutor('continue'),
-            waitStrategy: new EventDrivenWaitStrategy(),
-            commandName: 'debug.continue'
-        });
+        try {
+            // Use unified step operation architecture
+            const result = await executeStepOperation(bridgeContext, params, {
+                threadResolver: new MultiThreadResolver(),
+                stepExecutor: new MultiThreadStepExecutor('continue'),
+                waitStrategy: new EventDrivenWaitStrategy(),
+                commandName: 'debug.continue'
+            });
+
+            return ScriptResult.success(result);
+        } catch (error) {
+            return ScriptResult.fromError(error, ErrorCode.E_OPERATION_FAILED);
+        }
     }
 }
 

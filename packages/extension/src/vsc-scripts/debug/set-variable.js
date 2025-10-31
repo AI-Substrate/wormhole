@@ -3,7 +3,8 @@ const { z } = require('zod');
 // Dynamic loading - scripts are loaded from src but base classes are compiled to out
 const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
 const { RuntimeInspectionService } = require('@core/runtime-inspection/RuntimeInspectionService');
-const { createDebugError, DebugErrorCode } = require('@core/errors/debug-errors');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * Set Variable Mutation Script
@@ -58,14 +59,10 @@ class SetVariableScript extends ActionScript {
 
         // Check if there's an active debug session
         if (!session) {
-            const error = createDebugError(
-                DebugErrorCode.E_NO_SESSION,
-                'No active debug session'
+            return ScriptResult.failure(
+                'No active debug session',
+                ErrorCode.E_NO_SESSION
             );
-            return {
-                success: false,
-                error: error
-            };
         }
 
         // Get the runtime inspection service
@@ -77,10 +74,7 @@ class SetVariableScript extends ActionScript {
 
             // Check if this is an error response (unsupported language)
             if ('code' in adapter) {
-                return {
-                    success: false,
-                    error: adapter
-                };
+                return ScriptResult.fromError(adapter, ErrorCode.E_INTERNAL);
             }
 
             // Call setVariable on the adapter
@@ -94,16 +88,12 @@ class SetVariableScript extends ActionScript {
 
             // Check if the result is an error
             if (!result.success) {
-                return {
-                    success: false,
-                    error: result.error
-                };
+                return ScriptResult.fromError(result.error, ErrorCode.E_INTERNAL);
             }
 
             // Success - return the modification result
             // Note: ISetVariableResult provides 'value' (new value), not oldValue/newValue
-            return {
-                success: true,
+            return ScriptResult.success({
                 value: result.value,           // New value after modification
                 type: result.type,
                 variablesReference: result.variablesReference,
@@ -114,18 +104,11 @@ class SetVariableScript extends ActionScript {
                     sessionType: session.type,
                     name: name
                 }
-            };
+            });
 
         } catch (error) {
             // Unexpected error
-            const debugError = createDebugError(
-                DebugErrorCode.E_UNKNOWN,
-                error.message || 'Unknown error occurred'
-            );
-            return {
-                success: false,
-                error: debugError
-            };
+            return ScriptResult.fromError(error, ErrorCode.E_INTERNAL);
         }
     }
 }

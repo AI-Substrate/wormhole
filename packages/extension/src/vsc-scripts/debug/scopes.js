@@ -2,7 +2,8 @@ const { z } = require('zod');
 
 // Dynamic loading - scripts are loaded from src but base classes are compiled to out
 const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
-const { createDebugError, DebugErrorCode } = require('@core/errors/debug-errors');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * @typedef {any} ScriptContext
@@ -36,13 +37,19 @@ class ScopesScript extends QueryScript {
             const sessions = vscode.debug.breakpoints;
             session = sessions.find(s => s.id === params.sessionId);
             if (!session) {
-                throw createDebugError(DebugErrorCode.E_NO_SESSION, `Session ${params.sessionId} not found`);
+                return ScriptResult.failure(
+                    `Session ${params.sessionId} not found`,
+                    ErrorCode.E_NO_SESSION
+                );
             }
         } else {
             // Use active session
             session = vscode.debug.activeDebugSession;
             if (!session) {
-                throw createDebugError(DebugErrorCode.E_NO_SESSION, 'No active debug session');
+                return ScriptResult.failure(
+                    'No active debug session',
+                    ErrorCode.E_NO_SESSION
+                );
             }
         }
 
@@ -61,7 +68,7 @@ class ScopesScript extends QueryScript {
                 );
             }
 
-            return {
+            return ScriptResult.success({
                 scopes: scopes.map(scope => ({
                     name: scope.name,
                     variablesReference: scope.variablesReference,
@@ -69,9 +76,12 @@ class ScopesScript extends QueryScript {
                     namedVariables: scope.namedVariables,
                     indexedVariables: scope.indexedVariables
                 }))
-            };
+            });
         } catch (e) {
-            throw createDebugError(DebugErrorCode.E_INTERNAL, `Failed to get scopes: ${e.message}`);
+            return ScriptResult.failure(
+                `Failed to get scopes: ${e.message}`,
+                ErrorCode.E_INTERNAL
+            );
         }
     }
 }

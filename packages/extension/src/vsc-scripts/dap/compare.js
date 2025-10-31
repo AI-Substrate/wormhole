@@ -1,5 +1,6 @@
 const { z } = require('zod');
-const { QueryScript } = require('@script-base');
+const { QueryScript, ScriptResult } = require('@script-base');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * DAP Compare Script - Session Comparison Tool
@@ -26,7 +27,11 @@ class DapCompareScript extends QueryScript {
         // Access the global capture service
         const service = global.debugSessionCaptureService;
         if (!service) {
-            return { error: 'Debug session capture service not available' };
+            return ScriptResult.failure(
+                'Debug session capture service not available',
+                ErrorCode.E_NO_SESSION,
+                { reason: 'Service not initialized' }
+            );
         }
 
         // Get both sessions
@@ -34,10 +39,18 @@ class DapCompareScript extends QueryScript {
         const sessionB = service.getSession(params.sessionB);
 
         if (!sessionA) {
-            return { error: 'Session A not found', sessionId: params.sessionA };
+            return ScriptResult.failure(
+                `Session A "${params.sessionA}" not found`,
+                ErrorCode.E_NOT_FOUND,
+                { sessionId: params.sessionA }
+            );
         }
         if (!sessionB) {
-            return { error: 'Session B not found', sessionId: params.sessionB };
+            return ScriptResult.failure(
+                `Session B "${params.sessionB}" not found`,
+                ErrorCode.E_NOT_FOUND,
+                { sessionId: params.sessionB }
+            );
         }
 
         // Build comparison based on compareBy parameter
@@ -142,12 +155,12 @@ class DapCompareScript extends QueryScript {
             exitCode: sessionB.exitCode
         };
 
-        return {
+        return ScriptResult.success({
             comparison,
             sessionA: sessionASummary,
             sessionB: sessionBSummary,
             compareBy: params.compareBy
-        };
+        });
     }
 }
 

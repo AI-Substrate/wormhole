@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { BridgeContext } from '../bridge-context/BridgeContext';
 import { ErrorCode } from '../response/errorTaxonomy';
+import { ScriptResult, ScriptEnvelope } from './ScriptResult';
 
 /**
  * Base class for all scripts
@@ -57,10 +58,23 @@ export interface ActionResult {
 
 /**
  * Base class for action scripts (simple success/fail operations)
+ *
+ * MIGRATION NOTE: All ActionScripts should migrate to returning ScriptEnvelope
+ * and using ScriptResult factory instead of this.success()/this.failure()
  */
 export abstract class ActionScript<TParams = unknown> extends ScriptBase<TParams, ActionResult> {
     /**
      * Helper to create success result
+     *
+     * @deprecated Use ScriptResult.success() instead
+     * This method will be removed in a future version
+     *
+     * @example
+     * // OLD (deprecated):
+     * return this.success({ applied: true });
+     *
+     * // NEW (correct):
+     * return ScriptResult.success({ applied: true });
      */
     protected success(details?: unknown): ActionResult {
         return { success: true, details };
@@ -68,6 +82,20 @@ export abstract class ActionScript<TParams = unknown> extends ScriptBase<TParams
 
     /**
      * Helper to create failure result
+     *
+     * @deprecated Use ScriptResult.failure() instead
+     * This method will be removed in a future version
+     *
+     * @example
+     * // OLD (deprecated):
+     * return this.failure('Not found', { path });
+     *
+     * // NEW (correct):
+     * return ScriptResult.failure(
+     *   'Symbol not found in file',
+     *   ErrorCode.E_SYMBOL_NOT_FOUND,
+     *   { path }
+     * );
      */
     protected failure(reason: string | ErrorCode, details?: unknown): ActionResult {
         if (typeof reason === 'string') {
@@ -77,6 +105,9 @@ export abstract class ActionScript<TParams = unknown> extends ScriptBase<TParams
         }
     }
 }
+
+// Re-export ScriptResult and ScriptEnvelope for convenience
+export { ScriptResult, ScriptEnvelope };
 
 /**
  * Base class for waitable scripts (operations that block until condition)

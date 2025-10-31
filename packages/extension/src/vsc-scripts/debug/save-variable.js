@@ -2,7 +2,8 @@ const { z } = require('zod');
 const fs = require('fs');
 const path = require('path');
 const { QueryScript } = require('@script-base');
-const { createDebugError, DebugErrorCode } = require('@core/errors/debug-errors');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * Save Variable Query Script
@@ -65,14 +66,10 @@ class SaveVariableScript extends QueryScript {
 
         // Check if there's an active debug session
         if (!session) {
-            const error = createDebugError(
-                DebugErrorCode.E_NO_SESSION,
-                'No active debug session'
+            return ScriptResult.failure(
+                'No active debug session',
+                ErrorCode.E_NO_SESSION
             );
-            return {
-                success: false,
-                error: error
-            };
         }
 
         const workspaceDir = bridgeContext.workspaceFolder?.uri?.fsPath || process.cwd();
@@ -91,14 +88,10 @@ class SaveVariableScript extends QueryScript {
             const threadsResponse = await session.customRequest('threads');
             const threads = threadsResponse.threads || [];
             if (threads.length === 0) {
-                const error = createDebugError(
-                    DebugErrorCode.E_NO_THREADS,
-                    'No threads available'
+                return ScriptResult.failure(
+                    'No threads available',
+                    ErrorCode.E_INTERNAL
                 );
-                return {
-                    success: false,
-                    error: error
-                };
             }
 
             const pausedThread = threads.find(t => t.presentationHint === 'paused' || t.stopped) || threads[0];
@@ -111,27 +104,19 @@ class SaveVariableScript extends QueryScript {
             });
 
             if (!stackResponse.stackFrames || stackResponse.stackFrames.length === 0) {
-                const error = createDebugError(
-                    DebugErrorCode.E_NO_STACK,
-                    'No stack frames available'
+                return ScriptResult.failure(
+                    'No stack frames available',
+                    ErrorCode.E_INTERNAL
                 );
-                return {
-                    success: false,
-                    error: error
-                };
             }
 
             frameInfo = stackResponse.stackFrames[0];
             frameId = frameInfo.id;
         } catch (error) {
-            const debugError = createDebugError(
-                DebugErrorCode.E_NOT_STOPPED,
-                'Debugger must be paused at a breakpoint'
+            return ScriptResult.failure(
+                'Debugger must be paused at a breakpoint',
+                ErrorCode.E_OPERATION_FAILED
             );
-            return {
-                success: false,
-                error: debugError
-            };
         }
 
         // Evaluate expression to get variablesReference metadata
@@ -143,26 +128,17 @@ class SaveVariableScript extends QueryScript {
                 context
             });
         } catch (error) {
-            const debugError = createDebugError(
-                DebugErrorCode.E_EVALUATE_FAILED,
-                `Failed to evaluate expression "${expression}": ${error.message}`
+            return ScriptResult.failure(
+                `Failed to evaluate expression "${expression}": ${error.message}`,
+                ErrorCode.E_OPERATION_FAILED
             );
-            return {
-                success: false,
-                error: debugError
-            };
         }
 
         if (!evalResponse || typeof evalResponse.variablesReference !== 'number' || evalResponse.variablesReference === 0) {
-            const error = createDebugError(
-                DebugErrorCode.E_NOT_EXPANDABLE,
-                `Expression "${expression}" did not produce expandable variables`
+            return ScriptResult.failure(
+                `Expression "${expression}" did not produce expandable variables`,
+                ErrorCode.E_OPERATION_FAILED
             );
-            return {
-                success: false,
-                error: error,
-                preview: evalResponse?.result ?? null
-            };
         }
 
         const rootReference = evalResponse.variablesReference;
@@ -332,8 +308,7 @@ class SaveVariableScript extends QueryScript {
 
         const fileStats = await fs.promises.stat(resolvedOutputPath);
 
-        return {
-            success: true,
+        return ScriptResult.success({
             message: `Wrote ${counts.named + counts.indexed} records to ${resolvedOutputPath}`,
             outputPath: resolvedOutputPath,
             bytes: fileStats.size,
@@ -346,7 +321,7 @@ class SaveVariableScript extends QueryScript {
                 namedVariables: rootMetadata.namedVariables,
                 indexedVariables: rootMetadata.indexedVariables
             }
-        };
+        });
     }
 }
 

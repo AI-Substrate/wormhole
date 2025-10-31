@@ -1,5 +1,6 @@
 const { z } = require('zod');
-const { QueryScript } = require('@script-base');
+const { QueryScript, ScriptResult } = require('@script-base');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * Symbol kind enum mapping for filtering
@@ -71,12 +72,12 @@ class SymbolSearchScript extends QueryScript {
      * @returns {Promise<Object>}
      */
     async execute(bridgeContext, params) {
-        const vscode = bridgeContext.vscode;
-        const fs = require('fs');
-
-        let rawSymbols = [];
-
         try {
+            const vscode = bridgeContext.vscode;
+            const fs = require('fs');
+
+            let rawSymbols = [];
+
             // Execute appropriate symbol provider based on mode
             if (params.mode === 'workspace') {
                 // Workspace-wide symbol search
@@ -90,7 +91,11 @@ class SymbolSearchScript extends QueryScript {
 
                 // Validate file exists
                 if (!fs.existsSync(params.path)) {
-                    throw new Error(`E_FILE_NOT_FOUND: ${params.path}`);
+                    return ScriptResult.failure(
+                        `File not found: ${params.path}`,
+                        ErrorCode.E_FILE_NOT_FOUND,
+                        { path: params.path }
+                    );
                 }
 
                 const uri = vscode.Uri.file(params.path);
@@ -138,7 +143,7 @@ class SymbolSearchScript extends QueryScript {
             );
 
             // Return structured response
-            return {
+            return ScriptResult.success({
                 mode: params.mode,
                 query: params.query,
                 filters: {
@@ -152,14 +157,10 @@ class SymbolSearchScript extends QueryScript {
                 },
                 statistics: statistics,
                 symbols: formattedSymbols
-            };
+            });
 
         } catch (error) {
-            // Handle errors gracefully
-            if (error.message.startsWith('E_FILE_NOT_FOUND')) {
-                throw error;
-            }
-            throw new Error(`Symbol search failed: ${error.message}`);
+            return ScriptResult.fromError(error, ErrorCode.E_OPERATION_FAILED);
         }
     }
 

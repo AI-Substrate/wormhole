@@ -3,7 +3,8 @@ const { z } = require('zod');
 // Dynamic loading - scripts are loaded from src but base classes are compiled to out
 const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
 // Lazy-load RuntimeInspectionService to avoid importing vscode at module load time
-const { createDebugError, DebugErrorCode } = require('@core/errors/debug-errors');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * List Variables Query Script
@@ -54,9 +55,9 @@ class ListVariablesScript extends QueryScript {
 
         // Check if there's an active debug session
         if (!session) {
-            throw createDebugError(
-                DebugErrorCode.E_NO_SESSION,
-                'No active debug session'
+            return ScriptResult.failure(
+                'No active debug session',
+                ErrorCode.E_NO_SESSION
             );
         }
 
@@ -68,7 +69,7 @@ class ListVariablesScript extends QueryScript {
 
         // Check if this is an error response (unsupported language)
         if ('code' in adapter) {
-            throw adapter;
+            return ScriptResult.fromError(adapter, ErrorCode.E_INTERNAL);
         }
 
         // Call listVariables on the adapter
@@ -80,12 +81,12 @@ class ListVariablesScript extends QueryScript {
 
         // Check if the result is an error
         if ('code' in result) {
-            throw result;
+            return ScriptResult.fromError(result, ErrorCode.E_INTERNAL);
         }
 
         // Success - return the variables with metadata
         // Note: result is IVariableData[] (array of scope nodes)
-        return {
+        return ScriptResult.success({
             variables: result,
             metadata: {
                 sessionId: session.id,
@@ -94,7 +95,7 @@ class ListVariablesScript extends QueryScript {
                 maxDepth: maxDepth,
                 variableCount: result.length
             }
-        };
+        });
     }
 }
 

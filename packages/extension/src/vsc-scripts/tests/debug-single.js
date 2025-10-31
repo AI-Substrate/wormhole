@@ -1,7 +1,8 @@
 const { z } = require('zod');
 
 // Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
+const { QueryScript, ActionScript, WaitableScript, ScriptResult } = require('@script-base');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 const { waitUntilPausedAndGetLocation } = require('@core/debug/debug-polling-helpers');
 
 /**
@@ -31,32 +32,34 @@ class DebugSingleTestScript extends WaitableScript {
      * @returns {Promise<{event: string, file?: string, line?: number, sessionId: string, sessionName?: string, testName?: string, framework?: string, workspaceFolder?: string}>}
      */
     async wait(bridgeContext, params) {
-        const vscode = bridgeContext.vscode;
-        const outputChannel = bridgeContext.outputChannel;
-
-        // Log start
-        if (outputChannel) {
-            outputChannel.appendLine(
-                `[tests.debug-single] Starting test debug at ${params.path}:${params.line}:${params.column || 1}`
-            );
-        }
-
-        // Check if testing.debugAtCursor command is available
-        const commands = await vscode.commands.getCommands();
-        const hasDebugAtCursor = commands.includes('testing.debugAtCursor');
-
-        if (!hasDebugAtCursor) {
-            if (outputChannel) {
-                outputChannel.appendLine('[tests.debug-single] testing.debugAtCursor command not available');
-            }
-            throw new Error('E_API_UNAVAILABLE: testing.debugAtCursor command not available');
-        }
-
-        if (outputChannel) {
-            outputChannel.appendLine('[tests.debug-single] testing.debugAtCursor command available');
-        }
-
         try {
+            const vscode = bridgeContext.vscode;
+            const outputChannel = bridgeContext.outputChannel;
+
+            // Log start
+            if (outputChannel) {
+                outputChannel.appendLine(
+                    `[tests.debug-single] Starting test debug at ${params.path}:${params.line}:${params.column || 1}`
+                );
+            }
+
+            // Check if testing.debugAtCursor command is available
+            const commands = await vscode.commands.getCommands();
+            const hasDebugAtCursor = commands.includes('testing.debugAtCursor');
+
+            if (!hasDebugAtCursor) {
+                if (outputChannel) {
+                    outputChannel.appendLine('[tests.debug-single] testing.debugAtCursor command not available');
+                }
+                const error = new Error('testing.debugAtCursor command not available');
+                error.code = ErrorCode.E_OPERATION_FAILED;
+                throw error;
+            }
+
+            if (outputChannel) {
+                outputChannel.appendLine('[tests.debug-single] testing.debugAtCursor command available');
+            }
+
             // Open and position document at test location
             const uri = vscode.Uri.file(params.path);
             const document = await vscode.workspace.openTextDocument(uri);
@@ -109,8 +112,8 @@ class DebugSingleTestScript extends WaitableScript {
             }
 
             if (!session) {
-                throw new Error(
-                    `E_NO_SESSION: No debug session started after ${params.timeoutMs}ms\n\n` +
+                const error = new Error(
+                    `No debug session started after ${params.timeoutMs}ms\n\n` +
                     `Possible causes:\n` +
                     `  1. Test not discovered - Check Test Explorer (beaker/flask icon in sidebar)\n` +
                     `  2. Testing extension not active for this language\n` +
@@ -124,6 +127,8 @@ class DebugSingleTestScript extends WaitableScript {
                     `  - For C#: Ensure C# Dev Kit is installed\n` +
                     `  - Wait for test discovery to complete before debugging`
                 );
+                error.code = ErrorCode.E_NO_SESSION;
+                throw error;
             }
 
             if (outputChannel) {
@@ -177,17 +182,16 @@ class DebugSingleTestScript extends WaitableScript {
                 }
             }
 
-            return response;
+            return ScriptResult.success(response);
 
         } catch (error) {
             const errorMessage = error.message || String(error);
 
-            if (outputChannel) {
-                outputChannel.appendLine(`[tests.debug-single] Error: ${errorMessage}`);
+            if (bridgeContext.outputChannel) {
+                bridgeContext.outputChannel.appendLine(`[tests.debug-single] Error: ${errorMessage}`);
             }
 
-            // Re-throw with consistent error format
-            throw error;
+            return ScriptResult.fromError(error, ErrorCode.E_OPERATION_FAILED);
         }
     }
 

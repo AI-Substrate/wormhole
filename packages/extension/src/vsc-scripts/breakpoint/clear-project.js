@@ -2,6 +2,8 @@ const { z } = require('zod');
 
 // Dynamic loading - scripts are loaded from src but base classes are compiled to out
 const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * @typedef {any} ScriptContext
@@ -39,7 +41,7 @@ class ClearProjectBreakpointsScript extends ActionScript {
             );
         }
 
-        return this.success({
+        return ScriptResult.success({
             cleared: allBreakpoints.length
         });
     }

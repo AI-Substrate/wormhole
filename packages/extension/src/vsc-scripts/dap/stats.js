@@ -1,5 +1,6 @@
 const { z } = require('zod');
-const { QueryScript } = require('@script-base');
+const { QueryScript, ScriptResult } = require('@script-base');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * DAP Stats Script - Statistical Analysis
@@ -26,7 +27,11 @@ class DapStatsScript extends QueryScript {
         // Access the global capture service
         const service = global.debugSessionCaptureService;
         if (!service) {
-            return { error: 'Debug session capture service not available' };
+            return ScriptResult.failure(
+                'Debug session capture service not available',
+                ErrorCode.E_NO_SESSION,
+                { reason: 'Service not initialized' }
+            );
         }
 
         // Determine which sessions to analyze
@@ -37,15 +42,20 @@ class DapStatsScript extends QueryScript {
         } else {
             const sessionId = params.sessionId || service.getLastSessionId();
             if (!sessionId) {
-                return { error: 'No debug sessions captured yet' };
+                return ScriptResult.failure(
+                    'No debug sessions captured yet',
+                    ErrorCode.E_NO_SESSION,
+                    { reason: 'No session history' }
+                );
             }
 
             const session = service.getSession(sessionId);
             if (!session) {
-                return {
-                    error: 'Session not found',
-                    sessionId
-                };
+                return ScriptResult.failure(
+                    `Session "${sessionId}" not found - may have been cleared or never existed`,
+                    ErrorCode.E_NOT_FOUND,
+                    { sessionId }
+                );
             }
             sessionsToAnalyze.push(session);
         }
@@ -161,7 +171,7 @@ class DapStatsScript extends QueryScript {
             }
         }
 
-        return {
+        return ScriptResult.success({
             distribution: {
                 byCategory,
                 bySource: Object.fromEntries(Object.entries(bySource).slice(0, 20)), // top 20
@@ -185,7 +195,7 @@ class DapStatsScript extends QueryScript {
                 sessionsAnalyzed: sessionsToAnalyze.length,
                 timespan: `${totalDurationSec.toFixed(2)}s`
             }
-        };
+        });
     }
 }
 

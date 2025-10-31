@@ -1,5 +1,6 @@
 const { z } = require('zod');
-const { QueryScript } = require('@script-base');
+const { QueryScript, ScriptResult } = require('@script-base');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * DAP Filter Script - Advanced Multi-Filter Query
@@ -36,21 +37,30 @@ class DapFilterScript extends QueryScript {
         // Access the global capture service
         const service = global.debugSessionCaptureService;
         if (!service) {
-            return { error: 'Debug session capture service not available' };
+            return ScriptResult.failure(
+                'Debug session capture service not available',
+                ErrorCode.E_NO_SESSION,
+                { reason: 'Service not initialized' }
+            );
         }
 
         // Get session (latest if no ID provided)
         const sessionId = params.sessionId || service.getLastSessionId();
         if (!sessionId) {
-            return { error: 'No debug sessions captured yet' };
+            return ScriptResult.failure(
+                'No debug sessions captured yet',
+                ErrorCode.E_NO_SESSION,
+                { reason: 'No session history' }
+            );
         }
 
         const session = service.getSession(sessionId);
         if (!session) {
-            return {
-                error: 'Session not found',
-                sessionId
-            };
+            return ScriptResult.failure(
+                `Session "${sessionId}" not found - may have been cleared or never existed`,
+                ErrorCode.E_NOT_FOUND,
+                { sessionId }
+            );
         }
 
         const filters = params.filters;
@@ -132,7 +142,7 @@ class DapFilterScript extends QueryScript {
             } : null
         }));
 
-        return {
+        return ScriptResult.success({
             events,
             stats,
             totalFiltered: events.length,
@@ -142,7 +152,7 @@ class DapFilterScript extends QueryScript {
                 type: session.type,
                 name: session.name
             }
-        };
+        });
     }
 }
 

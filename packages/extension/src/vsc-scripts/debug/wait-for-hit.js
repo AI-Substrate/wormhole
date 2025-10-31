@@ -1,7 +1,8 @@
 const { z } = require('zod');
 
 // Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
+const { QueryScript, ActionScript, WaitableScript, ScriptResult } = require('@script-base');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * @typedef {any} ScriptContext
@@ -39,67 +40,75 @@ class WaitForHitScript extends WaitableScript {
      * @returns {Promise<{event: string, breakpoint?: {path: string, line: number, hitCount?: number}, timestamp: string}>}
      */
     async wait(bridgeContext, params) {
-        const vscode = bridgeContext.vscode;
-        const timeoutMs = params.timeoutMs || 30000;
+        try {
+            const vscode = bridgeContext.vscode;
+            const timeoutMs = params.timeoutMs || 30000;
 
-        // Check if there's an active debug session
-        if (!vscode.debug.activeDebugSession) {
-            throw new Error('E_NO_SESSION: No active debug session');
-        }
-
-        return new Promise((resolve, reject) => {
-            let disposable;
-            let timer;
-            let disposed = false;
-
-            const cleanup = () => {
-                if (disposed) return;
-                disposed = true;
-                if (timer) clearTimeout(timer);
-                if (disposable) disposable.dispose();
-            };
-
-            // Setup timeout
-            timer = setTimeout(() => {
-                cleanup();
-                resolve({
-                    event: 'timeout',
-                    timestamp: new Date().toISOString()
-                });
-            }, timeoutMs);
-
-            // Handle abort signal
-            if (ctx.signal) {
-                ctx.signal.addEventListener('abort', () => {
-                    cleanup();
-                    reject(new Error('E_ABORTED: Operation aborted'));
-                });
+            // Check if there's an active debug session
+            if (!vscode.debug.activeDebugSession) {
+                return ScriptResult.failure(
+                    'No active debug session',
+                    ErrorCode.E_NO_SESSION,
+                    { message: 'No active debug session' }
+                );
             }
 
-            // Listen for breakpoint hit (stopped event)
-            disposable = vscode.debug.onDidChangeActiveStackItem((e) => {
-                if (e && e.source && !disposed) {
+            return new Promise((resolve, reject) => {
+                let disposable;
+                let timer;
+                let disposed = false;
+
+                const cleanup = () => {
+                    if (disposed) return;
+                    disposed = true;
+                    if (timer) clearTimeout(timer);
+                    if (disposable) disposable.dispose();
+                };
+
+                // Setup timeout
+                timer = setTimeout(() => {
                     cleanup();
-
-                    // Log to output channel
-                    if (bridgeContext.outputChannel) {
-                        bridgeContext.outputChannel.appendLine(
-                            `[dbg.waitForHit] Breakpoint hit at ${e.source.path}:${e.line}`
-                        );
-                    }
-
                     resolve({
-                        event: 'breakpoint-hit',
-                        breakpoint: {
-                            path: e.source.path || 'unknown',
-                            line: e.line || 0,
-                            hitCount: 1 // VS Code doesn't provide hit count directly
-                        },
+                        event: 'timeout',
                         timestamp: new Date().toISOString()
                     });
+                }, timeoutMs);
+
+                // Handle abort signal
+                if (ctx.signal) {
+                    ctx.signal.addEventListener('abort', () => {
+                        cleanup();
+                        reject(new Error('E_ABORTED: Operation aborted'));
+                    });
                 }
+
+                // Listen for breakpoint hit (stopped event)
+                disposable = vscode.debug.onDidChangeActiveStackItem((e) => {
+                    if (e && e.source && !disposed) {
+                        cleanup();
+
+                        // Log to output channel
+                        if (bridgeContext.outputChannel) {
+                            bridgeContext.outputChannel.appendLine(
+                                `[dbg.waitForHit] Breakpoint hit at ${e.source.path}:${e.line}`
+                            );
+                        }
+
+                        resolve({
+                            event: 'breakpoint-hit',
+                            breakpoint: {
+                                path: e.source.path || 'unknown',
+                                line: e.line || 0,
+                                hitCount: 1 // VS Code doesn't provide hit count directly
+                            },
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                });
             });
-        });
+        } catch (error) {
+            return ScriptResult.fromError(error, ErrorCode.E_OPERATION_FAILED);
+        }
     }
 }
 

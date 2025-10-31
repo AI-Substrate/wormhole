@@ -2,6 +2,8 @@ const { z } = require('zod');
 
 // Dynamic loading - scripts are loaded from src but base classes are compiled to out
 const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * @typedef {any} ScriptContext
@@ -34,13 +36,20 @@ class RestartDebugScript extends ActionScript {
             const sessions = vscode.debug.breakpoints;
             session = sessions.find(s => s.id === params.sessionId);
             if (!session) {
-                return this.failure('E_NO_SESSION', { sessionId: params.sessionId });
+                return ScriptResult.failure(
+                    `Debug session not found: ${params.sessionId}`,
+                    ErrorCode.E_NO_SESSION,
+                    { sessionId: params.sessionId }
+                );
             }
         } else {
             // Use active session
             session = vscode.debug.activeDebugSession;
             if (!session) {
-                return this.failure('E_NO_SESSION', { message: 'No active debug session' });
+                return ScriptResult.failure(
+                    'No active debug session available',
+                    ErrorCode.E_NO_SESSION
+                );
             }
         }
 
@@ -70,7 +79,7 @@ class RestartDebugScript extends ActionScript {
             );
         }
 
-        return this.success({
+        return ScriptResult.success({
             restarted: true,
             sessionId: params.sessionId || session?.id
         });

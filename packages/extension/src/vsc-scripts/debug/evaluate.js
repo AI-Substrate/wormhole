@@ -2,7 +2,8 @@ const { z } = require('zod');
 
 // Dynamic loading - scripts are loaded from src but base classes are compiled to out
 const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
-const { createDebugError, DebugErrorCode } = require('@core/errors/debug-errors');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 const { getActiveThreadId } = require('@core/debug/session-helpers');
 
 /**
@@ -42,13 +43,19 @@ class EvaluateScript extends QueryScript {
                 : [];
             session = allSessions.find(s => s.id === params.sessionId);
             if (!session) {
-                throw createDebugError(DebugErrorCode.E_NO_SESSION, `Session ${params.sessionId} not found`);
+                return ScriptResult.failure(
+                    `Session ${params.sessionId} not found`,
+                    ErrorCode.E_NO_SESSION
+                );
             }
         } else {
             // Use active session
             session = vscode.debug.activeDebugSession;
             if (!session) {
-                throw createDebugError(DebugErrorCode.E_NO_SESSION, 'No active debug session');
+                return ScriptResult.failure(
+                    'No active debug session',
+                    ErrorCode.E_NO_SESSION
+                );
             }
         }
 
@@ -91,15 +98,18 @@ class EvaluateScript extends QueryScript {
                 );
             }
 
-            return {
+            return ScriptResult.success({
                 result: result.result,
                 type: result.type,
                 variablesReference: result.variablesReference,
                 namedVariables: result.namedVariables,
                 indexedVariables: result.indexedVariables
-            };
+            });
         } catch (e) {
-            throw createDebugError(DebugErrorCode.E_INTERNAL, `Failed to evaluate expression: ${e.message}`);
+            return ScriptResult.failure(
+                `Failed to evaluate expression: ${e.message}`,
+                ErrorCode.E_INTERNAL
+            );
         }
     }
 }

@@ -1,6 +1,8 @@
 const fs = require('fs');
 const { z } = require('zod');
 const { ActionScript } = require('@script-base');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * @typedef {any} ScriptContext
@@ -32,15 +34,20 @@ class SetBreakpointScript extends ActionScript {
 
         // Validate file exists
         if (!fs.existsSync(params.path)) {
-            return this.failure('E_FILE_NOT_FOUND', { path: params.path });
+            return ScriptResult.failure(
+                `File not found: ${params.path}`,
+                ErrorCode.E_FILE_NOT_FOUND,
+                { path: params.path }
+            );
         }
 
         // Validate line number is reasonable (must be positive)
         if (!params.line || params.line < 1) {
-            return this.failure('E_INVALID_LINE', {
-                line: params.line,
-                message: 'Line number must be a positive integer (1 or greater)'
-            });
+            return ScriptResult.failure(
+                `Line number must be a positive integer (1 or greater), got ${params.line}`,
+                ErrorCode.E_INVALID_LINE,
+                { line: params.line }
+            );
         }
 
         // Check if line number is within file bounds (optional but helpful)
@@ -85,7 +92,7 @@ class SetBreakpointScript extends ActionScript {
         }
 
         // Return success with breakpoint details
-        return this.success({
+        return ScriptResult.success({
             breakpoint: {
                 path: params.path,
                 line: params.line,

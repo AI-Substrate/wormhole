@@ -1,5 +1,6 @@
 const { z } = require('zod');
-const { QueryScript } = require('@script-base');
+const { QueryScript, ScriptResult } = require('@script-base');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * DAP Search Script - Pattern Search Across Outputs
@@ -29,7 +30,11 @@ class DapSearchScript extends QueryScript {
         // Access the global capture service
         const service = global.debugSessionCaptureService;
         if (!service) {
-            return { error: 'Debug session capture service not available' };
+            return ScriptResult.failure(
+                'Debug session capture service not available',
+                ErrorCode.E_NO_SESSION,
+                { reason: 'Service not initialized' }
+            );
         }
 
         // Determine which sessions to search
@@ -42,16 +47,20 @@ class DapSearchScript extends QueryScript {
             // Search specific session or latest
             const sessionId = params.sessionId || service.getLastSessionId();
             if (!sessionId) {
-                return { error: 'No debug sessions captured yet' };
+                return ScriptResult.failure(
+                    'No debug sessions captured yet',
+                    ErrorCode.E_NO_SESSION,
+                    { reason: 'No session history' }
+                );
             }
 
             const session = service.getSession(sessionId);
             if (!session) {
-                return {
-                    error: 'Session not found',
-                    sessionId,
-                    hint: 'Session may have been cleared or never existed'
-                };
+                return ScriptResult.failure(
+                    `Session "${sessionId}" not found - may have been cleared or never existed`,
+                    ErrorCode.E_NOT_FOUND,
+                    { sessionId }
+                );
             }
             sessionsToSearch.push(session);
         }
@@ -122,14 +131,14 @@ class DapSearchScript extends QueryScript {
         // Limit results
         const limitedMatches = allMatches.slice(0, params.limit);
 
-        return {
+        return ScriptResult.success({
             matches: limitedMatches,
             totalMatches: allMatches.length,
             matchesBySession,
             sessionsSearched: sessionsToSearch.length,
             pattern: params.pattern,
             truncated: allMatches.length > params.limit
-        };
+        });
     }
 }
 

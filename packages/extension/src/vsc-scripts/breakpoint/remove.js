@@ -2,6 +2,8 @@ const { z } = require('zod');
 
 // Dynamic loading - scripts are loaded from src but base classes are compiled to out
 const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * @typedef {any} ScriptContext
@@ -36,11 +38,14 @@ class RemoveBreakpointScript extends ActionScript {
         );
 
         if (toRemove.length === 0) {
-            return this.failure('E_NOT_FOUND', {
-                path: params.path,
-                line: params.line,
-                message: 'No breakpoint found at the specified location'
-            });
+            return ScriptResult.failure(
+                `No breakpoint found at ${params.path}:${params.line}`,
+                ErrorCode.E_NOT_FOUND,
+                {
+                    path: params.path,
+                    line: params.line
+                }
+            );
         }
 
         // Remove the breakpoint(s)
@@ -53,7 +58,7 @@ class RemoveBreakpointScript extends ActionScript {
             );
         }
 
-        return this.success({
+        return ScriptResult.success({
             path: params.path,
             line: params.line,
             removed: toRemove.length

@@ -442,12 +442,58 @@ export class ScriptRegistry {
             // Update duration
             const finalMeta = updateMetaDuration(meta);
 
-            // Check if this is an ActionScript failure response
+            // Check if this is a ScriptEnvelope (new pattern)
+            if (result && typeof result === 'object' && 'ok' in result && 'type' in result) {
+                const envelope = result as any;
+                if (!envelope.ok && envelope.error) {
+                    // NEW PATTERN: ScriptEnvelope from ScriptResult.failure()
+                    // Log ScriptEnvelope failure to output channel
+                    this.outputChannel.appendLine(`⚠️ Script ${alias} returned failure:`);
+                    this.outputChannel.appendLine(`   Code: ${envelope.error.code}`);
+                    this.outputChannel.appendLine(`   Message: ${envelope.error.message}`);
+                    if (envelope.error.details) {
+                        this.outputChannel.appendLine(`   Details: ${JSON.stringify(envelope.error.details, null, 2)}`);
+                    }
+                    this.outputChannel.appendLine('');
+
+                    // Send ScriptExecutionFailed event
+                    try {
+                        if (this.telemetry?.isEnabled()) {
+                            this.telemetry.sendErrorEvent('ScriptExecutionFailed', {
+                                sessionId: this.telemetry.getSessionId(),
+                                alias,
+                                errorCode: envelope.error.code,
+                                success: 'false',
+                                telemetrySchemaVersion: '2'
+                            }, {
+                                durationMs: finalMeta.durationMs
+                            });
+                        }
+                    } catch (error) {
+                        // Graceful degradation
+                    }
+
+                    // Return failure envelope directly (already properly formatted)
+                    const failureEnvelope = fail(
+                        envelope.error.code as ErrorCode,
+                        envelope.error.message,
+                        envelope.error.details,
+                        finalMeta
+                    );
+                    if (editorContext) {
+                        failureEnvelope.editorContext = editorContext;
+                    }
+                    return failureEnvelope;
+                }
+            }
+
+            // Check if this is an ActionScript failure response (OLD PATTERN - backward compatibility)
             if (result && typeof result === 'object' && 'success' in result) {
                 const actionResult = result as any;
                 if (!actionResult.success) {
+                    // OLD PATTERN: ActionResult from this.failure()
                     // Log ActionScript failure to output channel
-                    this.outputChannel.appendLine(`⚠️ Script ${alias} returned failure:`);
+                    this.outputChannel.appendLine(`⚠️ Script ${alias} returned failure (deprecated pattern):`);
                     this.outputChannel.appendLine(`   Reason: ${actionResult.reason || 'Unknown'}`);
                     if (actionResult.error) {
                         this.outputChannel.appendLine(`   Error: ${JSON.stringify(actionResult.error, null, 2)}`);
@@ -463,8 +509,22 @@ export class ScriptRegistry {
                                     (actionResult.reason && typeof actionResult.reason === 'string' &&
                                      actionResult.reason.startsWith('E_') ? actionResult.reason : ErrorCode.E_INTERNAL);
 
-                    // Get the error message
-                    const message = actionResult.reason || 'Script execution failed';
+                    // IMPROVED: Extract message from multiple sources (fixes error message loss)
+                    // Priority: details.message > reason (if not error code) > error.message > default
+                    let message: string;
+                    if (actionResult.details?.message && typeof actionResult.details.message === 'string') {
+                        // Check if message is in details (new idiomatic pattern)
+                        message = actionResult.details.message;
+                    } else if (actionResult.reason && typeof actionResult.reason === 'string' && !actionResult.reason.startsWith('E_')) {
+                        // Use reason if it's not an error code
+                        message = actionResult.reason;
+                    } else if (actionResult.error?.message) {
+                        // Check error object
+                        message = actionResult.error.message;
+                    } else {
+                        // Fallback to error code description
+                        message = ErrorMessages[errorCode as ErrorCode] || 'Script execution failed';
+                    }
 
                     // Send ScriptExecutionFailed event for ActionScript failure (T010)
                     try {

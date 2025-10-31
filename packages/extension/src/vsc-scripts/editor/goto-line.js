@@ -1,4 +1,6 @@
 const { ActionScript } = require('@script-base');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * Goto Line Script
@@ -55,7 +57,7 @@ class GotoLineScript extends ActionScript {
 
             bridgeContext.logger.info(`Successfully navigated to ${path}:${line}:${column}`);
 
-            return this.success({
+            return ScriptResult.success({
                 message: `Navigated to ${path}:${line}:${column}`,
                 file: path,
                 line: line,
@@ -65,17 +67,18 @@ class GotoLineScript extends ActionScript {
         } catch (error) {
             bridgeContext.logger.error(`Failed to navigate to file: ${error.message}`);
 
-            // Determine specific error reason
-            let reason = 'NAVIGATION_FAILED';
+            // Determine specific error code
+            let errorCode = ErrorCode.E_OPERATION_FAILED;
             if (error.code === 'ENOENT' || error.message.includes('Unable to read file')) {
-                reason = 'FILE_NOT_FOUND';
+                errorCode = ErrorCode.E_FILE_NOT_FOUND;
             } else if (error.message.includes('line') || error.message.includes('position')) {
-                reason = 'INVALID_POSITION';
+                errorCode = ErrorCode.E_INVALID_PATH;
             }
 
-            return this.failure(
-                reason,
-                `Failed to navigate to ${path}:${line}:${column}: ${error.message}`
+            return ScriptResult.failure(
+                `Failed to navigate to ${path}:${line}:${column}: ${error.message}`,
+                errorCode,
+                { path, line, column }
             );
         }
     }

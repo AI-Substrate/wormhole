@@ -1,5 +1,6 @@
 const { z } = require('zod');
-const { QueryScript } = require('@script-base');
+const { QueryScript, ScriptResult } = require('@script-base');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * DAP Timeline Script - Event Timeline Viewer
@@ -29,22 +30,30 @@ class DapTimelineScript extends QueryScript {
         // Access the global capture service
         const service = global.debugSessionCaptureService;
         if (!service) {
-            return { error: 'Debug session capture service not available' };
+            return ScriptResult.failure(
+                'Debug session capture service not available',
+                ErrorCode.E_NO_SESSION,
+                { reason: 'Service not initialized' }
+            );
         }
 
         // Get session (latest if no ID provided)
         const sessionId = params.sessionId || service.getLastSessionId();
         if (!sessionId) {
-            return { error: 'No debug sessions captured yet' };
+            return ScriptResult.failure(
+                'No debug sessions captured yet',
+                ErrorCode.E_NO_SESSION,
+                { reason: 'No session history' }
+            );
         }
 
         const session = service.getSession(sessionId);
         if (!session) {
-            return {
-                error: 'Session not found',
-                sessionId,
-                hint: 'Session may have been cleared or never existed'
-            };
+            return ScriptResult.failure(
+                `Session "${sessionId}" not found - may have been cleared or never existed`,
+                ErrorCode.E_NOT_FOUND,
+                { sessionId }
+            );
         }
 
         // Build timeline events
@@ -173,7 +182,7 @@ class DapTimelineScript extends QueryScript {
 
         const duration = (session.endTime || Date.now()) - session.startTime;
 
-        return {
+        return ScriptResult.success({
             timeline: filteredTimeline,
             milestones,
             duration,
@@ -183,7 +192,7 @@ class DapTimelineScript extends QueryScript {
                 type: session.type,
                 name: session.name
             }
-        };
+        });
     }
 }
 

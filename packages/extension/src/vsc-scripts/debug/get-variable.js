@@ -3,7 +3,8 @@ const { z } = require('zod');
 // Dynamic loading - scripts are loaded from src but base classes are compiled to out
 const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
 const { RuntimeInspectionService } = require('@core/runtime-inspection/RuntimeInspectionService');
-const { createDebugError, DebugErrorCode } = require('@core/errors/debug-errors');
+const { ScriptResult } = require('@core/scripts/ScriptResult');
+const { ErrorCode } = require('@core/response/errorTaxonomy');
 
 /**
  * Get Variable Query Script
@@ -54,26 +55,18 @@ class GetVariableScript extends QueryScript {
 
         // Check if there's an active debug session
         if (!session) {
-            const error = createDebugError(
-                DebugErrorCode.E_NO_SESSION,
-                'No active debug session'
+            return ScriptResult.failure(
+                'No active debug session',
+                ErrorCode.E_NO_SESSION
             );
-            return {
-                success: false,
-                error: error
-            };
         }
 
         // Validate variablesReference
         if (!variablesReference || variablesReference === 0) {
-            const error = createDebugError(
-                DebugErrorCode.E_INVALID_PARAMS,
-                'Invalid variablesReference (must be > 0)'
+            return ScriptResult.failure(
+                'Invalid variablesReference (must be > 0)',
+                ErrorCode.E_INVALID_PARAMS
             );
-            return {
-                success: false,
-                error: error
-            };
         }
 
         // Get the runtime inspection service
@@ -85,10 +78,7 @@ class GetVariableScript extends QueryScript {
 
             // Check if this is an error response (unsupported language)
             if ('code' in adapter) {
-                return {
-                    success: false,
-                    error: adapter
-                };
+                return ScriptResult.fromError(adapter, ErrorCode.E_INTERNAL);
             }
 
             // Call getVariableChildren on the adapter
@@ -101,10 +91,7 @@ class GetVariableScript extends QueryScript {
 
             // Check if the result is an error
             if ('code' in result) {
-                return {
-                    success: false,
-                    error: result
-                };
+                return ScriptResult.fromError(result, ErrorCode.E_INTERNAL);
             }
 
             // Success - result is the children array directly (not result.children)
@@ -121,8 +108,7 @@ class GetVariableScript extends QueryScript {
                 children = allChildren.slice(requestedStart, requestedStart + requestedCount);
             }
 
-            return {
-                success: true,
+            return ScriptResult.success({
                 children: children,
                 pagination: {
                     start: requestedStart,
@@ -136,18 +122,11 @@ class GetVariableScript extends QueryScript {
                     variablesReference: variablesReference,
                     filter: filter || 'all'
                 }
-            };
+            });
 
         } catch (error) {
             // Unexpected error
-            const debugError = createDebugError(
-                DebugErrorCode.E_UNKNOWN,
-                error.message || 'Unknown error occurred'
-            );
-            return {
-                success: false,
-                error: debugError
-            };
+            return ScriptResult.fromError(error, ErrorCode.E_INTERNAL);
         }
     }
 }
