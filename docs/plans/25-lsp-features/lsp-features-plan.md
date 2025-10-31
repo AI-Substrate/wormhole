@@ -2302,6 +2302,10 @@ vscb script run symbol.rename \
   - `file:scripts/sample/dynamic/explore-rename-basic.js` - TAD exploration script (permanent sample)
   - `file:scripts/sample/dynamic/explore-workspace-edit-validation.js` - Pre-validation exploration (permanent sample)
 
+[^7]: Subtask 001 (ST001-ST007) - Fixed ScriptRegistry error handling and migrated all scripts to ScriptResult pattern
+  - `method:packages/extension/src/core/registry/ScriptRegistry.ts:ScriptRegistry.executeScript` - Added multi-source error message extraction at lines 526-541
+  - `file:packages/extension/src/vsc-scripts/**/*.js` - Migrated all 41 scripts to idiomatic ScriptResult.failure(message, errorCode, details) pattern
+
 ---
 
 **✅ Plan Status**: DRAFT - Ready for validation via `/plan-4-complete-the-plan`
@@ -2321,3 +2325,4 @@ Mid-implementation detours requiring structured tracking.
 |----|---------|-------|-------------|--------|--------|---------|
 | 001-subtask-fix-scriptregistry-error-handling | 2025-10-31 | Phase 4: Method Replacement Tool | T013, T022 | Fix ScriptRegistry error message loss discovered during testing | [ ] Pending | [Link](tasks/phase-4-method-replacement-tool/001-subtask-fix-scriptregistry-error-handling.md) |
 | 002-subtask-remove-mocha-tests | 2025-10-31 | Phase 4: Method Replacement Tool | T013, T022 | Remove 23 orphaned Mocha test files blocking test framework validation | [ ] Pending | [Link](tasks/phase-4-method-replacement-tool/002-subtask-remove-mocha-tests.md) |
+| 004-subtask-fix-resolveFromSymbolName-lsp-warmup | 2025-10-31 | Phase 4: Method Replacement Tool | T007, T027 | Fix resolveFromSymbolName to open document before LSP call - discovered during T027 validation | [ ] Pending | [Link](tasks/phase-4-method-replacement-tool/004-subtask-fix-resolveFromSymbolName-lsp-warmup.md) |
