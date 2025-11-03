@@ -4,11 +4,14 @@ const CopyPlugin = require('copy-webpack-plugin');
 
 // Utility: map script files to webpack entries
 function scriptEntries() {
-  const files = glob.sync('src/vsc-scripts/**/*.js', { cwd: __dirname });
+  const files = glob.sync('src/vsc-scripts/**/*.{js,ts}', {
+    cwd: __dirname,
+    ignore: ['**/*.d.ts']  // Exclude TypeScript declaration files
+  });
   const entries = {};
   for (const file of files) {
     // keep relative path under vsc-scripts/ for output
-    const rel = path.relative('src', file).replace(/\.js$/, '');
+    const rel = path.relative('src', file).replace(/\.(js|ts)$/, '');
     entries[rel] = path.resolve(__dirname, file);
   }
   return entries;

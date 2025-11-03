@@ -78,6 +78,13 @@ export interface IBridgeContext {
     getTestEnvironment?: (file?: vscode.Uri) => Promise<ITestEnvironment | null>;
 
     /**
+     * JavaScript test environment detection
+     * @param file File URI for JavaScript file
+     * @returns JavaScript test environment or null if not detected
+     */
+    getJavaScriptEnv?: (file: vscode.Uri) => Promise<ITestEnvironment | null>;
+
+    /**
      * Debug service helpers (Phase 5)
      */
     debug?: IDebugService;
@@ -183,11 +190,22 @@ export interface IPythonEnvironment extends ITestEnvironment {
 /**
  * Debug service interface (Phase 5)
  * Wraps VS Code debug API
+ *
+ * Scripts should use `bridgeContext.debug.getSession()` to access debug sessions,
+ * not create custom helpers. This pattern provides direct access to VS Code's
+ * debug session without additional abstraction layers.
  */
 export interface IDebugService {
     /**
      * Get debug session by ID or active session
      * Wraps: vscode.debug.activeDebugSession
+     *
+     * @example
+     * // In a script's execute method:
+     * const session = bridgeContext.debug?.getSession();
+     * if (session) {
+     *     console.log(`Debug session active: ${session.id}`);
+     * }
      */
     getSession(sessionId?: string): vscode.DebugSession | undefined;
 
@@ -225,11 +243,22 @@ export interface IWorkspaceService {
 /**
  * Path service interface (Phase 5)
  * Wraps VS Code path/URI utilities
+ *
+ * Scripts should use `bridgeContext.paths.extensionRoot` to access the extension
+ * root directory. This provides the absolute path to the extension's installation
+ * directory, useful for loading bundled resources or scripts.
  */
 export interface IPathService {
     /**
      * Extension root directory
      * From: extensionContext.extensionPath
+     *
+     * @example
+     * // Access extension root in a script:
+     * const extensionRoot = bridgeContext.paths?.extensionRoot;
+     * if (extensionRoot) {
+     *     const scriptPath = path.join(extensionRoot, 'scripts', 'my-script.js');
+     * }
      */
     readonly extensionRoot: string;
 

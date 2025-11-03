@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BridgeContext } from '../bridge-context/BridgeContext';
+import { IBridgeContext } from '../bridge-context/types';
 import { ErrorCode } from '../response/errorTaxonomy';
 import { ScriptResult, ScriptEnvelope } from './ScriptResult';
 
@@ -43,7 +43,7 @@ export abstract class ScriptBase<TParams = unknown, TResult = unknown> {
     /**
      * Execute the script
      */
-    abstract execute(bridgeContext: BridgeContext, params: TParams): Promise<TResult>;
+    abstract execute(bridgeContext: IBridgeContext, params: TParams): Promise<TResult>;
 }
 
 /**
@@ -116,12 +116,12 @@ export abstract class WaitableScript<TParams = unknown, TResult = unknown> exten
     /**
      * Wait for a condition or event
      */
-    protected abstract wait(bridgeContext: BridgeContext, params: TParams): Promise<TResult>;
+    protected abstract wait(bridgeContext: IBridgeContext, params: TParams): Promise<TResult>;
 
     /**
      * Default execute delegates to wait
      */
-    async execute(bridgeContext: BridgeContext, params: TParams): Promise<TResult> {
+    async execute(bridgeContext: IBridgeContext, params: TParams): Promise<TResult> {
         return this.wait(bridgeContext, params);
     }
 
@@ -134,7 +134,7 @@ export abstract class WaitableScript<TParams = unknown, TResult = unknown> exten
      * @returns Structured event data or null on timeout
      */
     protected async waitForDebugEvent(
-        bridgeContext: BridgeContext,
+        bridgeContext: IBridgeContext,
         eventType: string,
         sessionId?: string,
         timeoutMs: number = 30000
@@ -207,7 +207,7 @@ export abstract class WaitableScript<TParams = unknown, TResult = unknown> exten
             };
 
             // Register tracker - use specific session type if we can determine it, otherwise '*'
-            const sessionType = sessionId ? bridgeContext.debug.getSession()?.type || '*' : '*';
+            const sessionType = sessionId ? bridgeContext.debug?.getSession()?.type || '*' : '*';
             const disposable = bridgeContext.vscode.debug?.registerDebugAdapterTrackerFactory?.(sessionType, trackerFactory);
 
             // Cleanup when done
@@ -241,7 +241,7 @@ export abstract class QueryScript<TParams = unknown, TResult = unknown> extends 
  * Placeholder for Phase 3
  */
 export abstract class StreamScript<TParams = unknown, TResult = unknown> extends ScriptBase<TParams, AsyncGenerator<TResult>> {
-    abstract execute(bridgeContext: BridgeContext, params: TParams): Promise<AsyncGenerator<TResult>>;
+    abstract execute(bridgeContext: IBridgeContext, params: TParams): Promise<AsyncGenerator<TResult>>;
 
     /**
      * Helper to create async generator

@@ -16,14 +16,34 @@
 		"forceConsistentCasingInFileNames": true,
 		"resolveJsonModule": true,
 		"declaration": false,
-		"declarationMap": false
+		"declarationMap": false,
+		"checkJs": false,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+		"paths": {
+			"@script-base": ["./src/core/scripts/base.ts"],
+			"@core/debug/debug-and-wait": ["./src/core/debug/debug-and-wait.ts"],
+			"@core/debug/event-hub": ["./src/core/debug/event-hub.ts"],
+			"@core/debug/debug-polling-helpers": ["./src/core/debug/debug-polling-helpers.js"],
+			"@core/debug/debug-session-capture": ["./src/core/debug/debug-session-capture.ts"],
+			"@core/debug/session-helpers": ["./src/core/debug/session-helpers.js"],
+			"@core/debug/step-operations": ["./src/core/debug/step-operations.js"],
+			"@core/debug/step-strategies": ["./src/core/debug/step-strategies.js"],
+			"@core/testing/test-executor": ["./src/core/testing/test-executor.ts"],
+			"@core/testing/availability": ["./src/core/testing/availability.ts"],
+			"@core/errors/debug-errors": ["./src/core/errors/debug-errors.ts"],
+			"@core/response/errorTaxonomy": ["./src/core/response/errorTaxonomy.ts"],
+			"@core/scripts/ScriptResult": ["./src/core/scripts/ScriptResult.ts"],
+			"@core/runtime-inspection/RuntimeInspectionService": ["./src/core/runtime-inspection/RuntimeInspectionService.ts"],
+			"@core/test-environments/detectors/JavaScriptTestDetector": ["./src/core/test-environments/detectors/JavaScriptTestDetector.ts"],
+			"@core/util/symbol-resolver": ["./src/core/util/symbol-resolver.ts"]
+		}
 		/* Additional Checks */
 		// "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
 		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
 		// "noUnusedParameters": true,  /* Report errors on unused parameters. */
 	},
 	"exclude": [
-		"src/vsc-scripts/**/*",
 		"test/**/*",
 		"scripts/**/*"
 	]

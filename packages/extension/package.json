@@ -13,6 +13,9 @@
   },
   "homepage": "https://github.com/AI-Substrate/wormhole#readme",
   "license": "MIT",
+  "sideEffects": [
+    "src/vsc-scripts/**/*.{js,ts}"
+  ],
   "keywords": [
     "debugging",
     "mcp",
@@ -77,7 +80,7 @@
     "publish": "vsce publish",
     "clean": "rm -rf out *.vsix",
     "manifest:build": "ts-node ../scripts/build-manifest.ts",
-    "manifest:watch": "chokidar 'src/vsc-scripts/**/*.{js,meta.yaml}' -c 'npm run manifest:build'",
+    "manifest:watch": "chokidar 'src/vsc-scripts/**/*.{js,ts,meta.yaml}' -c 'npm run manifest:build'",
     "schemas:build": "tsx scripts/generate-zod-schemas.ts",
     "prebuild": "npm run manifest:build && npm run schemas:build"
   },
