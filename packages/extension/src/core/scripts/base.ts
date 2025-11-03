@@ -3,6 +3,10 @@ import { IBridgeContext } from '../bridge-context/types';
 import { ErrorCode } from '../response/errorTaxonomy';
 import { ScriptResult, ScriptEnvelope } from './ScriptResult';
 
+// Re-export decorator for convenience
+// Allows: import { QueryScript, RegisterScript } from '@script-base'
+export { RegisterScript, getScriptMetadata } from './decorators';
+
 /**
  * Base class for all scripts
  */

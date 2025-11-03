@@ -394,14 +394,14 @@ export class SetBreakpointScript extends ActionScript { }
 
 | #   | Status | Task | Success Criteria | Log | Notes |
 |-----|--------|------|------------------|-----|-------|
-| 2.1 | [ ] | Write scratch tests for decorator behavior | Tests verify metadata storage + import order independence | - | Test @RegisterScript decorator, verify lazy init |
-| 2.2 | [ ] | Create RegisterScript decorator with lazy init | Decorator stores script metadata, WeakMap initializes on first access | - | /workspaces/vscode-bridge/packages/extension/src/core/scripts/decorators.ts |
-| 2.3 | [ ] | Create script metadata getter | Lazy initialization pattern for WeakMap | - | Prevents race conditions with import order |
-| 2.4 | [ ] | Add decorator to one test script | Script registers via decorator | - | Start with debug/status.ts |
-| 2.5 | [ ] | Verify decorator metadata accessible | Can retrieve metadata at runtime | - | Test in scratch |
-| 2.6 | [ ] | Create type definitions for decorators | TypeScript recognizes decorator types | - | Add to base.ts or new file |
-| 2.7 | [ ] | Test decorator with all base classes | Works with QueryScript, ActionScript, WaitableScript | - | One example of each |
-| 2.8 | [ ] | Document decorator usage pattern | Clear examples for conversion | - | Comments in decorators.ts |
+| 2.1 | [x] | Write scratch tests for decorator behavior | Tests verify metadata storage + import order independence | [📋](tasks/phase-2-decorator-system/execution.log.md#task-t005) | Completed · log#task-t005 [^8] |
+| 2.2 | [x] | Create RegisterScript decorator with lazy init | Decorator stores script metadata, WeakMap initializes on first access | [📋](tasks/phase-2-decorator-system/execution.log.md#task-t001-t004) | Completed · log#task-t001-t004 [^8] |
+| 2.3 | [x] | Create script metadata getter | Lazy initialization pattern for WeakMap | [📋](tasks/phase-2-decorator-system/execution.log.md#task-t001-t004) | Completed · log#task-t001-t004 [^8] |
+| 2.4 | [x] | Add decorator to one test script | Script registers via decorator | [📋](tasks/phase-2-decorator-system/execution.log.md#task-t009) | Completed · log#task-t009 [^8] |
+| 2.5 | [x] | Verify decorator metadata accessible | Can retrieve metadata at runtime | [📋](tasks/phase-2-decorator-system/execution.log.md#task-t010) | Completed · log#task-t010 [^8] |
+| 2.6 | [x] | Create type definitions for decorators | TypeScript recognizes decorator types | [📋](tasks/phase-2-decorator-system/execution.log.md#task-t001-t004) | Completed · log#task-t001-t004 [^8] |
+| 2.7 | [x] | Test decorator with all base classes | Works with QueryScript, ActionScript, WaitableScript | [📋](tasks/phase-2-decorator-system/execution.log.md#task-t006-t008) | Completed · log#task-t006-t008 [^8] |
+| 2.8 | [x] | Document decorator usage pattern | Clear examples for conversion | [📋](tasks/phase-2-decorator-system/execution.log.md#task-t012) | Completed · log#task-t012 + log#task-t001-t004 [^8] |
 
 ### Phase 3: Script Conversion (Batch 1)
 
@@ -426,10 +426,10 @@ export class SetBreakpointScript extends ActionScript { }
 | #   | Status | Task | Success Criteria | Log | Notes |
 |-----|--------|------|------------------|-----|-------|
 | 3.0 | [ ] | Write scratch tests for script conversion | Tests verify converted scripts execute in Extension Host | - | tests/scratch/script-conversion.test.ts |
-| 3.1 | [ ] | Convert breakpoint/ scripts (5 files) | All 5 scripts in TypeScript | - | set, list, clear.file, clear.project, remove |
-| 3.2 | [ ] | Convert code/ scripts (1 file) | replace-method.ts works | - | **Critical: The script we need to debug!** |
-| 3.3 | [ ] | Convert dap/ scripts (8 files) | All 8 DAP scripts converted | - | compare, exceptions, filter, logs, search, stats, summary, timeline |
-| 3.4 | [ ] | Convert diag/ scripts (1 file) | diagnostic.collect.ts works | - | Single diagnostic script |
+| 3.1 | [ ] | Convert breakpoint/ scripts (5 files) | All 5 scripts in TypeScript with @RegisterScript decorators | - | set, list, clear.file, clear.project, remove. Checklist: ✓ Decorator added ✓ Script name matches file path (Insight #3) |
+| 3.2 | [ ] | Convert code/ scripts (1 file) | replace-method.ts works with decorator | - | **Critical: The script we need to debug!** Checklist: ✓ Decorator added |
+| 3.3 | [ ] | Convert dap/ scripts (8 files) | All 8 DAP scripts converted with decorators | - | compare, exceptions, filter, logs, search, stats, summary, timeline. Checklist: ✓ All 8 have decorators |
+| 3.4 | [ ] | Convert diag/ scripts (1 file) | diagnostic.collect.ts works with decorator | - | Single diagnostic script. Checklist: ✓ Decorator added |
 | 3.5 | [ ] | Test batch 1 scripts in Extension Host | All scripts execute correctly | - | Run via CLI |
 | 3.6 | [ ] | Verify debugging works for code.replace-method | Can set breakpoints in replace-method.ts | - | **Primary goal achieved!** |
 | 3.7 | [ ] | Verify ScriptResult pattern compliance | All scripts use ScriptResult.success/failure/fromError, no ActionResult | - | Check error-handling-architecture.md compliance |
@@ -457,13 +457,13 @@ export class SetBreakpointScript extends ActionScript { }
 | #   | Status | Task | Success Criteria | Log | Notes |
 |-----|--------|------|------------------|-----|-------|
 | 4.0 | [ ] | Write scratch tests for batch 2 conversion | Tests verify remaining scripts execute in Extension Host | - | Extend tests/scratch/script-conversion.test.ts |
-| 4.1 | [ ] | Convert debug/ scripts (14 files) | All debug scripts in TypeScript | - | Largest category |
-| 4.2 | [ ] | Convert editor/ scripts (3 files) | Editor scripts converted | - | get-context, goto-line, show-testing-ui |
-| 4.3 | [ ] | Convert search/ scripts (1 file) | symbol-search.ts works | - | Single search script |
-| 4.4 | [ ] | Convert symbol/ scripts (3 files) | Symbol scripts converted | - | navigate, rename, [one more] |
-| 4.5 | [ ] | Convert tests/ scripts (2 files) | Test scripts converted | - | debug-single, [one more] |
-| 4.6 | [ ] | Convert utils/ scripts (2 files) | Utility scripts converted | - | restart-vscode, [one more] |
-| 4.7 | [ ] | Convert bridge/ script (1 file) | Bridge status script converted | - | Final script |
+| 4.1 | [ ] | Convert debug/ scripts (14 files) | All debug scripts in TypeScript with decorators | - | Largest category. Checklist: ✓ All 14 have @RegisterScript (Insight #3) |
+| 4.2 | [ ] | Convert editor/ scripts (3 files) | Editor scripts converted with decorators | - | get-context, goto-line, show-testing-ui. Checklist: ✓ All 3 have decorators |
+| 4.3 | [ ] | Convert search/ scripts (1 file) | symbol-search.ts works with decorator | - | Single search script. Checklist: ✓ Decorator added |
+| 4.4 | [ ] | Convert symbol/ scripts (3 files) | Symbol scripts converted with decorators | - | navigate, rename, [one more]. Checklist: ✓ All 3 have decorators |
+| 4.5 | [ ] | Convert tests/ scripts (2 files) | Test scripts converted with decorators | - | debug-single, [one more]. Checklist: ✓ Both have decorators |
+| 4.6 | [ ] | Convert utils/ scripts (2 files) | Utility scripts converted with decorators | - | restart-vscode, [one more]. Checklist: ✓ Both have decorators |
+| 4.7 | [ ] | Convert bridge/ script (1 file) | Bridge status script converted with decorator | - | Final script. Checklist: ✓ Decorator added |
 | 4.8 | [ ] | Verify ScriptResult pattern compliance | All batch 2 scripts use ScriptResult factory | - | Check error-handling-architecture.md compliance |
 | 4.9 | [ ] | Verify all 41 scripts converted | No .js files remain in vsc-scripts | - | Complete conversion |
 
@@ -494,8 +494,10 @@ export class SetBreakpointScript extends ActionScript { }
 | 5.2 | [ ] | Update ScriptRegistry to use decorators | Registry reads decorator metadata | - | Remove loadModuleFromDisk |
 | 5.3 | [ ] | Remove dynamicLoader usage | No more eval('require') | - | Clean removal |
 | 5.4 | [ ] | Verify all scripts register | 41 scripts in registry | - | Count at runtime |
+| 5.4a | [ ] | Add manifest-decorator validation | Registry logs warnings for missing decorators or name mismatches | - | Compares manifest.json to decorator metadata, prevents "ghost scripts" (Insight #1 from Phase 2 /didyouknow) |
 | 5.5 | [ ] | Test debugging across all scripts | Breakpoints work everywhere | - | Sample 5-10 scripts |
 | 5.6 | [ ] | Remove old duck-typing code | Clean type-safe registration | - | Simplify ScriptRegistry |
+| 5.6a | [ ] | Review: Verify no class.name dependencies | No code uses .constructor.name or .name for script identification | - | Search codebase for class name checks - minification mangles names in production (Insight #5 from Phase 2 /didyouknow). Registry must use decorator metadata only. |
 | 5.7 | [ ] | Optimize import order if needed | No circular dependency issues | - | May need careful ordering |
 | 5.8 | [ ] | Performance check | Startup time acceptable | - | Should be <1s overhead |
 
@@ -587,14 +589,14 @@ docs/how/
 ### Phase Completion Checklist
 - [x] Phase 0: BridgeContext Type Safety - COMPLETE
 - [x] Phase 1: TypeScript Infrastructure Setup - COMPLETE
-- [ ] Phase 2: Decorator System Implementation
+- [x] Phase 2: Decorator System Implementation - COMPLETE
 - [ ] Phase 3: Script Conversion (Batch 1)
 - [ ] Phase 4: Script Conversion (Batch 2)
 - [ ] Phase 5: Registry Integration
 - [ ] Phase 6: Validation & Testing
 - [ ] Phase 7: Documentation
 
-**Overall Progress**: 2/8 phases complete (25%)
+**Overall Progress**: 3/8 phases complete (37.5%)
 
 ### Primary Goal
 - [ ] **Can debug code.replace-method to find symbol resolution issue**
@@ -632,6 +634,15 @@ docs/how/
   - Updated build-manifest.cts to support TypeScript files during transition
   - Verified build and debugging with simple TypeScript files
   - All infrastructure in place for subsequent script conversion phases
+
+[^8]: Phase 2 (Tasks 2.1-2.8) - Decorator System Implementation completed
+  - [`file:packages/extension/src/core/scripts/decorators.ts`](packages/extension/src/core/scripts/decorators.ts) - RegisterScript decorator with lazy initialization
+  - [`file:packages/extension/test/scratch/decorator-tests.test.ts`](packages/extension/test/scratch/decorator-tests.test.ts) - Comprehensive decorator behavior tests
+  - Verified decorator metadata storage with QueryScript, ActionScript, and WaitableScript base classes
+  - Created example script with decorator (debug.status-example.ts)
+  - Documentation includes usage patterns and lazy init rationale
+  - All decorator tests passing in Extension Host
+  - See: [Execution Log](tasks/phase-2-decorator-system/execution.log.md) for detailed task breakdown
 
 **Initial State**:
 ```markdown
