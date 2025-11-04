@@ -79,9 +79,12 @@ async function discoverScripts(dir: string, baseDir: string = dir): Promise<Mani
                     // Calculate relative path from scripts directory
                     const relPath = path.relative(baseDir, scriptPath);
 
+                    // Convert .ts extension to .js for runtime loading from out/ directory
+                    const runtimeRelPath = relPath.replace(/\.ts$/, '.js');
+
                     entries.push({
                         metadata,
-                        scriptRelPath: relPath
+                        scriptRelPath: runtimeRelPath
                     });
 
                     console.log(`✓ Discovered script: ${metadata.alias} (${relPath})`);

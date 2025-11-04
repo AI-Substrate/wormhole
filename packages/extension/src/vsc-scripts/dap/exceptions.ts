@@ -1,6 +1,8 @@
-const { z } = require('zod');
-const { QueryScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * DAP Exceptions Script - Exception Inspector
@@ -10,25 +12,21 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  *
  * Use this to deep dive into what was happening around each exception.
  */
-class DapExceptionsScript extends QueryScript {
+@RegisterScript('dap.exceptions')
+export class DapExceptionsScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
             sessionId: z.string().optional(),
-            count: z.number().int().min(1).max(100).optional().default(10),
-            withContext: z.boolean().optional().default(true),
-            contextLines: z.number().int().min(0).max(50).optional().default(5)
+            count: z.coerce.number().int().min(1).max(100).optional().default(10),
+            withContext: z.coerce.boolean().optional().default(true),
+            contextLines: z.coerce.number().int().min(0).max(50).optional().default(5)
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{sessionId?: string, count?: number, withContext?: boolean, contextLines?: number}} params
-     * @returns {Promise<object>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         // Access the global capture service
-        const service = global.debugSessionCaptureService;
+        const service = (global as any).debugSessionCaptureService;
         if (!service) {
             return ScriptResult.failure(
                 'Debug session capture service not available',
@@ -73,8 +71,8 @@ class DapExceptionsScript extends QueryScript {
         const exceptionsToShow = session.exceptions.slice(-params.count);
 
         // Build exception details with context
-        const exceptionDetails = exceptionsToShow.map((exception, idx) => {
-            const result = {
+        const exceptionDetails = exceptionsToShow.map((exception: any, idx: number) => {
+            const result: any = {
                 exception: {
                     message: exception.message,
                     description: exception.description,
@@ -85,7 +83,7 @@ class DapExceptionsScript extends QueryScript {
             };
 
             // Find the associated stopped event
-            const stoppedEvent = session.stoppedEvents.find(e =>
+            const stoppedEvent = session.stoppedEvents.find((e: any) =>
                 e.reason === 'exception' &&
                 Math.abs(e.threadId - (exception.threadId || 0)) < 100 // rough match
             );
@@ -112,12 +110,12 @@ class DapExceptionsScript extends QueryScript {
                 const afterEnd = Math.min(session.outputs.length, estimatedOutputIndex + params.contextLines);
 
                 result.context = {
-                    before: session.outputs.slice(beforeStart, estimatedOutputIndex).map(o => ({
+                    before: session.outputs.slice(beforeStart, estimatedOutputIndex).map((o: any) => ({
                         ts: o.ts,
                         category: o.category,
                         text: o.text.slice(0, 200)
                     })),
-                    after: session.outputs.slice(estimatedOutputIndex, afterEnd).map(o => ({
+                    after: session.outputs.slice(estimatedOutputIndex, afterEnd).map((o: any) => ({
                         ts: o.ts,
                         category: o.category,
                         text: o.text.slice(0, 200)
@@ -156,4 +154,4 @@ class DapExceptionsScript extends QueryScript {
     }
 }
 
-module.exports = { DapExceptionsScript };
+export default DapExceptionsScript;

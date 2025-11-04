@@ -1,36 +1,30 @@
-const fs = require('fs');
-const { z } = require('zod');
-const { ActionScript } = require('@script-base');
-const { ScriptResult } = require('@core/scripts/ScriptResult');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-
-/**
- * @typedef {any} ScriptContext
- */
+import * as fs from 'fs';
+import { z } from 'zod';
+import { ActionScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
+import * as vscode from 'vscode';
 
 /**
  * Set breakpoint action script
  * Supports conditions, hit conditions, and log messages
  */
-class SetBreakpointScript extends ActionScript {
+@RegisterScript('breakpoint.set')
+export class SetBreakpointScript extends ActionScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
             path: z.string().min(1),
-            line: z.number().int().min(1),
+            line: z.coerce.number().int().min(1), // CLI passes strings, use coerce
             condition: z.string().optional(),
             hitCondition: z.string().optional(),
             logMessage: z.string().optional()
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{path: string, line: number, condition?: string, hitCondition?: string, logMessage?: string}} params
-     * @returns {Promise<{success: boolean, reason?: string, details?: any}>}
-     */
-    async execute(bridgeContext, params) {
-        const vscode = bridgeContext.vscode;
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
+        const vscodeApi = bridgeContext.vscode;
 
         // Validate file exists
         if (!fs.existsSync(params.path)) {
@@ -60,18 +54,18 @@ class SetBreakpointScript extends ActionScript {
                 console.log(`[bp.set] Warning: Line ${params.line} is beyond end of file (${lineCount} lines)`);
                 // Still allow it as VS Code handles this gracefully
             }
-        } catch (err) {
+        } catch (err: any) {
             // If we can't read the file, just proceed - VS Code will handle it
             console.error(`[bp.set] Could not verify line bounds: ${err.message}`);
         }
 
         // Create source breakpoint
-        const uri = vscode.Uri.file(params.path);
-        const position = new vscode.Position(params.line - 1, 0); // VS Code uses 0-indexed lines
-        const location = new vscode.Location(uri, position);
+        const uri = vscodeApi.Uri.file(params.path);
+        const position = new vscodeApi.Position(params.line - 1, 0); // VS Code uses 0-indexed lines
+        const location = new vscodeApi.Location(uri, position);
 
         // Create the breakpoint with all optional properties
-        const sourceBreakpoint = new vscode.SourceBreakpoint(
+        const sourceBreakpoint = new vscodeApi.SourceBreakpoint(
             location,
             true, // enabled
             params.condition, // condition (optional)
@@ -80,7 +74,7 @@ class SetBreakpointScript extends ActionScript {
         );
 
         // Add the breakpoint
-        vscode.debug.addBreakpoints([sourceBreakpoint]);
+        vscodeApi.debug.addBreakpoints([sourceBreakpoint]);
 
         // Log to output channel
         if (bridgeContext.outputChannel) {
@@ -106,4 +100,4 @@ class SetBreakpointScript extends ActionScript {
     }
 }
 
-module.exports = { SetBreakpointScript };
+export default SetBreakpointScript;

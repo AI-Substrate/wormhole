@@ -1,12 +1,14 @@
-const { z } = require('zod');
-const { ActionScript } = require('@script-base');
-const { ScriptResult } = require('@core/scripts/ScriptResult');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-const {
+import { z } from 'zod';
+import { ActionScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
+import {
     resolveSymbolInput,
     getLSPResultWithTimeout
-} = require('@core/util/symbol-resolver');
-const fs = require('fs');
+} from '@core/util/symbol-resolver';
+import * as vscode from 'vscode';
+import * as fs from 'fs';
 
 /**
  * Method replacement script - replace entire method declarations using LSP
@@ -15,7 +17,8 @@ const fs = require('fs');
  * DESTRUCTIVE OPERATION: Modifies files with best-effort save (non-atomic)
  * Uses whole-symbol replacement (DocumentSymbol.range) matching Serena production tool
  */
-class ReplaceMethodScript extends ActionScript {
+@RegisterScript('code.replace-method')
+export class ReplaceMethodScript extends ActionScript {
     constructor() {
         super();
         this.paramsSchema = z.object({
@@ -45,12 +48,14 @@ class ReplaceMethodScript extends ActionScript {
 
     /**
      * Execute method replacement
-     * @param {any} bridgeContext
-     * @param {{nodeId?: string, path?: string, symbol?: string, replacement: string}} params
-     * @returns {Promise<ActionResult>}
      */
-    async execute(bridgeContext, params) {
-        const vscode = bridgeContext.vscode;
+    async execute(bridgeContext: IBridgeContext, params: {
+        nodeId?: string;
+        path?: string;
+        symbol?: string;
+        replacement: string;
+    }): Promise<any> {
+        const vscodeApi = bridgeContext.vscode;
 
         try {
             // Step 1: Resolve symbol input to position (Phase 1 API - T007)
@@ -61,7 +66,7 @@ class ReplaceMethodScript extends ActionScript {
             });
 
             if (!resolution) {
-                const error = new Error(
+                const error: any = new Error(
                     params.nodeId
                         ? `Symbol not found for Flowspace ID "${params.nodeId}"`
                         : `Symbol "${params.symbol}" not found in ${params.path}`
@@ -72,12 +77,12 @@ class ReplaceMethodScript extends ActionScript {
 
             // Step 2: Get DocumentSymbol from LSP (proven in dynamic scripts - T007)
             const symbols = await this._executeDocumentSymbolProvider(
-                vscode,
+                vscodeApi,
                 resolution.uri
             );
 
             if (!symbols || symbols.length === 0) {
-                const error = new Error('No document symbol provider available for this file type');
+                const error: any = new Error('No document symbol provider available for this file type');
                 error.code = 'E_NO_LANGUAGE_SERVER';
                 throw error;
             }
@@ -86,17 +91,17 @@ class ReplaceMethodScript extends ActionScript {
             const targetSymbol = this._findSymbolAtPosition(symbols, resolution.position);
 
             if (!targetSymbol) {
-                const error = new Error(`No symbol found at resolved position in ${resolution.uri.fsPath}`);
+                const error: any = new Error(`No symbol found at resolved position in ${resolution.uri.fsPath}`);
                 error.code = 'E_NOT_FOUND';
                 throw error;
             }
 
             // Step 4: Capture old text for response (before replacement - T008)
-            const doc = await vscode.workspace.openTextDocument(resolution.uri);
+            const doc = await vscodeApi.workspace.openTextDocument(resolution.uri);
             const oldText = doc.getText(targetSymbol.range);
 
             // Step 5: Create WorkspaceEdit with whole-symbol replacement (T008)
-            const edit = new vscode.WorkspaceEdit();
+            const edit = new vscodeApi.WorkspaceEdit();
             edit.replace(resolution.uri, targetSymbol.range, params.replacement);
 
             // Step 6: Extract files and pre-validate permissions (T009, T010)
@@ -104,7 +109,7 @@ class ReplaceMethodScript extends ActionScript {
             await this._validateFilesWritable(files);
 
             // Step 7: Apply WorkspaceEdit with best-effort save (T011)
-            const saveResults = await this._applyWorkspaceEditSafely(vscode, edit);
+            const saveResults = await this._applyWorkspaceEditSafely(vscodeApi, edit);
 
             // Step 8: Format response (T012)
             return ScriptResult.success({
@@ -133,7 +138,7 @@ class ReplaceMethodScript extends ActionScript {
                 }
             });
 
-        } catch (error) {
+        } catch (error: any) {
             // T013: Comprehensive error handling
             return this._handleError(error);
         }
@@ -143,27 +148,26 @@ class ReplaceMethodScript extends ActionScript {
      * Execute DocumentSymbol provider with timeout protection
      * @private
      */
-    async _executeDocumentSymbolProvider(vscode, uri) {
-        const result = await getLSPResultWithTimeout(
-            'vscode.executeDocumentSymbolProvider',
-            uri
+    private async _executeDocumentSymbolProvider(vscodeApi: typeof vscode, uri: vscode.Uri): Promise<vscode.DocumentSymbol[]> {
+        const result = await getLSPResultWithTimeout<vscode.DocumentSymbol[]>(
+            Promise.resolve(vscodeApi.commands.executeCommand('vscode.executeDocumentSymbolProvider', uri)) as Promise<vscode.DocumentSymbol[]>
         );
 
         if (result === 'timeout') {
-            const error = new Error('LSP document symbol provider timeout (10s)');
+            const error: any = new Error('LSP document symbol provider timeout (10s)');
             error.code = 'E_TIMEOUT';
             throw error;
         }
 
-        return result; // DocumentSymbol[] or null/undefined
+        return result as vscode.DocumentSymbol[]; // DocumentSymbol[] or null/undefined
     }
 
     /**
      * Find symbol at specified position using hierarchical search
      * @private
      */
-    _findSymbolAtPosition(symbols, position) {
-        const findInSymbols = (syms) => {
+    private _findSymbolAtPosition(symbols: vscode.DocumentSymbol[], position: vscode.Position): vscode.DocumentSymbol | null {
+        const findInSymbols = (syms: vscode.DocumentSymbol[]): vscode.DocumentSymbol | null => {
             for (const sym of syms) {
                 // Check if position is within this symbol's range
                 if (this._containsPosition(sym.range, position)) {
@@ -188,7 +192,7 @@ class ReplaceMethodScript extends ActionScript {
      * Check if range contains position
      * @private
      */
-    _containsPosition(range, position) {
+    private _containsPosition(range: vscode.Range, position: vscode.Position): boolean {
         if (position.line < range.start.line || position.line > range.end.line) {
             return false;
         }
@@ -205,8 +209,8 @@ class ReplaceMethodScript extends ActionScript {
      * Extract unique file paths from WorkspaceEdit (T009)
      * @private
      */
-    _extractFilesFromEdit(edit) {
-        const files = [];
+    private _extractFilesFromEdit(edit: vscode.WorkspaceEdit): string[] {
+        const files: string[] = [];
         for (const [uri, _edits] of edit.entries()) {
             files.push(uri.fsPath);
         }
@@ -217,11 +221,11 @@ class ReplaceMethodScript extends ActionScript {
      * Validate all files are writable (T010 - pre-validation)
      * @private
      */
-    async _validateFilesWritable(files) {
+    private async _validateFilesWritable(files: string[]): Promise<void> {
         for (const file of files) {
             // Check file exists
             if (!fs.existsSync(file)) {
-                const error = new Error(`Cannot apply edit: ${file} does not exist`);
+                const error: any = new Error(`Cannot apply edit: ${file} does not exist`);
                 error.code = 'E_NOT_FOUND';
                 throw error;
             }
@@ -230,7 +234,7 @@ class ReplaceMethodScript extends ActionScript {
             try {
                 fs.accessSync(file, fs.constants.W_OK);
             } catch {
-                const error = new Error(`Cannot apply edit: ${file} is read-only`);
+                const error: any = new Error(`Cannot apply edit: ${file} is read-only`);
                 error.code = 'E_FILE_READ_ONLY';
                 throw error;
             }
@@ -242,12 +246,15 @@ class ReplaceMethodScript extends ActionScript {
      * Insight #1: Document save is NOT atomic - try-catch per file with detailed reporting
      * @private
      */
-    async _applyWorkspaceEditSafely(vscode, edit) {
+    private async _applyWorkspaceEditSafely(vscodeApi: typeof vscode, edit: vscode.WorkspaceEdit): Promise<{
+        succeeded: string[];
+        failed: Array<{ file: string; reason: string }>;
+    }> {
         // Apply edit (atomic - all or nothing)
-        const applied = await vscode.workspace.applyEdit(edit);
+        const applied = await vscodeApi.workspace.applyEdit(edit);
 
         if (!applied) {
-            const error = new Error(
+            const error: any = new Error(
                 'E_OPERATION_FAILED: Cannot apply replacement. Common causes: ' +
                 '(1) File locked by another application, ' +
                 '(2) File modified concurrently, ' +
@@ -259,15 +266,15 @@ class ReplaceMethodScript extends ActionScript {
         }
 
         // Save affected documents (best-effort - Insight #1)
-        const succeeded = [];
-        const failed = [];
+        const succeeded: string[] = [];
+        const failed: Array<{ file: string; reason: string }> = [];
 
         for (const [uri, _edits] of edit.entries()) {
             try {
-                const doc = await vscode.workspace.openTextDocument(uri);
+                const doc = await vscodeApi.workspace.openTextDocument(uri);
                 await doc.save();
                 succeeded.push(uri.fsPath);
-            } catch (saveError) {
+            } catch (saveError: any) {
                 failed.push({
                     file: uri.fsPath,
                     reason: saveError.message
@@ -282,7 +289,7 @@ class ReplaceMethodScript extends ActionScript {
      * Handle errors with appropriate error codes (T013)
      * @private
      */
-    _handleError(error) {
+    private _handleError(error: any): any {
         // Pass through VS Code errors wholesale - no mucking around
         const errorCode = error.code || ErrorCode.E_INTERNAL;
 
@@ -300,4 +307,4 @@ class ReplaceMethodScript extends ActionScript {
     }
 }
 
-module.exports = { ReplaceMethodScript };
+export default ReplaceMethodScript;

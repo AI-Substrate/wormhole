@@ -1,6 +1,8 @@
-const { z } = require('zod');
-const { QueryScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * DAP Logs Script - Recent Logs Viewer
@@ -10,28 +12,24 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  *
  * Most commonly used script for viewing debug output.
  */
-class DapLogsScript extends QueryScript {
+@RegisterScript('dap.logs')
+export class DapLogsScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
             sessionId: z.string().optional(),
-            count: z.number().int().min(1).max(10000).optional().default(20),
+            count: z.coerce.number().int().min(1).max(10000).optional().default(20),
             category: z.enum(['all', 'stdout', 'stderr', 'console', 'telemetry']).optional().default('all'),
             search: z.string().optional(),
-            since: z.number().optional(), // timestamp in ms or negative offset
-            reverse: z.boolean().optional().default(false),
-            showSource: z.boolean().optional().default(true)
+            since: z.coerce.number().optional(), // timestamp in ms or negative offset
+            reverse: z.coerce.boolean().optional().default(false),
+            showSource: z.coerce.boolean().optional().default(true)
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{sessionId?: string, count?: number, category?: string, search?: string, since?: number, reverse?: boolean, showSource?: boolean}} params
-     * @returns {Promise<object>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         // Access the global capture service
-        const service = global.debugSessionCaptureService;
+        const service = (global as any).debugSessionCaptureService;
         if (!service) {
             return ScriptResult.failure(
                 'Debug session capture service not available',
@@ -70,7 +68,7 @@ class DapLogsScript extends QueryScript {
 
         // Filter by category
         if (params.category !== 'all') {
-            filtered = filtered.filter(o => o.category === params.category);
+            filtered = filtered.filter((o: any) => o.category === params.category);
             filterStats.byCategory = filterStats.original - filtered.length;
         }
 
@@ -78,7 +76,7 @@ class DapLogsScript extends QueryScript {
         if (params.search) {
             const searchRegex = new RegExp(params.search, 'i');
             const beforeSearch = filtered.length;
-            filtered = filtered.filter(o => searchRegex.test(o.text));
+            filtered = filtered.filter((o: any) => searchRegex.test(o.text));
             filterStats.bySearch = beforeSearch - filtered.length;
         }
 
@@ -88,10 +86,10 @@ class DapLogsScript extends QueryScript {
             if (params.since < 0) {
                 // Negative offset: "last N milliseconds"
                 const cutoff = Date.now() + params.since; // since is negative
-                filtered = filtered.filter(o => o.ts >= cutoff);
+                filtered = filtered.filter((o: any) => o.ts >= cutoff);
             } else {
                 // Absolute timestamp
-                filtered = filtered.filter(o => o.ts >= params.since);
+                filtered = filtered.filter((o: any) => o.ts >= params.since);
             }
             filterStats.byTime = beforeTime - filtered.length;
         }
@@ -108,8 +106,8 @@ class DapLogsScript extends QueryScript {
         const logs = filtered.slice(0, params.count);
 
         // Format logs
-        const formattedLogs = logs.map(o => {
-            const result = {
+        const formattedLogs = logs.map((o: any) => {
+            const result: any = {
                 ts: o.ts,
                 relativeTime: o.ts - session.startTime,
                 category: o.category,
@@ -145,4 +143,4 @@ class DapLogsScript extends QueryScript {
     }
 }
 
-module.exports = { DapLogsScript };
+export default DapLogsScript;

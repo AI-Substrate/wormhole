@@ -1,6 +1,8 @@
-const { z } = require('zod');
-const { QueryScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * DAP Compare Script - Session Comparison Tool
@@ -8,7 +10,8 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  * Side-by-side diff of two debug sessions for regression testing.
  * Answers "what changed between this test run and the previous one?"
  */
-class DapCompareScript extends QueryScript {
+@RegisterScript('dap.compare')
+export class DapCompareScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
@@ -18,14 +21,9 @@ class DapCompareScript extends QueryScript {
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{sessionA: string, sessionB: string, compareBy?: string}} params
-     * @returns {Promise<object>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         // Access the global capture service
-        const service = global.debugSessionCaptureService;
+        const service = (global as any).debugSessionCaptureService;
         if (!service) {
             return ScriptResult.failure(
                 'Debug session capture service not available',
@@ -54,7 +52,7 @@ class DapCompareScript extends QueryScript {
         }
 
         // Build comparison based on compareBy parameter
-        const comparison = {};
+        const comparison: any = {};
 
         // Always include count deltas
         comparison.counts = {
@@ -68,13 +66,13 @@ class DapCompareScript extends QueryScript {
 
         // Exception comparison
         if (params.compareBy === 'exceptions' || params.compareBy === 'counts') {
-            const exceptionsA = sessionA.exceptions.map(e => e.message || e.description);
-            const exceptionsB = sessionB.exceptions.map(e => e.message || e.description);
+            const exceptionsA = sessionA.exceptions.map((e: any) => e.message || e.description);
+            const exceptionsB = sessionB.exceptions.map((e: any) => e.message || e.description);
 
             comparison.exceptions = {
-                onlyInA: exceptionsA.filter(msg => !exceptionsB.includes(msg)),
-                onlyInB: exceptionsB.filter(msg => !exceptionsA.includes(msg)),
-                common: exceptionsA.filter(msg => exceptionsB.includes(msg))
+                onlyInA: exceptionsA.filter((msg: string) => !exceptionsB.includes(msg)),
+                onlyInB: exceptionsB.filter((msg: string) => !exceptionsA.includes(msg)),
+                common: exceptionsA.filter((msg: string) => exceptionsB.includes(msg))
             };
         }
 
@@ -109,13 +107,13 @@ class DapCompareScript extends QueryScript {
 
         // Output comparison (detailed)
         if (params.compareBy === 'outputs') {
-            const categoriesA = {};
-            const categoriesB = {};
+            const categoriesA: Record<string, number> = {};
+            const categoriesB: Record<string, number> = {};
 
-            sessionA.outputs.forEach(o => {
+            sessionA.outputs.forEach((o: any) => {
                 categoriesA[o.category] = (categoriesA[o.category] || 0) + 1;
             });
-            sessionB.outputs.forEach(o => {
+            sessionB.outputs.forEach((o: any) => {
                 categoriesB[o.category] = (categoriesB[o.category] || 0) + 1;
             });
 
@@ -127,7 +125,7 @@ class DapCompareScript extends QueryScript {
 
             // Calculate deltas for each category
             const allCategories = new Set([...Object.keys(categoriesA), ...Object.keys(categoriesB)]);
-            allCategories.forEach(cat => {
+            allCategories.forEach((cat: string) => {
                 const countA = categoriesA[cat] || 0;
                 const countB = categoriesB[cat] || 0;
                 comparison.outputBreakdown.categoryDeltas[cat] = countA - countB;
@@ -164,4 +162,4 @@ class DapCompareScript extends QueryScript {
     }
 }
 
-module.exports = { DapCompareScript };
+export default DapCompareScript;

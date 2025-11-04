@@ -1,19 +1,17 @@
-const { z } = require('zod');
-const os = require('os');
-
-// Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-
-/**
- * @typedef {any} ScriptContext
- */
+import { z } from 'zod';
+import * as os from 'os';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
+import * as vscode from 'vscode';
 
 /**
  * Collect diagnostics query script
  * Collects system, extension, and debug session diagnostics
  */
-class CollectDiagnosticsScript extends QueryScript {
+@RegisterScript('diag.collect')
+export class CollectDiagnosticsScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
@@ -21,23 +19,18 @@ class CollectDiagnosticsScript extends QueryScript {
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{path?: string}} params
-     * @returns {Promise<{success: boolean, data?: any, reason?: string}>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         try {
-            const vscode = bridgeContext.vscode;
+            const vscodeApi = bridgeContext.vscode;
 
             // Collect VS Code diagnostics
-            const diagnosticCollection = vscode.languages.getDiagnostics();
-            let diagnostics = [];
+            const diagnosticCollection = vscodeApi.languages.getDiagnostics();
+            let diagnostics: any[] = [];
 
             if (params.path) {
                 // Get diagnostics for specific file
-                const uri = vscode.Uri.file(params.path);
-                const fileDiagnostics = vscode.languages.getDiagnostics(uri);
+                const uri = vscodeApi.Uri.file(params.path);
+                const fileDiagnostics = vscodeApi.languages.getDiagnostics(uri);
                 diagnostics = fileDiagnostics.map(d => ({
                     file: params.path,
                     line: d.range.start.line + 1, // Convert to 1-indexed
@@ -67,8 +60,8 @@ class CollectDiagnosticsScript extends QueryScript {
 
             // Collect system info
             const systemInfo = {
-                vscodeVersion: vscode.version,
-                extensionVersion: vscode.extensions.getExtension('AI-Substrate.vsc-bridge-extension')?.packageJSON?.version || 'dev',
+                vscodeVersion: vscodeApi.version,
+                extensionVersion: vscodeApi.extensions.getExtension('AI-Substrate.vsc-bridge-extension')?.packageJSON?.version || 'dev',
                 platform: os.platform(),
                 arch: os.arch(),
                 nodeVersion: process.version,
@@ -76,13 +69,13 @@ class CollectDiagnosticsScript extends QueryScript {
             };
 
             // Collect debug session info
-            const activeSession = vscode.debug.activeDebugSession;
+            const activeSession = vscodeApi.debug.activeDebugSession;
             const debugInfo = {
                 hasActiveSession: !!activeSession,
                 sessionId: activeSession?.id,
                 sessionName: activeSession?.name,
                 sessionType: activeSession?.type,
-                breakpointCount: vscode.debug.breakpoints.length
+                breakpointCount: vscodeApi.debug.breakpoints.length
             };
 
             // Log to output channel
@@ -98,20 +91,20 @@ class CollectDiagnosticsScript extends QueryScript {
                 debug: debugInfo,
                 timestamp: new Date().toISOString()
             });
-        } catch (error) {
+        } catch (error: any) {
             return ScriptResult.fromError(error, ErrorCode.E_OPERATION_FAILED);
         }
     }
 
-    getSeverityName(severity) {
+    getSeverityName(severity: vscode.DiagnosticSeverity): string {
         switch (severity) {
-            case 0: return 'error';
-            case 1: return 'warning';
-            case 2: return 'info';
-            case 3: return 'hint';
+            case vscode.DiagnosticSeverity.Error: return 'error';
+            case vscode.DiagnosticSeverity.Warning: return 'warning';
+            case vscode.DiagnosticSeverity.Information: return 'info';
+            case vscode.DiagnosticSeverity.Hint: return 'hint';
             default: return 'unknown';
         }
     }
 }
 
-module.exports = { CollectDiagnosticsScript };
+export default CollectDiagnosticsScript;

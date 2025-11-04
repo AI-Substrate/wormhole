@@ -1,6 +1,8 @@
-const { z } = require('zod');
-const { QueryScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * DAP Summary Script - Session Overview Dashboard
@@ -10,23 +12,19 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  *
  * Use this first when paused at a breakpoint to get an overview of session state.
  */
-class DapSummaryScript extends QueryScript {
+@RegisterScript('dap.summary')
+export class DapSummaryScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
             sessionId: z.string().optional(),
-            compact: z.boolean().optional().default(false)
+            compact: z.coerce.boolean().optional().default(false)
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{sessionId?: string, compact?: boolean}} params
-     * @returns {Promise<object>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         // Access the global capture service
-        const service = global.debugSessionCaptureService;
+        const service = (global as any).debugSessionCaptureService;
         if (!service) {
             return ScriptResult.failure(
                 'Debug session capture service not available',
@@ -62,13 +60,13 @@ class DapSummaryScript extends QueryScript {
 
         const totalOutputs = session.outputs.length;
         const byCategory = {
-            stdout: session.outputs.filter(o => o.category === 'stdout').length,
-            stderr: session.outputs.filter(o => o.category === 'stderr').length,
-            console: session.outputs.filter(o => o.category === 'console').length,
-            telemetry: session.outputs.filter(o => o.category === 'telemetry').length
+            stdout: session.outputs.filter((o: any) => o.category === 'stdout').length,
+            stderr: session.outputs.filter((o: any) => o.category === 'stderr').length,
+            console: session.outputs.filter((o: any) => o.category === 'console').length,
+            telemetry: session.outputs.filter((o: any) => o.category === 'telemetry').length
         };
 
-        const totalDataSize = session.outputs.reduce((sum, o) => sum + (o.text?.length || 0), 0);
+        const totalDataSize = session.outputs.reduce((sum: number, o: any) => sum + (o.text?.length || 0), 0);
         const avgOutputLength = totalOutputs > 0 ? Math.round(totalDataSize / totalOutputs) : 0;
         const eventsPerSecond = durationSec > 0 ? (totalOutputs / durationSec).toFixed(2) : '0';
 
@@ -106,7 +104,7 @@ class DapSummaryScript extends QueryScript {
                 byCategory,
                 exceptions: session.exceptions.length,
                 stoppedEvents: session.stoppedEvents.length,
-                breakpointHits: session.stoppedEvents.filter(e => e.reason === 'breakpoint').length
+                breakpointHits: session.stoppedEvents.filter((e: any) => e.reason === 'breakpoint').length
             },
             metrics: {
                 totalDataSize,
@@ -123,8 +121,8 @@ class DapSummaryScript extends QueryScript {
                 truncated: session.truncated || false
             },
             samples: {
-                first: firstOutputs.map(o => ({ ts: o.ts, category: o.category, text: o.text.slice(0, 100) })),
-                last: lastOutputs.map(o => ({ ts: o.ts, category: o.category, text: o.text.slice(0, 100) })),
+                first: firstOutputs.map((o: any) => ({ ts: o.ts, category: o.category, text: o.text.slice(0, 100) })),
+                last: lastOutputs.map((o: any) => ({ ts: o.ts, category: o.category, text: o.text.slice(0, 100) })),
                 lastException: lastException ? {
                     message: lastException.message,
                     description: lastException.description
@@ -144,4 +142,4 @@ class DapSummaryScript extends QueryScript {
     }
 }
 
-module.exports = { DapSummaryScript };
+export default DapSummaryScript;

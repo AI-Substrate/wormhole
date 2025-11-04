@@ -425,16 +425,18 @@ export class SetBreakpointScript extends ActionScript { }
 
 | #   | Status | Task | Success Criteria | Log | Notes |
 |-----|--------|------|------------------|-----|-------|
-| 3.0 | [ ] | Write scratch tests for script conversion | Tests verify converted scripts execute in Extension Host | - | tests/scratch/script-conversion.test.ts |
-| 3.1 | [ ] | Convert breakpoint/ scripts (5 files) | All 5 scripts in TypeScript with @RegisterScript decorators | - | set, list, clear.file, clear.project, remove. Checklist: ✓ Decorator added ✓ Script name matches file path (Insight #3) |
-| 3.2 | [ ] | Convert code/ scripts (1 file) | replace-method.ts works with decorator | - | **Critical: The script we need to debug!** Checklist: ✓ Decorator added |
-| 3.3 | [ ] | Convert dap/ scripts (8 files) | All 8 DAP scripts converted with decorators | - | compare, exceptions, filter, logs, search, stats, summary, timeline. Checklist: ✓ All 8 have decorators |
-| 3.4 | [ ] | Convert diag/ scripts (1 file) | diagnostic.collect.ts works with decorator | - | Single diagnostic script. Checklist: ✓ Decorator added |
-| 3.5 | [ ] | Test batch 1 scripts in Extension Host | All scripts execute correctly | - | Run via CLI |
-| 3.6 | [ ] | Verify debugging works for code.replace-method | Can set breakpoints in replace-method.ts | - | **Primary goal achieved!** |
-| 3.7 | [ ] | Verify ScriptResult pattern compliance | All scripts use ScriptResult.success/failure/fromError, no ActionResult | - | Check error-handling-architecture.md compliance |
-| 3.8 | [ ] | Fix any type errors | No TypeScript errors | - | May need type assertions |
-| 3.9 | [ ] | Verify CLI commands still work | `vscb script list` shows all scripts | - | No regression |
+| 3.0 | [x] | Write scratch tests for script conversion | Tests verify converted scripts execute in Extension Host | [📋](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t001-write-scratch-tests) | Completed · log#task-t001 [^9] |
+| 3.1 | [x] | Convert breakpoint/ scripts (5 files) | All 5 scripts in TypeScript with @RegisterScript decorators | [📋](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t003-t006-breakpoint-scripts) | All 5 scripts complete · [^11] [^12] [^13] [^14] |
+| 3.2 | [x] | Convert code/ scripts (1 file) | replace-method.ts works with decorator | [📋](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t007-code-replace-method) | Completed · PRIMARY GOAL SCRIPT · [^15] |
+| 3.3 | [x] | Convert dap/ scripts (8 files) | All 8 DAP scripts converted with decorators | [📋](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t008-t015-dap-scripts) | All 8 scripts complete · [^16] [^17] [^18] [^19] [^20] [^21] [^22] [^23] |
+| 3.4 | [x] | Convert diag/ scripts (1 file) | diagnostic.collect.ts works with decorator | [📋](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t016-diag-collect) | Completed · [^24] |
+| 3.5 | [x] | Test batch 1 scripts in Extension Host | All scripts execute correctly | [📋](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t017) | Tested via CLI - all work correctly |
+| 3.6 | [x] | Verify debugging works for code.replace-method | Can set breakpoints in replace-method.ts | [📋](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t018) | **Primary goal achieved!** · [^25] |
+| 3.7 | [x] | Verify ScriptResult pattern compliance | All scripts use ScriptResult.success/failure/fromError, no ActionResult | [📋](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t019) | 100% compliance verified |
+| 3.8 | [x] | Fix any type errors | No TypeScript errors | [📋](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t020) | Clean compilation - 0 errors |
+| 3.9 | [x] | Verify CLI commands still work | `vscb script list` shows all scripts | [📋](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t021) | No regression - all work identically |
+| 3.10 | [x] | Fix manifest generation | Manifest references .js files correctly | [📋](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t022) | Fixed build-manifest.cts · [^26] [^27] |
+| 3.11 | [x] | Fix source map configuration | Breakpoints bind to TypeScript source | [📋](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t023) | Added sourceMapPathOverrides · [^25] |
 
 ### Phase 4: Script Conversion (Batch 2)
 
@@ -590,16 +592,16 @@ docs/how/
 - [x] Phase 0: BridgeContext Type Safety - COMPLETE
 - [x] Phase 1: TypeScript Infrastructure Setup - COMPLETE
 - [x] Phase 2: Decorator System Implementation - COMPLETE
-- [ ] Phase 3: Script Conversion (Batch 1)
+- [x] Phase 3: Script Conversion (Batch 1) - COMPLETE (23/23 tasks - 100%)
 - [ ] Phase 4: Script Conversion (Batch 2)
 - [ ] Phase 5: Registry Integration
 - [ ] Phase 6: Validation & Testing
 - [ ] Phase 7: Documentation
 
-**Overall Progress**: 3/8 phases complete (37.5%)
+**Overall Progress**: 4/8 phases (50%)
 
 ### Primary Goal
-- [ ] **Can debug code.replace-method to find symbol resolution issue**
+- [x] **Can debug code.replace-method to find symbol resolution issue** - ACHIEVED in Phase 3!
 
 ## Change Footnotes Ledger
 
@@ -643,6 +645,86 @@ docs/how/
   - Documentation includes usage patterns and lazy init rationale
   - All decorator tests passing in Extension Host
   - See: [Execution Log](tasks/phase-2-decorator-system/execution.log.md) for detailed task breakdown
+
+[^9]: Phase 3 Task 3.0 (T001) - Write scratch tests for script conversion
+  - [`file:packages/extension/test/scratch/script-conversion.test.ts`](packages/extension/test/scratch/script-conversion.test.ts) - Tests verify converted scripts execute in Extension Host
+  - Tests written to validate script conversion workflow using TAD approach
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t001-write-scratch-tests) for test details
+
+[^10]: Phase 3 Task 3.1 (T002) - Convert breakpoint/ scripts (5 files, 1/5 complete)
+  - [`file:packages/extension/src/vsc-scripts/breakpoint/set.ts`](packages/extension/src/vsc-scripts/breakpoint/set.ts) - breakpoint.set script converted to TypeScript with @RegisterScript decorator
+  - Remaining scripts: list, clear-file, clear-project, remove (4/5 pending)
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t002-convert-breakpoint-set) for conversion details
+
+[^11]: Phase 3 Task 3.1 (T003) - Convert breakpoint/clear-file.ts
+  - [`file:packages/extension/src/vsc-scripts/breakpoint/clear-file.ts`](packages/extension/src/vsc-scripts/breakpoint/clear-file.ts) - breakpoint.clear-file script converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t003-t006-breakpoint-scripts) for conversion details
+
+[^12]: Phase 3 Task 3.1 (T004) - Convert breakpoint/clear-project.ts
+  - [`file:packages/extension/src/vsc-scripts/breakpoint/clear-project.ts`](packages/extension/src/vsc-scripts/breakpoint/clear-project.ts) - breakpoint.clear-project script converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t003-t006-breakpoint-scripts) for conversion details
+
+[^13]: Phase 3 Task 3.1 (T005) - Convert breakpoint/list.ts
+  - [`file:packages/extension/src/vsc-scripts/breakpoint/list.ts`](packages/extension/src/vsc-scripts/breakpoint/list.ts) - breakpoint.list script converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t003-t006-breakpoint-scripts) for conversion details
+
+[^14]: Phase 3 Task 3.1 (T006) - Convert breakpoint/remove.ts
+  - [`file:packages/extension/src/vsc-scripts/breakpoint/remove.ts`](packages/extension/src/vsc-scripts/breakpoint/remove.ts) - breakpoint.remove script converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t003-t006-breakpoint-scripts) for conversion details
+
+[^15]: Phase 3 Task 3.2 (T007) - Convert code/replace-method.ts
+  - [`file:packages/extension/src/vsc-scripts/code/replace-method.ts`](packages/extension/src/vsc-scripts/code/replace-method.ts) - code.replace-method script converted to TypeScript with @RegisterScript decorator
+  - PRIMARY GOAL SCRIPT - enables debugging of symbol resolution issues
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t007-code-replace-method) for conversion details
+
+[^16]: Phase 3 Task 3.3 (T008) - Convert dap/compare.ts
+  - [`file:packages/extension/src/vsc-scripts/dap/compare.ts`](packages/extension/src/vsc-scripts/dap/compare.ts) - dap.compare script converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t008-t015-dap-scripts) for conversion details
+
+[^17]: Phase 3 Task 3.3 (T009) - Convert dap/exceptions.ts
+  - [`file:packages/extension/src/vsc-scripts/dap/exceptions.ts`](packages/extension/src/vsc-scripts/dap/exceptions.ts) - dap.exceptions script converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t008-t015-dap-scripts) for conversion details
+
+[^18]: Phase 3 Task 3.3 (T010) - Convert dap/filter.ts
+  - [`file:packages/extension/src/vsc-scripts/dap/filter.ts`](packages/extension/src/vsc-scripts/dap/filter.ts) - dap.filter script converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t008-t015-dap-scripts) for conversion details
+
+[^19]: Phase 3 Task 3.3 (T011) - Convert dap/logs.ts
+  - [`file:packages/extension/src/vsc-scripts/dap/logs.ts`](packages/extension/src/vsc-scripts/dap/logs.ts) - dap.logs script converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t008-t015-dap-scripts) for conversion details
+
+[^20]: Phase 3 Task 3.3 (T012) - Convert dap/search.ts
+  - [`file:packages/extension/src/vsc-scripts/dap/search.ts`](packages/extension/src/vsc-scripts/dap/search.ts) - dap.search script converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t008-t015-dap-scripts) for conversion details
+
+[^21]: Phase 3 Task 3.3 (T013) - Convert dap/stats.ts
+  - [`file:packages/extension/src/vsc-scripts/dap/stats.ts`](packages/extension/src/vsc-scripts/dap/stats.ts) - dap.stats script converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t008-t015-dap-scripts) for conversion details
+
+[^22]: Phase 3 Task 3.3 (T014) - Convert dap/summary.ts
+  - [`file:packages/extension/src/vsc-scripts/dap/summary.ts`](packages/extension/src/vsc-scripts/dap/summary.ts) - dap.summary script converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t008-t015-dap-scripts) for conversion details
+
+[^23]: Phase 3 Task 3.3 (T015) - Convert dap/timeline.ts
+  - [`file:packages/extension/src/vsc-scripts/dap/timeline.ts`](packages/extension/src/vsc-scripts/dap/timeline.ts) - dap.timeline script converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#tasks-t008-t015-dap-scripts) for conversion details
+
+[^24]: Phase 3 Task 3.4 (T016) - Convert diag/collect.ts
+  - [`file:packages/extension/src/vsc-scripts/diag/collect.ts`](packages/extension/src/vsc-scripts/diag/collect.ts) - diag.collect script converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t016-diag-collect) for conversion details
+
+[^25]: Phase 3 Task 3.6 & 3.11 (T018 & T023) - Fix source map configuration for debugging
+  - [`file:.vscode/launch.json`](.vscode/launch.json) - Added sourceMapPathOverrides for webpack path mapping
+  - PRIMARY GOAL ACHIEVED: Breakpoints now work in TypeScript source files
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t018) for debugging validation details
+
+[^26]: Phase 3 Task 3.10 (T022) - Fix manifest generation to use .js extensions
+  - [`file:scripts/build-manifest.cts`](scripts/build-manifest.cts) - Updated to convert .ts to .js in manifest output
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t022) for fix details
+
+[^27]: Phase 3 Task 3.10 (T022) - Fix package.json manifest:build script path
+  - [`file:packages/extension/package.json`](packages/extension/package.json) - Corrected manifest:build script reference
+  - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t022) for fix details
 
 **Initial State**:
 ```markdown

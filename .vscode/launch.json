@@ -16,6 +16,9 @@
 			"outFiles": [
 				"${workspaceFolder}/packages/extension/out/**/*.js"
 			],
+			"sourceMapPathOverrides": {
+				".././*": "${workspaceFolder}/packages/extension/*"
+			},
 			"preLaunchTask": "${defaultBuildTask}"
 		},
 		{

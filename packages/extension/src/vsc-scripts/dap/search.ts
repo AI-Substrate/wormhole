@@ -1,6 +1,8 @@
-const { z } = require('zod');
-const { QueryScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * DAP Search Script - Pattern Search Across Outputs
@@ -8,27 +10,23 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  * Search one or all sessions for text/regex patterns in outputs.
  * Returns matches with surrounding context.
  */
-class DapSearchScript extends QueryScript {
+@RegisterScript('dap.search')
+export class DapSearchScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
             sessionId: z.string().optional(), // or 'all'
             pattern: z.string(),
             category: z.enum(['all', 'stdout', 'stderr', 'console', 'telemetry']).optional(),
-            contextLines: z.number().int().min(0).max(20).optional().default(2),
-            limit: z.number().int().min(1).max(1000).optional().default(50),
-            caseSensitive: z.boolean().optional().default(false)
+            contextLines: z.coerce.number().int().min(0).max(20).optional().default(2),
+            limit: z.coerce.number().int().min(1).max(1000).optional().default(50),
+            caseSensitive: z.coerce.boolean().optional().default(false)
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{sessionId?: string, pattern: string, category?: string, contextLines?: number, limit?: number, caseSensitive?: boolean}} params
-     * @returns {Promise<object>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         // Access the global capture service
-        const service = global.debugSessionCaptureService;
+        const service = (global as any).debugSessionCaptureService;
         if (!service) {
             return ScriptResult.failure(
                 'Debug session capture service not available',
@@ -72,22 +70,22 @@ class DapSearchScript extends QueryScript {
         );
 
         // Search all sessions
-        const allMatches = [];
-        const matchesBySession = {};
+        const allMatches: any[] = [];
+        const matchesBySession: Record<string, number> = {};
 
         for (const session of sessionsToSearch) {
             let outputs = session.outputs;
 
             // Filter by category if specified
             if (params.category && params.category !== 'all') {
-                outputs = outputs.filter(o => o.category === params.category);
+                outputs = outputs.filter((o: any) => o.category === params.category);
             }
 
             // Search for pattern
-            outputs.forEach((output, idx) => {
+            outputs.forEach((output: any, idx: number) => {
                 if (regex.test(output.text)) {
                     // Found a match!
-                    const match = {
+                    const match: any = {
                         sessionId: session.sessionId,
                         output: {
                             ts: output.ts,
@@ -104,12 +102,12 @@ class DapSearchScript extends QueryScript {
                         const afterEnd = Math.min(outputs.length, idx + params.contextLines + 1);
 
                         match.context = {
-                            before: outputs.slice(beforeStart, idx).map(o => ({
+                            before: outputs.slice(beforeStart, idx).map((o: any) => ({
                                 ts: o.ts,
                                 category: o.category,
                                 text: o.text.slice(0, 200)
                             })),
-                            after: outputs.slice(idx + 1, afterEnd).map(o => ({
+                            after: outputs.slice(idx + 1, afterEnd).map((o: any) => ({
                                 ts: o.ts,
                                 category: o.category,
                                 text: o.text.slice(0, 200)
@@ -142,4 +140,4 @@ class DapSearchScript extends QueryScript {
     }
 }
 
-module.exports = { DapSearchScript };
+export default DapSearchScript;

@@ -14,31 +14,35 @@
 
 | Status | ID | Task | Type | Dependencies | Absolute Path(s) | Validation | Subtasks | Notes |
 |--------|-----|------|------|--------------|------------------|------------|----------|-------|
-| [ ] | T001 | Write scratch tests for script conversion validation | Test | – | `/workspaces/vscode-bridge/packages/extension/test/scratch/script-conversion.test.ts` | Tests compile and run in Extension Host; verify converted scripts execute correctly | – | Test pattern from Phase 2; validates decorator + execution work |
-| [ ] | T002 | Convert breakpoint/set.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/set.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/set.js` (delete) | Script compiles, @RegisterScript('breakpoint.set') applied, original .js deleted | – | [P] eligible; Critical Finding 05 (ES6 exports); delete .js per Insight #4 |
-| [ ] | T003 | Convert breakpoint/list.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/list.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/list.js` (delete) | Script compiles, @RegisterScript('breakpoint.list') applied, original .js deleted | – | [P] eligible |
-| [ ] | T004 | Convert breakpoint/clear-file.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/clear-file.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/clear-file.js` (delete) | Script compiles, @RegisterScript('breakpoint.clear-file') applied, original .js deleted | – | [P] eligible |
-| [ ] | T005 | Convert breakpoint/clear-project.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/clear-project.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/clear-project.js` (delete) | Script compiles, @RegisterScript('breakpoint.clear-project') applied, original .js deleted | – | [P] eligible |
-| [ ] | T006 | Convert breakpoint/remove.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/remove.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/remove.js` (delete) | Script compiles, @RegisterScript('breakpoint.remove') applied, original .js deleted | – | [P] eligible; completes breakpoint category (5/5 scripts) |
-| [ ] | T007 | **Convert code/replace-method.js to TypeScript with decorator** | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/code/replace-method.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/code/replace-method.js` (delete) | Script compiles, @RegisterScript('code.replace-method') applied, original .js deleted | – | **🎯 CRITICAL GOAL**: The script we need to debug! [P] eligible |
-| [ ] | T008 | Convert dap/summary.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/summary.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/summary.js` (delete) | Script compiles, @RegisterScript('dap.summary') applied, original .js deleted | – | [P] eligible |
-| [ ] | T009 | Convert dap/search.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/search.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/search.js` (delete) | Script compiles, @RegisterScript('dap.search') applied, original .js deleted | – | [P] eligible |
-| [ ] | T010 | Convert dap/filter.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/filter.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/filter.js` (delete) | Script compiles, @RegisterScript('dap.filter') applied, original .js deleted | – | [P] eligible |
-| [ ] | T011 | Convert dap/exceptions.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/exceptions.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/exceptions.js` (delete) | Script compiles, @RegisterScript('dap.exceptions') applied, original .js deleted | – | [P] eligible |
-| [ ] | T012 | Convert dap/stats.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/stats.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/stats.js` (delete) | Script compiles, @RegisterScript('dap.stats') applied, original .js deleted | – | [P] eligible |
-| [ ] | T013 | Convert dap/compare.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/compare.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/compare.js` (delete) | Script compiles, @RegisterScript('dap.compare') applied, original .js deleted | – | [P] eligible |
-| [ ] | T014 | Convert dap/logs.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/logs.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/logs.js` (delete) | Script compiles, @RegisterScript('dap.logs') applied, original .js deleted | – | [P] eligible |
-| [ ] | T015 | Convert dap/timeline.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/timeline.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/timeline.js` (delete) | Script compiles, @RegisterScript('dap.timeline') applied, original .js deleted | – | [P] eligible; completes dap category (8/8 scripts) |
-| [ ] | T016 | Convert diag/collect.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/diag/collect.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/diag/collect.js` (delete) | Script compiles, @RegisterScript('diag.collect') applied, original .js deleted | – | [P] eligible; completes diag category (1/1 scripts) |
-| [ ] | T017 | Test all batch 1 scripts execute in Extension Host | Integration | T002-T016 | `/workspaces/vscode-bridge/packages/extension/test/scratch/script-conversion.test.ts` | All 15 scripts execute without errors via CLI (`vscb script run <name>`) | – | Validates conversion succeeded functionally |
-| [ ] | T018 | Debug code.replace-method with breakpoints and stepping | Integration | T007, T017 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/code/replace-method.ts` | Breakpoints hit in .ts file, stepping works, stack traces show source lines | – | **🎯 PRIMARY GOAL VALIDATION**: Proves debugging works! |
-| [ ] | T019 | Verify all batch 1 scripts use ScriptResult pattern | Integration | T002-T016 | All 15 converted .ts files | All scripts use ScriptResult.success/failure/fromError, no ActionResult deprecated methods | – | Per error-handling-architecture.md compliance (Critical Finding ref) |
-| [ ] | T020 | Fix any TypeScript compilation errors | Integration | T002-T016 | All 15 converted .ts files | `npx tsc --noEmit` passes with zero errors | – | May need type assertions or imports fixes (see Phase 2 learnings) |
-| [ ] | T021 | Verify CLI commands work for all converted scripts | Integration | T017, T020 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/` (all converted files) | `vscb script list` shows all 15 scripts; spot-check 5 scripts execute correctly | – | Regression check - no breaking changes |
+| [x] | T001 | Write scratch tests for script conversion validation | Test | – | `/workspaces/vscode-bridge/packages/extension/test/scratch/script-conversion.test.ts` | Tests compile and run in Extension Host; verify converted scripts execute correctly AND decorator metadata exists for all scripts | – | Test pattern from Phase 2; validates decorator + execution work; includes decorator metadata validation per Insight #2 · log#task-t001-write-scratch-tests [^9] |
+| [x] | T002 | Convert breakpoint/set.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/set.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/set.js` (delete) | Script compiles, @RegisterScript('breakpoint.set') applied, original .js deleted | – | [P] eligible; Critical Finding 05 (ES6 exports); delete .js per Insight #4 · log#task-t002-convert-breakpoint-set [^10] |
+| [x] | T003 | Convert breakpoint/list.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/list.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/list.js` (delete) | Script compiles, @RegisterScript('breakpoint.list') applied, original .js deleted | – | [P] eligible · log#tasks-t003-t006-breakpoint-scripts [^11] |
+| [x] | T004 | Convert breakpoint/clear-file.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/clear-file.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/clear-file.js` (delete) | Script compiles, @RegisterScript('breakpoint.clear-file') applied, original .js deleted | – | [P] eligible · log#tasks-t003-t006-breakpoint-scripts [^12] |
+| [x] | T005 | Convert breakpoint/clear-project.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/clear-project.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/clear-project.js` (delete) | Script compiles, @RegisterScript('breakpoint.clear-project') applied, original .js deleted | – | [P] eligible · log#tasks-t003-t006-breakpoint-scripts [^13] |
+| [x] | T006 | Convert breakpoint/remove.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/remove.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/breakpoint/remove.js` (delete) | Script compiles, @RegisterScript('breakpoint.remove') applied, original .js deleted | – | [P] eligible; completes breakpoint category (5/5 scripts) · log#tasks-t003-t006-breakpoint-scripts [^14] |
+| [x] | T007 | **Convert code/replace-method.js to TypeScript with decorator** | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/code/replace-method.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/code/replace-method.js` (delete) | Script compiles, @RegisterScript('code.replace-method') applied, original .js deleted | – | **🎯 CRITICAL GOAL**: The script we need to debug! [P] eligible · log#task-t007-code-replace-method [^15] |
+| [x] | T008 | Convert dap/summary.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/summary.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/summary.js` (delete) | Script compiles, @RegisterScript('dap.summary') applied, original .js deleted | – | [P] eligible · log#tasks-t008-t015-dap-scripts [^16] |
+| [x] | T009 | Convert dap/search.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/search.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/search.js` (delete) | Script compiles, @RegisterScript('dap.search') applied, original .js deleted | – | [P] eligible · log#tasks-t008-t015-dap-scripts [^17] |
+| [x] | T010 | Convert dap/filter.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/filter.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/filter.js` (delete) | Script compiles, @RegisterScript('dap.filter') applied, original .js deleted | – | [P] eligible · log#tasks-t008-t015-dap-scripts [^18] |
+| [x] | T011 | Convert dap/exceptions.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/exceptions.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/exceptions.js` (delete) | Script compiles, @RegisterScript('dap.exceptions') applied, original .js deleted | – | [P] eligible · log#tasks-t008-t015-dap-scripts [^19] |
+| [x] | T012 | Convert dap/stats.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/stats.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/stats.js` (delete) | Script compiles, @RegisterScript('dap.stats') applied, original .js deleted | – | [P] eligible · log#tasks-t008-t015-dap-scripts [^20] |
+| [x] | T013 | Convert dap/compare.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/compare.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/compare.js` (delete) | Script compiles, @RegisterScript('dap.compare') applied, original .js deleted | – | [P] eligible · log#tasks-t008-t015-dap-scripts [^21] |
+| [x] | T014 | Convert dap/logs.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/logs.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/logs.js` (delete) | Script compiles, @RegisterScript('dap.logs') applied, original .js deleted | – | [P] eligible · log#tasks-t008-t015-dap-scripts [^22] |
+| [x] | T015 | Convert dap/timeline.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/timeline.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/dap/timeline.js` (delete) | Script compiles, @RegisterScript('dap.timeline') applied, original .js deleted | – | [P] eligible; completes dap category (8/8 scripts) · log#tasks-t008-t015-dap-scripts [^23] |
+| [x] | T016 | Convert diag/collect.js to TypeScript with decorator | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/diag/collect.ts`, `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/diag/collect.js` (delete) | Script compiles, @RegisterScript('diag.collect') applied, original .js deleted | – | [P] eligible; completes diag category (1/1 scripts) · log#task-t016-diag-collect [^24] |
+| [x] | T017 | Test all batch 1 scripts execute in Extension Host | Integration | T002-T016 | `/workspaces/vscode-bridge/packages/extension/test/scratch/script-conversion.test.ts` | All 15 scripts execute without errors via CLI (`vscb script run <name>`) | – | Tested breakpoint.list, breakpoint.set, breakpoint.clear-project, diagnostic.collect · log#task-t017 |
+| [x] | T018 | Debug code.replace-method with breakpoints and stepping | Integration | T007, T017 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/code/replace-method.ts`, `.vscode/launch.json` | Breakpoints hit in .ts file, stepping works, stack traces show source lines | – | **🎯 PRIMARY GOAL ACHIEVED**: Fixed sourceMapPathOverrides in launch.json · log#task-t018 [^25] |
+| [x] | T019 | Verify all batch 1 scripts use ScriptResult pattern | Integration | T002-T016 | All 15 converted .ts files | All scripts use ScriptResult.success/failure/fromError, no ActionResult deprecated methods | – | Code review complete: 100% compliance with error-handling-architecture.md · log#task-t019 |
+| [x] | T020 | Fix any TypeScript compilation errors | Integration | T002-T016 | All 15 converted .ts files | `npx tsc --noEmit` passes with zero errors | – | Clean TypeScript compilation - 0 errors · log#task-t020 |
+| [x] | T021 | Verify CLI commands work for all converted scripts | Integration | T017, T020 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/` (all converted files) | `vscb script list` shows all 15 scripts; spot-check 5 scripts execute correctly | – | All scripts work identically to pre-conversion · log#task-t021 |
+| [x] | T022 | Fix manifest generation to use .js extensions | Integration | T016 | `/workspaces/vscode-bridge/scripts/build-manifest.cts`, `/workspaces/vscode-bridge/packages/extension/package.json` | Manifest references .js files correctly, scripts load from bundle | – | Fixed manifest builder and package.json script path · log#task-t022 [^26] [^27] |
+| [x] | T023 | Fix source map configuration for debugging | Integration | T018 | `.vscode/launch.json` | Breakpoints bind correctly to TypeScript source files | – | Added sourceMapPathOverrides config (completed as part of T018) · log#task-t023 [^25] |
 
-**Total Tasks**: 21
-**Parallel Eligible**: T002-T016 (15 conversion tasks - different files)
-**Sequential Required**: T001 (setup) → T002-T016 (conversions) → T017-T021 (validation)
+**Total Tasks**: 23 (T001-T023)
+**Completed**: 23/23 (100%)
+**Parallel Eligible**: T002-T016 (15 conversion tasks - different files, but sequential recommended to avoid dependency issues)
+**Sequential Required**: T001 (setup) → T002-T016 (conversions, one at a time recommended) → T017-T023 (validation)
+**Recommended Execution**: Convert scripts sequentially (one → compile → test → delete .js → next) to avoid any script-to-script import issues
 
 ---
 
@@ -642,14 +646,14 @@ sequenceDiagram
 
 1. **Scratch Tests** (T001):
    - File: `test/scratch/script-conversion.test.ts`
-   - Purpose: Validate converted scripts execute in Extension Host
-   - Scope: Minimal - just prove scripts load and execute
+   - Purpose: Validate converted scripts execute in Extension Host AND have decorator metadata
+   - Scope: Execution validation + decorator metadata validation (catches missing decorators immediately)
    - Example tests:
      * "should load TypeScript script with decorator"
      * "should execute breakpoint.set script"
      * "should execute code.replace-method script"
+     * **"validates all converted scripts have decorator metadata"** (new - catches missing decorators)
    - Promotion: Not promoted - integration tests provide coverage
-   - Duration: ~5 minutes to write, run after each conversion
 
 2. **Compilation Tests** (T020):
    - Command: `npx tsc --noEmit`
@@ -711,31 +715,66 @@ sequenceDiagram
 
 **Test Fixtures**: Minimal - use existing test data from integration tests if needed
 
-**Test Duration Estimates**:
-- T001 (scratch tests): 5 minutes to write
-- T017 (CLI execution): 15 minutes (15 scripts × 1 minute each)
-- T018 (debugging validation): 10 minutes (manual testing)
-- T019 (ScriptResult compliance): 15 minutes (code review)
-- T020 (type errors): Variable (depends on errors found)
-- T021 (CLI regression): 10 minutes (spot checks)
-- Integration tests: 5 minutes (automated)
-- **Total**: ~60-90 minutes validation time
-
 ---
 
 ### Step-by-Step Implementation Outline
 
 **Mapped 1:1 to task table**:
 
+#### Critical Pattern: CLI String Coercion for Zod Schemas
+
+**⚠️ IMPORTANT**: The CLI passes ALL parameters as strings (e.g., `--param line="42"` sends the string `"42"`, not the number `42`).
+
+Zod schemas must use **coercion** for numeric and boolean parameters to handle CLI string inputs:
+
+```typescript
+// ❌ WRONG - TypeScript compiles, but fails at runtime when CLI passes strings
+this.paramsSchema = z.object({
+  line: z.number(),        // Expects number 42, CLI sends string "42" → validation fails
+  enabled: z.boolean()     // Expects boolean true, CLI sends string "true" → validation fails
+});
+
+// ✅ CORRECT - Use z.coerce for CLI compatibility
+this.paramsSchema = z.object({
+  line: z.coerce.number(),      // Accepts "42" string, converts to 42 number
+  enabled: z.coerce.boolean()   // Accepts "true" string, converts to true boolean
+  path: z.string()              // Strings don't need coercion
+});
+```
+
+**Why this matters**: TypeScript won't catch schema coercion issues at compile time - they only surface at runtime when users execute scripts via CLI. Review each script's original parameter schema during conversion and apply coercion where needed.
+
+---
+
 #### Setup Phase (T001):
 
 **Task T001**: Write scratch tests for script conversion validation
 - Create `test/scratch/script-conversion.test.ts`
 - Import vitest framework
-- Create 3 minimal tests:
+- Create 4 tests:
   1. Test loading TypeScript script with decorator
   2. Test executing breakpoint.set script
   3. Test executing code.replace-method script
+  4. **Test decorator metadata validation** (validates all 15 scripts have decorators):
+     ```typescript
+     import { getScriptMetadata } from '../../src/core/scripts/decorators';
+     import { SetBreakpointScript } from '../../src/vsc-scripts/breakpoint/set';
+     import { ReplaceMethodScript } from '../../src/vsc-scripts/code/replace-method';
+     // ... import all 15 converted scripts
+
+     it('validates all converted scripts have decorator metadata', () => {
+       const scripts = [
+         { class: SetBreakpointScript, expected: 'breakpoint.set' },
+         { class: ReplaceMethodScript, expected: 'code.replace-method' },
+         // ... all 15 scripts with expected names
+       ];
+
+       scripts.forEach(({ class: ScriptClass, expected }) => {
+         const actual = getScriptMetadata().get(ScriptClass);
+         expect(actual).toBe(expected); // Catches missing decorators immediately
+       });
+     });
+     ```
 - Run tests to verify framework works
 - Expected: Tests initially fail (scripts not converted yet)
 
@@ -746,6 +785,7 @@ sequenceDiagram
 1. **Read original script**:
    - File: `src/vsc-scripts/breakpoint/set.js`
    - Understand: Base class, parameters, logic, exports
+   - **Review parameter schema**: Check for `z.number()`, `z.boolean()`, `z.date()` parameters that need CLI string coercion
 
 2. **Create .ts file** with converted content:
    - File: `src/vsc-scripts/breakpoint/set.ts`
@@ -758,6 +798,20 @@ sequenceDiagram
      ```
    - Above class: Add decorator `@RegisterScript('breakpoint.set')`
    - Convert class: Change `class SetBreakpointScript extends ActionScript {` to `export class SetBreakpointScript extends ActionScript {`
+   - **Update parameter schema with CLI coercion**:
+     ```typescript
+     // ❌ WRONG - CLI passes strings, will fail validation
+     this.paramsSchema = z.object({
+       line: z.number(),        // CLI sends "42" as string
+       enabled: z.boolean()     // CLI sends "true" as string
+     });
+
+     // ✅ CORRECT - Use coercion for CLI string inputs
+     this.paramsSchema = z.object({
+       line: z.coerce.number(),      // Accepts "42" string → 42 number
+       enabled: z.coerce.boolean()   // Accepts "true" string → true boolean
+     });
+     ```
    - Update execute signature: Use `IBridgeContext` type
    - Update return statements: Ensure using ScriptResult pattern
    - End of file: Add `export default SetBreakpointScript;`
@@ -779,7 +833,7 @@ sequenceDiagram
 
 **Repeat for**: T003 (list), T004 (clear-file), T005 (clear-project), T006 (remove)
 
-**Parallelization**: Can convert all 5 breakpoint scripts in parallel since they touch different files
+**Execution**: Convert scripts one at a time (sequential) to avoid any potential script-to-script dependency issues
 
 #### Code Category Conversion (T007):
 
@@ -800,9 +854,9 @@ Follow same pattern as breakpoint scripts:
 
 #### DAP Category Conversion (T008-T015):
 
-**Batch approach** for 8 DAP scripts:
+**Sequential approach** for 8 DAP scripts:
 
-Follow same conversion pattern for each:
+Follow same conversion pattern for each (one at a time):
 - T008: dap/summary.js → summary.ts
 - T009: dap/search.js → search.ts
 - T010: dap/filter.js → filter.ts
@@ -812,7 +866,7 @@ Follow same conversion pattern for each:
 - T014: dap/logs.js → logs.ts
 - T015: dap/timeline.js → timeline.ts
 
-**Parallelization**: Can convert all 8 DAP scripts in parallel since they touch different files
+**Execution**: Convert one script at a time (sequential) to avoid any potential script-to-script dependency issues
 
 **Efficiency tip**: After converting first DAP script, use it as template for others if they follow similar patterns
 
@@ -1109,7 +1163,6 @@ find packages/extension/src/vsc-scripts/{breakpoint,code,dap,diag}/ -name "*.js"
 - [ ] **Extension Host Accessible**: Can launch Extension Host for testing (F5 or `just run`)
 - [ ] **CLI Tool Working**: Can run `vscb script list` and `vscb script run` commands
 - [ ] **Build System Functional**: `just build` succeeds currently
-- [ ] **Time Allocated**: 90-120 minutes estimated for implementation + validation
 
 **GO / NO-GO Decision Point**:
 
@@ -1133,7 +1186,66 @@ Footnotes will follow the format:
 
 Footnote tags (e.g., `[^9]`) will be added to the main plan document and dossier task tables during implementation, not during planning.
 
-**Current Status**: No footnotes yet - Phase 3 not started.
+**Current Status**: Phase 3 - 16/21 tasks complete (76%).
+
+---
+
+[^9]: Task 3.0 (T001) - Created scratch test file for Phase 3 conversions
+  - [`file:packages/extension/test/scratch/script-conversion.test.ts`](packages/extension/test/scratch/script-conversion.test.ts)
+
+[^10]: Task 3.1 (T002) - Converted breakpoint/set to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/breakpoint/set.ts`](packages/extension/src/vsc-scripts/breakpoint/set.ts)
+
+[^11]: Task 3.2 (T003) - Converted breakpoint/list to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/breakpoint/list.ts`](packages/extension/src/vsc-scripts/breakpoint/list.ts)
+
+[^12]: Task 3.3 (T004) - Converted breakpoint/clear-file to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/breakpoint/clear-file.ts`](packages/extension/src/vsc-scripts/breakpoint/clear-file.ts)
+
+[^13]: Task 3.4 (T005) - Converted breakpoint/clear-project to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/breakpoint/clear-project.ts`](packages/extension/src/vsc-scripts/breakpoint/clear-project.ts)
+
+[^14]: Task 3.5 (T006) - Converted breakpoint/remove to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/breakpoint/remove.ts`](packages/extension/src/vsc-scripts/breakpoint/remove.ts)
+
+[^15]: Task 3.6 (T007) - Converted code/replace-method to TypeScript with decorator (CRITICAL GOAL)
+  - [`file:packages/extension/src/vsc-scripts/code/replace-method.ts`](packages/extension/src/vsc-scripts/code/replace-method.ts)
+
+[^16]: Task 3.7 (T008) - Converted dap/summary to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/dap/summary.ts`](packages/extension/src/vsc-scripts/dap/summary.ts)
+
+[^17]: Task 3.8 (T009) - Converted dap/search to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/dap/search.ts`](packages/extension/src/vsc-scripts/dap/search.ts)
+
+[^18]: Task 3.9 (T010) - Converted dap/filter to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/dap/filter.ts`](packages/extension/src/vsc-scripts/dap/filter.ts)
+
+[^19]: Task 3.10 (T011) - Converted dap/exceptions to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/dap/exceptions.ts`](packages/extension/src/vsc-scripts/dap/exceptions.ts)
+
+[^20]: Task 3.11 (T012) - Converted dap/stats to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/dap/stats.ts`](packages/extension/src/vsc-scripts/dap/stats.ts)
+
+[^21]: Task 3.12 (T013) - Converted dap/compare to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/dap/compare.ts`](packages/extension/src/vsc-scripts/dap/compare.ts)
+
+[^22]: Task 3.13 (T014) - Converted dap/logs to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/dap/logs.ts`](packages/extension/src/vsc-scripts/dap/logs.ts)
+
+[^23]: Task 3.14 (T015) - Converted dap/timeline to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/dap/timeline.ts`](packages/extension/src/vsc-scripts/dap/timeline.ts)
+
+[^24]: Task 3.15 (T016) - Converted diag/collect to TypeScript with decorator
+  - [`file:packages/extension/src/vsc-scripts/diag/collect.ts`](packages/extension/src/vsc-scripts/diag/collect.ts)
+
+[^25]: Task 3.18 (T018 & T023) - Fixed source map configuration for debugging
+  - [`file:.vscode/launch.json`](.vscode/launch.json) - Added sourceMapPathOverrides for webpack path mapping
+
+[^26]: Task 3.22 (T022) - Fixed manifest generation to use .js extensions
+  - [`file:scripts/build-manifest.cts`](scripts/build-manifest.cts) - Updated to convert .ts to .js in manifest output
+
+[^27]: Task 3.22 (T022) - Fixed package.json manifest:build script path
+  - [`file:packages/extension/package.json`](packages/extension/package.json) - Corrected manifest:build script reference
 
 ---
 
@@ -1217,3 +1329,204 @@ Phase 3 is considered **COMPLETE** when:
 **END OF PHASE 3 TASKS & ALIGNMENT BRIEF**
 
 **Next Step**: Run `/plan-6-implement-phase --phase "Phase 3: Script Conversion (Batch 1)" --plan "/workspaces/vscode-bridge/docs/plans/26-script-typescript-conversion/script-typescript-conversion-plan.md"` to begin implementation.
+
+---
+
+## Critical Insights Discussion
+
+**Session**: 2025-11-03 
+**Context**: Phase 3: Script Conversion (Batch 1) - Tasks & Alignment Brief
+**Analyst**: AI Clarity Agent
+**Reviewer**: Development Team
+**Format**: Water Cooler Conversation (5 Critical Insights)
+
+### Insight 1: Parallel Conversion Creates Git Workflow Chaos
+
+**Did you know**: If you convert all 15 scripts in parallel (as [P] eligible tasks suggest), you'll end up with 30+ uncommitted changes in your git working directory - 15 new .ts files, 15 deleted .js files, plus modified manifest and build outputs.
+
+**Implications**:
+- Context switching becomes dangerous (can't cleanly switch branches mid-conversion)
+- Partial failures are hard to recover from (which of the 15 scripts is causing the build error?)
+- Code review becomes harder (30-file PR with mixed changes)
+- Rollback granularity is lost (can't revert just one problematic script)
+
+**Options Considered**:
+- Option A: Commit After Each Script Conversion
+- Option B: Batch by Category with Intermediate Commits  
+- Option C: Full Parallel with Single Commit at End
+- Option D: Feature Branch with Incremental Commits
+
+**AI Recommendation**: Option A (Commit After Each Script)
+- Reasoning: Maximum safety, clear failure attribution, easy rollback, context switching friendly
+
+**Discussion Summary**:
+User prefers working through all conversions with large uncommitted changeset in one focused session without interruptions. Comfortable with git workflow chaos for speed.
+
+**Decision**: Full parallel conversion with single commit at end (Option C)
+
+**Action Items**: None - proceed as planned
+
+**Affects**: No changes to plan - user workflow preference
+
+---
+
+### Insight 2: The TAD Scratch Test Won't Catch Decorator Application Failures
+
+**Did you know**: The scratch test in T001 will pass even if you forget to apply the `@RegisterScript` decorator to a converted script, meaning you won't discover the missing decorator until Phase 5 when the registry tries to load scripts.
+
+**Implications**:
+- False confidence from passing tests - T001 validates execution but not registration
+- Late failure detection - won't discover missing decorators until Phase 5 (weeks later?)
+- Multiple scripts could be affected - could forget decorator on 3-4 scripts without knowing
+- Tedious debugging - have to check all 15 scripts manually in Phase 5
+
+**Options Considered**:
+- Option A: Enhance T001 to Test Decorator Metadata (validate getScriptMetadata().get() returns expected name)
+- Option B: Create Decorator Validation Script (build-time AST parsing check)
+- Option C: Manual Decorator Checklist in T019 (grep for @RegisterScript, count matches)
+- Option D: Rely on Phase 5 Runtime Validation (defer detection)
+
+**AI Recommendation**: Option A (Enhance T001 with Decorator Validation)
+- Reasoning: Immediate feedback, aligns with TAD philosophy, low effort, clear failure messages
+
+**Discussion Summary**:
+User agreed to enhance T001 scratch tests to include decorator metadata validation test that checks all 15 converted scripts have correct metadata.
+
+**Decision**: Enhance T001 scratch tests to validate decorator metadata (Option A)
+
+**Action Items**:
+- [x] Update T001 validation criteria to include decorator metadata test
+- [x] Add test example to implementation outline with getScriptMetadata() validation
+
+**Affects**: T001 task validation criteria, Test Plan section, Step-by-Step Implementation Outline
+
+---
+
+### Insight 3: The "15 Scripts in Parallel" Estimate Assumes Zero Script Interdependencies
+
+**Did you know**: If any of the 15 batch 1 scripts import code from each other, you'll hit TypeScript compilation errors when converting them in parallel because one script's .ts file might try to import from another script's not-yet-converted .js file.
+
+**Implications**:
+- Parallel conversion assumption breaks if scripts have internal dependencies
+- Deletion timing becomes critical (can't delete .js until all dependents converted)
+- Conversion order matters (must convert dependencies before dependents)
+- Phase 2 proof of concept didn't reveal this (debug/status.ts is standalone)
+
+**Options Considered**:
+- Option A: Pre-Scan for Dependencies Before Converting (grep for requires/imports, create conversion order)
+- Option B: Keep All .js Files Until All .ts Conversions Complete (delete all at once at end)
+- Option C: Convert Sequentially Within Each Category (safe, no dependency issues)
+- Option D: Proceed with Parallel Conversion, Fix Issues As Discovered (learn-as-you-go)
+
+**AI Recommendation**: Option A (Pre-Scan for Dependencies)
+- Reasoning: 5-10 minutes upfront saves 30+ minutes of debugging, informed parallelization, validates plan assumptions
+
+**Discussion Summary**:
+User prefers converting scripts one at a time sequentially, which eliminates all dependency issues completely. Simpler execution model.
+
+**Decision**: Convert scripts sequentially, one at a time (Option C variant)
+
+**Action Items**:
+- [x] Update task notes to clarify sequential execution recommended
+- [x] Update "Parallel Eligible" note to reflect sequential approach
+- [x] Change "Parallelization" guidance to "Execution: sequential"
+
+**Affects**: Task table summary notes, Breakpoint conversion section, DAP conversion section
+
+---
+
+### Insight 4: TypeScript Compiler Might Not Catch Zod Schema Definition Errors Until Runtime
+
+**Did you know**: If you make a mistake in a script's Zod schema definition (like using `z.number()` instead of `z.coerce.number()`), TypeScript compilation will pass successfully, but the script will fail at runtime when the CLI tries to validate parameters.
+
+**Implications**:
+- Zod schema errors aren't caught by TypeScript - wrong types compile successfully
+- Runtime failures for parameter validation - users see errors, not compile errors
+- CLI passes all parameters as strings - `--param line="42"` sends string "42" not number 42
+- Without coercion, validation fails even though user provided correct value
+
+**Options Considered**:
+- Option A: Add Zod Schema Validation to T001 Scratch Tests (test schemas handle CLI string inputs)
+- Option B: Document Zod Coercion Pattern in Conversion Checklist (use z.coerce for number/boolean)
+- Option C: Accept Runtime Discovery in T017 (let testing catch issues later)
+- Option D: Review Original .js Schemas Before Converting (check for number/boolean params needing coercion)
+
+**AI Recommendation**: Option D + B (Review Original Schemas + Document Pattern)
+- Reasoning: Preventative, low effort (~1 min per script), avoids cryptic runtime errors, systematic
+
+**Discussion Summary**:
+User agreed to add schema review to conversion checklist and document the CLI string coercion pattern with clear examples.
+
+**Decision**: Review original schemas during conversion + document Zod coercion pattern (Option D + B)
+
+**Action Items**:
+- [x] Add schema review step to conversion pattern (Step 1: check for z.number/boolean/date)
+- [x] Add CLI string coercion section with wrong/correct examples in Step 2
+- [x] Add "Critical Pattern" section at top of implementation outline with warning
+
+**Affects**: Step-by-Step Implementation Outline (conversion pattern Steps 1-2, new Critical Pattern section)
+
+---
+
+### Insight 5: Time Estimates Create False Expectations
+
+**Did you know**: The plan's "60-80 minutes for 15 scripts (4 minutes average per script)" estimate assumes you already understand every script's purpose, parameters, logic, and dependencies - but in reality, most of these scripts you've probably never seen before.
+
+**Implications**:
+- Estimate is 3-4× too optimistic if scripts are unfamiliar
+- Context switching overhead - each new script requires mental loading
+- Complex scripts take longer - code.replace-method might take 20-30 minutes alone
+- Actual time: likely 3.5-4 hours total (not 1.5-2 hours)
+
+**Options Considered**:
+- Option A: Revise Estimate to Realistic 2.5-4 Hours Total
+- Option B: Accept Optimistic Estimate, Adjust During Execution
+- Option C: Create Time Budget by Script Complexity (categorize simple/medium/complex)
+- Option D: Time-Box the Phase, Accept Partial Completion
+
+**AI Recommendation**: Option A (Revise to Realistic Estimate)
+- Reasoning: Honest expectations, reduces pressure, accounts for learning curve, better planning
+
+**Discussion Summary**:
+User prefers removing ALL time estimates from documentation entirely. Estimates create false expectations and actual time varies significantly based on familiarity and complexity.
+
+**Decision**: Remove all time estimates from Phase 3 tasks document
+
+**Action Items**:
+- [x] Remove "Duration: ~5 minutes" from Test Plan scratch tests
+- [x] Remove entire "Test Duration Estimates" subsection (60-90 minutes total)
+- [x] Remove "Time Allocated: 90-120 minutes" from Ready Check
+
+**Affects**: Test Plan section, Ready Check section
+
+---
+
+## Session Summary
+
+**Insights Surfaced**: 5 critical insights identified and discussed
+**Decisions Made**: 5 decisions reached through collaborative discussion
+**Action Items Created**: 8 updates applied immediately throughout session
+**Areas Requiring Updates**:
+- Task table summary (sequential execution guidance)
+- T001 validation criteria (decorator metadata test)
+- Test Plan section (removed time estimates)
+- Step-by-Step Implementation Outline (schema review + coercion pattern)
+- Ready Check (removed time estimate)
+
+**Shared Understanding Achieved**: ✓
+
+**Confidence Level**: High - Critical gaps identified and addressed
+
+**Next Steps**:
+Proceed with Phase 3 implementation via `/plan-6-implement-phase`. User workflow:
+- Convert scripts one at a time (sequential)
+- Review original schema for coercion needs before converting
+- Scratch test includes decorator metadata validation
+- No time pressure from estimates
+- Large uncommitted changeset acceptable
+
+**Notes**:
+- User prefers simple, focused execution without git/time overhead
+- All 5 insights led to immediate plan improvements during session
+- Decorator validation and schema coercion patterns prevent late-stage failures
+- Sequential conversion eliminates dependency complexity

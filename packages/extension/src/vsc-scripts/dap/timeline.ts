@@ -1,6 +1,8 @@
-const { z } = require('zod');
-const { QueryScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * DAP Timeline Script - Event Timeline Viewer
@@ -9,26 +11,22 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  * Helps understand what happened and when, especially useful for finding
  * what happened in the seconds before a crash.
  */
-class DapTimelineScript extends QueryScript {
+@RegisterScript('dap.timeline')
+export class DapTimelineScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
             sessionId: z.string().optional(),
             eventTypes: z.array(z.enum(['output', 'exception', 'stopped', 'exit'])).optional(),
-            window: z.number().int().min(1).optional(), // time window in ms
+            window: z.coerce.number().int().min(1).optional(), // time window in ms
             granularity: z.enum(['all', 'summary', 'milestones']).optional().default('all'),
-            fromEnd: z.boolean().optional().default(false)
+            fromEnd: z.coerce.boolean().optional().default(false)
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{sessionId?: string, eventTypes?: string[], window?: number, granularity?: string, fromEnd?: boolean}} params
-     * @returns {Promise<object>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         // Access the global capture service
-        const service = global.debugSessionCaptureService;
+        const service = (global as any).debugSessionCaptureService;
         if (!service) {
             return ScriptResult.failure(
                 'Debug session capture service not available',
@@ -57,12 +55,12 @@ class DapTimelineScript extends QueryScript {
         }
 
         // Build timeline events
-        const timeline = [];
+        const timeline: any[] = [];
         const eventTypesFilter = params.eventTypes || ['output', 'exception', 'stopped', 'exit'];
 
         // Add outputs
         if (eventTypesFilter.includes('output')) {
-            session.outputs.forEach(o => {
+            session.outputs.forEach((o: any) => {
                 timeline.push({
                     timestamp: o.ts,
                     relativeTime: o.ts - session.startTime,
@@ -76,7 +74,7 @@ class DapTimelineScript extends QueryScript {
 
         // Add exceptions
         if (eventTypesFilter.includes('exception')) {
-            session.exceptions.forEach((exc, idx) => {
+            session.exceptions.forEach((exc: any, idx: number) => {
                 // Estimate timestamp based on session progress
                 const estimatedTs = session.startTime +
                     ((session.endTime || Date.now()) - session.startTime) *
@@ -95,7 +93,7 @@ class DapTimelineScript extends QueryScript {
 
         // Add stopped events
         if (eventTypesFilter.includes('stopped')) {
-            session.stoppedEvents.forEach(e => {
+            session.stoppedEvents.forEach((e: any) => {
                 // Estimate timestamp
                 const estimatedTs = session.startTime + (session.endTime || Date.now() - session.startTime) / 2;
                 timeline.push({
@@ -132,18 +130,18 @@ class DapTimelineScript extends QueryScript {
                 // Last N milliseconds
                 const sessionEnd = session.endTime || Date.now();
                 const cutoff = sessionEnd - params.window;
-                filteredTimeline = timeline.filter(e => e.timestamp >= cutoff);
+                filteredTimeline = timeline.filter((e: any) => e.timestamp >= cutoff);
             } else {
                 // First N milliseconds
                 const cutoff = session.startTime + params.window;
-                filteredTimeline = timeline.filter(e => e.timestamp <= cutoff);
+                filteredTimeline = timeline.filter((e: any) => e.timestamp <= cutoff);
             }
         }
 
         // Apply granularity
         if (params.granularity === 'milestones') {
             // Only show significant events
-            filteredTimeline = filteredTimeline.filter(e =>
+            filteredTimeline = filteredTimeline.filter((e: any) =>
                 e.eventType === 'exception' ||
                 e.eventType === 'stopped' ||
                 e.eventType === 'exit' ||
@@ -151,8 +149,8 @@ class DapTimelineScript extends QueryScript {
             );
         } else if (params.granularity === 'summary') {
             // Group events by second
-            const grouped = {};
-            filteredTimeline.forEach(e => {
+            const grouped: Record<number, any[]> = {};
+            filteredTimeline.forEach((e: any) => {
                 const second = Math.floor(e.relativeTime / 1000);
                 if (!grouped[second]) {
                     grouped[second] = [];
@@ -164,9 +162,9 @@ class DapTimelineScript extends QueryScript {
                 timestamp: session.startTime + parseInt(second) * 1000,
                 relativeTime: parseInt(second) * 1000,
                 eventType: 'summary',
-                summary: `Second ${second}: ${events.length} events (${events.filter(e => e.significance === 'error').length} errors)`,
-                significance: events.some(e => e.significance === 'error') ? 'error' : 'normal',
-                data: { events: events.length, types: events.map(e => e.eventType) }
+                summary: `Second ${second}: ${events.length} events (${events.filter((e: any) => e.significance === 'error').length} errors)`,
+                significance: events.some((e: any) => e.significance === 'error') ? 'error' : 'normal',
+                data: { events: events.length, types: events.map((e: any) => e.eventType) }
             }));
         }
 
@@ -175,8 +173,8 @@ class DapTimelineScript extends QueryScript {
             firstOutput: session.outputs.length > 0 ? session.outputs[0].ts : null,
             firstException: session.exceptions.length > 0 ? session.exceptions[0] : null,
             breakpointHits: session.stoppedEvents
-                .filter(e => e.reason === 'breakpoint')
-                .map((e, idx) => session.startTime + (idx + 1) * 100), // estimated
+                .filter((e: any) => e.reason === 'breakpoint')
+                .map((e: any, idx: number) => session.startTime + (idx + 1) * 100), // estimated
             sessionExit: session.endTime || null
         };
 
@@ -196,4 +194,4 @@ class DapTimelineScript extends QueryScript {
     }
 }
 
-module.exports = { DapTimelineScript };
+export default DapTimelineScript;

@@ -1,6 +1,8 @@
-const { z } = require('zod');
-const { QueryScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * DAP Filter Script - Advanced Multi-Filter Query
@@ -8,7 +10,8 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  * Complex filtering with multiple AND-ed criteria.
  * For power users who need precise output filtering.
  */
-class DapFilterScript extends QueryScript {
+@RegisterScript('dap.filter')
+export class DapFilterScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
@@ -16,26 +19,21 @@ class DapFilterScript extends QueryScript {
             filters: z.object({
                 categories: z.array(z.string()).optional(),
                 timeRange: z.object({
-                    start: z.number(),
-                    end: z.number()
+                    start: z.coerce.number(),
+                    end: z.coerce.number()
                 }).optional(),
                 exclude: z.array(z.string()).optional(), // regex patterns to exclude
                 include: z.array(z.string()).optional(), // regex patterns that must match
                 sources: z.array(z.string()).optional(), // file path filters
-                minLength: z.number().int().min(0).optional(),
-                maxLength: z.number().int().min(0).optional()
+                minLength: z.coerce.number().int().min(0).optional(),
+                maxLength: z.coerce.number().int().min(0).optional()
             })
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{sessionId?: string, filters: object}} params
-     * @returns {Promise<object>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         // Access the global capture service
-        const service = global.debugSessionCaptureService;
+        const service = (global as any).debugSessionCaptureService;
         if (!service) {
             return ScriptResult.failure(
                 'Debug session capture service not available',
@@ -77,13 +75,13 @@ class DapFilterScript extends QueryScript {
 
         // Apply category filter
         if (filters.categories && filters.categories.length > 0) {
-            filtered = filtered.filter(o => filters.categories.includes(o.category));
+            filtered = filtered.filter((o: any) => filters.categories.includes(o.category));
             stats.afterCategories = filtered.length;
         }
 
         // Apply time range filter
         if (filters.timeRange) {
-            filtered = filtered.filter(o =>
+            filtered = filtered.filter((o: any) =>
                 o.ts >= filters.timeRange.start &&
                 o.ts <= filters.timeRange.end
             );
@@ -92,35 +90,35 @@ class DapFilterScript extends QueryScript {
 
         // Apply exclude patterns (regex)
         if (filters.exclude && filters.exclude.length > 0) {
-            const excludeRegexes = filters.exclude.map(pattern => new RegExp(pattern, 'i'));
-            filtered = filtered.filter(o => {
-                return !excludeRegexes.some(regex => regex.test(o.text));
+            const excludeRegexes = filters.exclude.map((pattern: string) => new RegExp(pattern, 'i'));
+            filtered = filtered.filter((o: any) => {
+                return !excludeRegexes.some((regex: RegExp) => regex.test(o.text));
             });
             stats.afterExclude = filtered.length;
         }
 
         // Apply include patterns (regex) - ALL must match
         if (filters.include && filters.include.length > 0) {
-            const includeRegexes = filters.include.map(pattern => new RegExp(pattern, 'i'));
-            filtered = filtered.filter(o => {
-                return includeRegexes.every(regex => regex.test(o.text));
+            const includeRegexes = filters.include.map((pattern: string) => new RegExp(pattern, 'i'));
+            filtered = filtered.filter((o: any) => {
+                return includeRegexes.every((regex: RegExp) => regex.test(o.text));
             });
             stats.afterInclude = filtered.length;
         }
 
         // Apply source file filter
         if (filters.sources && filters.sources.length > 0) {
-            filtered = filtered.filter(o => {
+            filtered = filtered.filter((o: any) => {
                 if (!o.source?.path && !o.source?.name) return false;
                 const sourcePath = o.source.path || o.source.name;
-                return filters.sources.some(filterPath => sourcePath.includes(filterPath));
+                return filters.sources.some((filterPath: string) => sourcePath.includes(filterPath));
             });
             stats.afterSources = filtered.length;
         }
 
         // Apply length filters
         if (filters.minLength != null || filters.maxLength != null) {
-            filtered = filtered.filter(o => {
+            filtered = filtered.filter((o: any) => {
                 const len = o.text.length;
                 if (filters.minLength != null && len < filters.minLength) return false;
                 if (filters.maxLength != null && len > filters.maxLength) return false;
@@ -130,7 +128,7 @@ class DapFilterScript extends QueryScript {
         }
 
         // Format results
-        const events = filtered.map(o => ({
+        const events = filtered.map((o: any) => ({
             ts: o.ts,
             relativeTime: o.ts - session.startTime,
             category: o.category,
@@ -156,4 +154,4 @@ class DapFilterScript extends QueryScript {
     }
 }
 
-module.exports = { DapFilterScript };
+export default DapFilterScript;

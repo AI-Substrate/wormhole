@@ -1,6 +1,8 @@
-const { z } = require('zod');
-const { QueryScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * DAP Stats Script - Statistical Analysis
@@ -8,24 +10,20 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  * Aggregate metrics and pattern detection across debug sessions.
  * Answers questions like "What's generating the most log spam?"
  */
-class DapStatsScript extends QueryScript {
+@RegisterScript('dap.stats')
+export class DapStatsScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
             sessionId: z.string().optional(), // or 'all'
             groupBy: z.enum(['category', 'source', 'hour', 'session']).optional().default('category'),
-            includeCharts: z.boolean().optional().default(true)
+            includeCharts: z.coerce.boolean().optional().default(true)
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{sessionId?: string, groupBy?: string, includeCharts?: boolean}} params
-     * @returns {Promise<object>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         // Access the global capture service
-        const service = global.debugSessionCaptureService;
+        const service = (global as any).debugSessionCaptureService;
         if (!service) {
             return ScriptResult.failure(
                 'Debug session capture service not available',
@@ -61,18 +59,18 @@ class DapStatsScript extends QueryScript {
         }
 
         // Aggregate all outputs
-        const allOutputs = sessionsToAnalyze.flatMap(s => s.outputs);
-        const allExceptions = sessionsToAnalyze.flatMap(s => s.exceptions);
+        const allOutputs = sessionsToAnalyze.flatMap((s: any) => s.outputs);
+        const allExceptions = sessionsToAnalyze.flatMap((s: any) => s.exceptions);
 
         // Distribution by category
-        const byCategory = {};
-        allOutputs.forEach(o => {
+        const byCategory: Record<string, number> = {};
+        allOutputs.forEach((o: any) => {
             byCategory[o.category] = (byCategory[o.category] || 0) + 1;
         });
 
         // Distribution by source file
-        const bySource = {};
-        allOutputs.forEach(o => {
+        const bySource: Record<string, number> = {};
+        allOutputs.forEach((o: any) => {
             if (o.source?.path || o.source?.name) {
                 const file = o.source.path || o.source.name;
                 bySource[file] = (bySource[file] || 0) + 1;
@@ -80,15 +78,15 @@ class DapStatsScript extends QueryScript {
         });
 
         // Distribution over time (hourly buckets)
-        const overTime = {};
-        allOutputs.forEach(o => {
+        const overTime: Record<string, number> = {};
+        allOutputs.forEach((o: any) => {
             const hour = new Date(o.ts).toISOString().slice(0, 13) + ':00';
             overTime[hour] = (overTime[hour] || 0) + 1;
         });
 
         // Top N most frequent messages
-        const messageFrequency = {};
-        allOutputs.forEach(o => {
+        const messageFrequency: Record<string, number> = {};
+        allOutputs.forEach((o: any) => {
             const msg = o.text.slice(0, 100); // First 100 chars
             messageFrequency[msg] = (messageFrequency[msg] || 0) + 1;
         });
@@ -104,8 +102,8 @@ class DapStatsScript extends QueryScript {
             .map(([file, count]) => ({ file, count }));
 
         // Exception hotspots
-        const exceptionLocations = {};
-        allExceptions.forEach(exc => {
+        const exceptionLocations: Record<string, number> = {};
+        allExceptions.forEach((exc: any) => {
             if (exc.stackFrames && exc.stackFrames.length > 0) {
                 const location = `${exc.stackFrames[0].source}:${exc.stackFrames[0].line}`;
                 exceptionLocations[location] = (exceptionLocations[location] || 0) + 1;
@@ -117,7 +115,7 @@ class DapStatsScript extends QueryScript {
             .map(([location, count]) => ({ location, count }));
 
         // Calculate averages
-        const totalDuration = sessionsToAnalyze.reduce((sum, s) => {
+        const totalDuration = sessionsToAnalyze.reduce((sum: number, s: any) => {
             const duration = (s.endTime || Date.now()) - s.startTime;
             return sum + duration;
         }, 0);
@@ -139,7 +137,7 @@ class DapStatsScript extends QueryScript {
         };
 
         // Build charts if requested
-        const charts = {};
+        const charts: any = {};
         if (params.includeCharts) {
             // Category distribution as structured data
             const maxCount = Math.max(...Object.values(byCategory));
@@ -161,7 +159,7 @@ class DapStatsScript extends QueryScript {
                 const maxHourCount = Math.max(...hourCounts);
                 const sparkChars = ' ▁▂▃▄▅▆▇█';
                 charts.timeline = {
-                    sparkline: hourCounts.map(count => {
+                    sparkline: hourCounts.map((count: number) => {
                         const index = Math.floor((count / maxHourCount) * (sparkChars.length - 1));
                         return sparkChars[index];
                     }).join(''),
@@ -199,4 +197,4 @@ class DapStatsScript extends QueryScript {
     }
 }
 
-module.exports = { DapStatsScript };
+export default DapStatsScript;
