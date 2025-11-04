@@ -1,13 +1,9 @@
-const { z } = require('zod');
-
-// Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-const { waitUntilPausedAndGetLocation } = require('@core/debug/debug-polling-helpers');
-
-/**
- * @typedef {any} ScriptContext
- */
+import { z } from 'zod';
+import { WaitableScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
+import { waitUntilPausedAndGetLocation } from '@core/debug/debug-polling-helpers';
 
 /**
  * Start debug session waitable script
@@ -18,50 +14,46 @@ const { waitUntilPausedAndGetLocation } = require('@core/debug/debug-polling-hel
  * - Waits for breakpoint hit, error, or program exit
  * - Returns the outcome event
  */
-class StartDebugScript extends WaitableScript {
+@RegisterScript('debug.start')
+export class StartDebugScript extends WaitableScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
             launch: z.string().min(1),
             folder: z.string().optional(),
-            timeoutMs: z.number().int().min(1).max(300000).default(30000),
-            wait: z.boolean().default(false)
+            timeoutMs: z.coerce.number().int().min(1).max(300000).default(30000),
+            wait: z.coerce.boolean().default(false)
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{launch: string, folder?: string, timeoutMs?: number, wait?: boolean}} params
-     * @returns {Promise<{sessionId: string, adapterType: string, workspaceFolder?: string, event?: string, file?: string, line?: number}>}
-     */
-    async wait(bridgeContext, params) {
+    async wait(bridgeContext: IBridgeContext, params: any): Promise<any> {
         try {
             const vscode = bridgeContext.vscode;
             const outputChannel = bridgeContext.outputChannel;
 
             // Find the launch configuration
             const workspaceFolder = params.folder
-                ? vscode.workspace.workspaceFolders?.find(f => f.uri.fsPath === params.folder)
+                ? vscode.workspace.workspaceFolders?.find((f: any) => f.uri.fsPath === params.folder)
                 : vscode.workspace.workspaceFolders?.[0];
 
             if (!workspaceFolder) {
-                const error = new Error(`Workspace folder not found: ${params.folder || 'default'}`);
+                const error: any = new Error(`Workspace folder not found: ${params.folder || 'default'}`);
                 error.code = ErrorCode.E_NOT_FOUND;
                 throw error;
             }
 
             // Start the debug session
             const sessionStartedPromise = new Promise((resolve, reject) => {
-                let disposable;
+                let disposable: any;
                 const timeout = setTimeout(() => {
                     if (disposable) disposable.dispose();
-                    const error = new Error('Debug session failed to start');
+                    const error: any = new Error('Debug session failed to start');
                     error.code = ErrorCode.E_TIMEOUT;
                     reject(error);
                 }, params.timeoutMs);
 
                 // Listen for session start
-                disposable = vscode.debug.onDidStartDebugSession((session) => {
+                disposable = vscode.debug.onDidStartDebugSession((session: any) => {
                     clearTimeout(timeout);
                     disposable.dispose();
                     resolve(session);
@@ -75,13 +67,13 @@ class StartDebugScript extends WaitableScript {
             );
 
             if (!started) {
-                const error = new Error(`Failed to start debug configuration: ${params.launch}`);
+                const error: any = new Error(`Failed to start debug configuration: ${params.launch}`);
                 error.code = ErrorCode.E_OPERATION_FAILED;
                 throw error;
             }
 
             // Wait for session to be fully initialized
-            const session = await sessionStartedPromise;
+            const session: any = await sessionStartedPromise;
 
             // Wait a bit for the session to be fully ready
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -113,7 +105,6 @@ class StartDebugScript extends WaitableScript {
             }
 
             // Use useActiveSession=true to dynamically query the active session each poll
-            // (the session object might become stale after startDebugging, similar to debug-single)
             const outcome = await waitUntilPausedAndGetLocation(session, params.timeoutMs, vscode, true);
 
             if (outputChannel) {
@@ -142,10 +133,8 @@ class StartDebugScript extends WaitableScript {
                 ...outcome
             });
 
-        } catch (error) {
+        } catch (error: any) {
             return ScriptResult.fromError(error, ErrorCode.E_OPERATION_FAILED);
         }
     }
 }
-
-module.exports = { StartDebugScript };

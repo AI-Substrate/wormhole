@@ -1,17 +1,20 @@
-const { z } = require('zod');
-const { QueryScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-const {
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
+import {
     resolveSymbolInput,
     buildFlowspaceIdAtPosition,
     getLSPResultWithTimeout
-} = require('@core/util/symbol-resolver');
+} from '@core/util/symbol-resolver';
 
 /**
  * Symbol navigation script - find references and implementations
  * Supports Flowspace ID and symbol name inputs
  */
-class NavigateScript extends QueryScript {
+@RegisterScript('symbol.navigate')
+export class NavigateScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
@@ -24,8 +27,8 @@ class NavigateScript extends QueryScript {
             action: z.enum(['references', 'implementations']).default('references'),
 
             // Options
-            includeDeclaration: z.boolean().optional(),
-            enrichWithFlowspaceIds: z.boolean().default(false)
+            includeDeclaration: z.coerce.boolean().optional(),
+            enrichWithFlowspaceIds: z.coerce.boolean().default(false)
         }).refine(data => {
             // Validate: Must provide either nodeId OR (path AND symbol)
             const hasNodeId = !!data.nodeId;
@@ -45,11 +48,8 @@ class NavigateScript extends QueryScript {
 
     /**
      * Execute symbol navigation
-     * @param {any} bridgeContext
-     * @param {{nodeId?: string, path?: string, symbol?: string, action: string, includeDeclaration?: boolean, enrichWithFlowspaceIds: boolean}} params
-     * @returns {Promise<Object>}
      */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscode = bridgeContext.vscode;
 
         try {
@@ -73,7 +73,7 @@ class NavigateScript extends QueryScript {
             }
 
             // Step 2: Execute appropriate LSP command
-            let locations;
+            let locations: any = [];
             if (params.action === 'references') {
                 locations = await this._executeReferences(
                     vscode,
@@ -112,7 +112,7 @@ class NavigateScript extends QueryScript {
             }
 
             // Step 4: Normalize Location/LocationLink polymorphism
-            const normalized = locations.map(loc => this._normalizeLocation(loc));
+            const normalized = locations.map((loc: any) => this._normalizeLocation(loc));
 
             // Step 5: Optional Flowspace ID enrichment
             let enriched = normalized;
@@ -128,7 +128,7 @@ class NavigateScript extends QueryScript {
                 total: enriched.length
             });
 
-        } catch (error) {
+        } catch (error: any) {
             // Handle known error codes from symbol-resolver
             if (error.code === 'E_AMBIGUOUS_SYMBOL') {
                 return ScriptResult.failure(
@@ -164,40 +164,31 @@ class NavigateScript extends QueryScript {
      * Execute references provider with timeout protection
      * @private
      */
-    async _executeReferences(vscode, uri, position, includeDeclaration) {
+    async _executeReferences(vscode: any, uri: any, position: any, includeDeclaration: any) {
         // Convert undefined to explicit boolean (tri-state: true, false, undefined)
         // undefined means "use provider default"
         const context = includeDeclaration !== undefined
             ? { includeDeclaration: includeDeclaration }
             : {};
 
-        const command = 'vscode.executeReferenceProvider';
-        return await getLSPResultWithTimeout(
-            command,
-            uri,
-            position,
-            context
-        );
+        const promise = vscode.commands.executeCommand('vscode.executeReferenceProvider', uri, position, context);
+        return await getLSPResultWithTimeout(promise);
     }
 
     /**
      * Execute implementations provider with timeout protection
      * @private
      */
-    async _executeImplementations(vscode, uri, position) {
-        const command = 'vscode.executeImplementationProvider';
-        return await getLSPResultWithTimeout(
-            command,
-            uri,
-            position
-        );
+    async _executeImplementations(vscode: any, uri: any, position: any) {
+        const promise = vscode.commands.executeCommand('vscode.executeImplementationProvider', uri, position);
+        return await getLSPResultWithTimeout(promise);
     }
 
     /**
      * Normalize Location or LocationLink to consistent format
      * @private
      */
-    _normalizeLocation(loc) {
+    _normalizeLocation(loc: any) {
         // Check if it's LocationLink (has targetUri/targetRange)
         if (loc.targetUri) {
             return {
@@ -235,7 +226,7 @@ class NavigateScript extends QueryScript {
      * Enrich locations with Flowspace IDs
      * @private
      */
-    async _enrichWithFlowspaceIds(vscode, locations) {
+    async _enrichWithFlowspaceIds(vscode: any, locations: any[]) {
         const enriched = [];
 
         for (const loc of locations) {
@@ -260,7 +251,7 @@ class NavigateScript extends QueryScript {
      * Format input for response
      * @private
      */
-    _formatInput(params) {
+    _formatInput(params: any) {
         if (params.nodeId) {
             return { type: 'flowspaceId', value: params.nodeId };
         } else {
@@ -276,7 +267,7 @@ class NavigateScript extends QueryScript {
      * Get language-specific hint for missing language server
      * @private
      */
-    _getLanguageHint(path) {
+    _getLanguageHint(path: any) {
         if (!path) return '';
 
         if (path.endsWith('.py')) {
@@ -295,4 +286,4 @@ class NavigateScript extends QueryScript {
     }
 }
 
-module.exports = { NavigateScript };
+export default NavigateScript;

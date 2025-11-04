@@ -1,6 +1,7 @@
-const { ActionScript } = require('@script-base');
-const { ScriptResult } = require('@core/scripts/ScriptResult');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { ActionScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * Restart VS Code Script
@@ -21,8 +22,9 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  * This reloads the current window. For Extension Development Host,
  * this will reload the host window. The workspace will be preserved.
  */
-class RestartVSCodeScript extends ActionScript {
-    async execute(bridgeContext, params) {
+@RegisterScript('utils.restart-vscode')
+export class RestartVSCodeScript extends ActionScript<any> {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscode = bridgeContext.vscode;
 
         bridgeContext.logger.info('🔄 Reloading VS Code window...');
@@ -41,7 +43,7 @@ class RestartVSCodeScript extends ActionScript {
                 message: 'VS Code window reload triggered - window will restart momentarily',
                 timestamp: new Date().toISOString()
             });
-        } catch (error) {
+        } catch (error: any) {
             // This is expected! The window reload kills the extension before it can respond
             bridgeContext.logger.error(`⚠️  Connection lost during reload (this is expected): ${error.message}`);
 
@@ -54,4 +56,4 @@ class RestartVSCodeScript extends ActionScript {
     }
 }
 
-module.exports = { RestartVSCodeScript };
+export default RestartVSCodeScript;

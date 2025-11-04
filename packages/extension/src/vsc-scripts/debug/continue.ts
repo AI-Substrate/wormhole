@@ -1,19 +1,14 @@
-const { z } = require('zod');
-
-// Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
-const { executeStepOperation } = require('@core/debug/step-operations');
-const {
+import { z } from 'zod';
+import { WaitableScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { executeStepOperation } from '@core/debug/step-operations';
+import {
     MultiThreadResolver,
     MultiThreadStepExecutor,
     EventDrivenWaitStrategy
-} = require('@core/debug/step-strategies');
-const { ScriptResult } = require('@core/scripts/ScriptResult');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-
-/**
- * @typedef {any} ScriptContext
- */
+} from '@core/debug/step-strategies';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * Continue debug execution waitable script
@@ -21,21 +16,17 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  *
  * Uses unified step operation architecture (upgraded from polling to event-driven).
  */
-class ContinueDebugScript extends WaitableScript {
+@RegisterScript('debug.continue')
+export class ContinueDebugScript extends WaitableScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
             sessionId: z.string().optional(),
-            timeoutMs: z.number().int().min(1).max(300000).default(30000)
+            timeoutMs: z.coerce.number().int().min(1).max(300000).default(30000)
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{sessionId?: string, timeoutMs?: number}} params
-     * @returns {Promise<{event: string, file?: string, line?: number, sessionId: string}>}
-     */
-    async wait(bridgeContext, params) {
+    async wait(bridgeContext: IBridgeContext, params: any): Promise<any> {
         try {
             // Use unified step operation architecture
             const result = await executeStepOperation(bridgeContext, params, {
@@ -46,10 +37,8 @@ class ContinueDebugScript extends WaitableScript {
             });
 
             return ScriptResult.success(result);
-        } catch (error) {
+        } catch (error: any) {
             return ScriptResult.fromError(error, ErrorCode.E_OPERATION_FAILED);
         }
     }
 }
-
-module.exports = { ContinueDebugScript };

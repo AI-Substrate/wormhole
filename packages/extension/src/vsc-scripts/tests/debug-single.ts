@@ -1,13 +1,9 @@
-const { z } = require('zod');
-
-// Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-const { waitUntilPausedAndGetLocation } = require('@core/debug/debug-polling-helpers');
-
-/**
- * @typedef {any} ScriptContext
- */
+import { z } from 'zod';
+import { WaitableScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
+import { waitUntilPausedAndGetLocation } from '@core/debug/debug-polling-helpers';
 
 /**
  * Debug single test waitable script
@@ -15,23 +11,19 @@ const { waitUntilPausedAndGetLocation } = require('@core/debug/debug-polling-hel
  *
  * Uses standardized polling approach for consistent outcome detection.
  */
-class DebugSingleTestScript extends WaitableScript {
+@RegisterScript('tests.debug-single')
+export class DebugSingleTestScript extends WaitableScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
             path: z.string().min(1),
-            line: z.number().int().min(1),
-            column: z.number().int().min(1).default(1),
-            timeoutMs: z.number().int().min(1).max(300000).default(30000)
+            line: z.coerce.number().int().min(1),
+            column: z.coerce.number().int().min(1).default(1),
+            timeoutMs: z.coerce.number().int().min(1).max(300000).default(30000)
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{path: string, line: number, column?: number, timeoutMs?: number}} params
-     * @returns {Promise<{event: string, file?: string, line?: number, sessionId: string, sessionName?: string, testName?: string, framework?: string, workspaceFolder?: string}>}
-     */
-    async wait(bridgeContext, params) {
+    async wait(bridgeContext: IBridgeContext, params: any): Promise<any> {
         try {
             const vscode = bridgeContext.vscode;
             const outputChannel = bridgeContext.outputChannel;
@@ -51,7 +43,7 @@ class DebugSingleTestScript extends WaitableScript {
                 if (outputChannel) {
                     outputChannel.appendLine('[tests.debug-single] testing.debugAtCursor command not available');
                 }
-                const error = new Error('testing.debugAtCursor command not available');
+                const error: any = new Error('testing.debugAtCursor command not available');
                 error.code = ErrorCode.E_OPERATION_FAILED;
                 throw error;
             }
@@ -112,7 +104,7 @@ class DebugSingleTestScript extends WaitableScript {
             }
 
             if (!session) {
-                const error = new Error(
+                const error: any = new Error(
                     `No debug session started after ${params.timeoutMs}ms\n\n` +
                     `Possible causes:\n` +
                     `  1. Test not discovered - Check Test Explorer (beaker/flask icon in sidebar)\n` +
@@ -184,7 +176,7 @@ class DebugSingleTestScript extends WaitableScript {
 
             return ScriptResult.success(response);
 
-        } catch (error) {
+        } catch (error: any) {
             const errorMessage = error.message || String(error);
 
             if (bridgeContext.outputChannel) {
@@ -194,7 +186,6 @@ class DebugSingleTestScript extends WaitableScript {
             return ScriptResult.fromError(error, ErrorCode.E_OPERATION_FAILED);
         }
     }
-
 }
 
-module.exports = { DebugSingleTestScript };
+export default DebugSingleTestScript;

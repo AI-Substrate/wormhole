@@ -1,6 +1,8 @@
-const { ActionScript } = require('@script-base');
-const { ScriptResult } = require('@core/scripts/ScriptResult');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import { ActionScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * Goto Line Script
@@ -23,8 +25,18 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  * 3. Center the line in the viewport
  * 4. Open as a permanent tab (not preview)
  */
-class GotoLineScript extends ActionScript {
-    async execute(bridgeContext, params) {
+@RegisterScript('editor.goto-line')
+export class GotoLineScript extends ActionScript<any> {
+    constructor() {
+        super();
+        this.paramsSchema = z.object({
+            path: z.string().min(1),
+            line: z.coerce.number().int().min(1),
+            column: z.coerce.number().int().min(1).optional().default(1)
+        });
+    }
+
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscode = bridgeContext.vscode;
         const { path, line, column = 1 } = params;
 
@@ -64,7 +76,7 @@ class GotoLineScript extends ActionScript {
                 column: column,
                 timestamp: new Date().toISOString()
             });
-        } catch (error) {
+        } catch (error: any) {
             bridgeContext.logger.error(`Failed to navigate to file: ${error.message}`);
 
             // Determine specific error code
@@ -83,5 +95,3 @@ class GotoLineScript extends ActionScript {
         }
     }
 }
-
-module.exports = { GotoLineScript };

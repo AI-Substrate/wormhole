@@ -1,41 +1,32 @@
-const { z } = require('zod');
-
-// Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
-const { ScriptResult } = require('@core/scripts/ScriptResult');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-
-/**
- * @typedef {any} ScriptContext
- */
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * List scopes query script
  * Returns available scopes for a given frame
  */
-class ScopesScript extends QueryScript {
+@RegisterScript('debug.scopes')
+export class ScopesScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
-            frameId: z.number().int().min(0),
+            frameId: z.coerce.number().int().min(0),
             sessionId: z.string().optional()
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{frameId: number, sessionId?: string}} params
-     * @returns {Promise<{success: boolean, data?: any, reason?: string}>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscode = bridgeContext.vscode;
 
         // Get the target session
-        let session;
+        let session: any;
         if (params.sessionId) {
             // Find specific session by ID
-            const sessions = vscode.debug.breakpoints;
-            session = sessions.find(s => s.id === params.sessionId);
+            const sessions = vscode.debug.breakpoints as any;
+            session = sessions.find((s: any) => s.id === params.sessionId);
             if (!session) {
                 return ScriptResult.failure(
                     `Session ${params.sessionId} not found`,
@@ -69,7 +60,7 @@ class ScopesScript extends QueryScript {
             }
 
             return ScriptResult.success({
-                scopes: scopes.map(scope => ({
+                scopes: scopes.map((scope: any) => ({
                     name: scope.name,
                     variablesReference: scope.variablesReference,
                     expensive: scope.expensive || false,
@@ -77,7 +68,7 @@ class ScopesScript extends QueryScript {
                     indexedVariables: scope.indexedVariables
                 }))
             });
-        } catch (e) {
+        } catch (e: any) {
             return ScriptResult.failure(
                 `Failed to get scopes: ${e.message}`,
                 ErrorCode.E_INTERNAL
@@ -85,5 +76,3 @@ class ScopesScript extends QueryScript {
         }
     }
 }
-
-module.exports = { ScopesScript };

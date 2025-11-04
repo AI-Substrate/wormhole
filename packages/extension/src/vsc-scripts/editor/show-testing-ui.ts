@@ -1,6 +1,8 @@
-const { ActionScript } = require('@script-base');
-const { ScriptResult } = require('@core/scripts/ScriptResult');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import { ActionScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * Show Testing UI Script
@@ -17,8 +19,14 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  * Testing view is shown. This script programmatically shows the view to
  * trigger discovery, enabling automated test workflows.
  */
-class ShowTestingUIScript extends ActionScript {
-    async execute(bridgeContext, params) {
+@RegisterScript('editor.show-testing-ui')
+export class ShowTestingUIScript extends ActionScript<any> {
+    constructor() {
+        super();
+        this.paramsSchema = z.object({});
+    }
+
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscode = bridgeContext.vscode;
 
         bridgeContext.logger.info('Showing Testing view to trigger test discovery...');
@@ -33,7 +41,7 @@ class ShowTestingUIScript extends ActionScript {
                 message: 'Testing view shown - test discovery triggered',
                 timestamp: new Date().toISOString()
             });
-        } catch (error) {
+        } catch (error: any) {
             bridgeContext.logger.error(`Failed to show Testing view: ${error.message}`);
 
             return ScriptResult.failure(
@@ -44,5 +52,3 @@ class ShowTestingUIScript extends ActionScript {
         }
     }
 }
-
-module.exports = { ShowTestingUIScript };

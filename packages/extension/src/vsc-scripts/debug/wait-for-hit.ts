@@ -1,22 +1,19 @@
-const { z } = require('zod');
-
-// Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-
-/**
- * @typedef {any} ScriptContext
- */
+import { z } from 'zod';
+import { WaitableScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * Wait for breakpoint hit waitable script
- * Phase 3 will implement actual DAP event listening
+ * Waits for debugger to hit any breakpoint
  */
-class WaitForHitScript extends WaitableScript {
+@RegisterScript('debug.wait-for-hit')
+export class WaitForHitScript extends WaitableScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
-            timeoutMs: z.number()
+            timeoutMs: z.coerce.number()
                 .min(100)
                 .max(300000)
                 .optional()
@@ -34,12 +31,7 @@ class WaitForHitScript extends WaitableScript {
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{timeoutMs?: number}} params
-     * @returns {Promise<{event: string, breakpoint?: {path: string, line: number, hitCount?: number}, timestamp: string}>}
-     */
-    async wait(bridgeContext, params) {
+    async wait(bridgeContext: IBridgeContext, params: any): Promise<any> {
         try {
             const vscode = bridgeContext.vscode;
             const timeoutMs = params.timeoutMs || 30000;
@@ -54,8 +46,8 @@ class WaitForHitScript extends WaitableScript {
             }
 
             return new Promise((resolve, reject) => {
-                let disposable;
-                let timer;
+                let disposable: any;
+                let timer: any;
                 let disposed = false;
 
                 const cleanup = () => {
@@ -68,22 +60,14 @@ class WaitForHitScript extends WaitableScript {
                 // Setup timeout
                 timer = setTimeout(() => {
                     cleanup();
-                    resolve({
+                    resolve(ScriptResult.success({
                         event: 'timeout',
                         timestamp: new Date().toISOString()
-                    });
+                    }));
                 }, timeoutMs);
 
-                // Handle abort signal
-                if (ctx.signal) {
-                    ctx.signal.addEventListener('abort', () => {
-                        cleanup();
-                        reject(new Error('E_ABORTED: Operation aborted'));
-                    });
-                }
-
                 // Listen for breakpoint hit (stopped event)
-                disposable = vscode.debug.onDidChangeActiveStackItem((e) => {
+                disposable = vscode.debug.onDidChangeActiveStackItem((e: any) => {
                     if (e && e.source && !disposed) {
                         cleanup();
 
@@ -94,7 +78,7 @@ class WaitForHitScript extends WaitableScript {
                             );
                         }
 
-                        resolve({
+                        resolve(ScriptResult.success({
                             event: 'breakpoint-hit',
                             breakpoint: {
                                 path: e.source.path || 'unknown',
@@ -102,14 +86,12 @@ class WaitForHitScript extends WaitableScript {
                                 hitCount: 1 // VS Code doesn't provide hit count directly
                             },
                             timestamp: new Date().toISOString()
-                        });
+                        }));
                     }
                 });
             });
-        } catch (error) {
+        } catch (error: any) {
             return ScriptResult.fromError(error, ErrorCode.E_OPERATION_FAILED);
         }
     }
 }
-
-module.exports = { WaitForHitScript };

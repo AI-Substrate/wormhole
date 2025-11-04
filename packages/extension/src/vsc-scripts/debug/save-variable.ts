@@ -1,9 +1,10 @@
-const { z } = require('zod');
-const fs = require('fs');
-const path = require('path');
-const { QueryScript } = require('@script-base');
-const { ScriptResult } = require('@core/scripts/ScriptResult');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import * as fs from 'fs';
+import * as path from 'path';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * Save Variable Query Script
@@ -21,14 +22,15 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  * Usage:
  *   vscb script run debug.save-variable --expression="largeArray" --outputPath="/tmp/vars.jsonl"
  */
-class SaveVariableScript extends QueryScript {
+@RegisterScript('debug.save-variable')
+export class SaveVariableScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
             outputPath: z.string().min(1),
             expression: z.string().min(1),
-            pageSize: z.number().int().positive().optional().default(500),
-            maxItems: z.number().int().positive().optional(),
+            pageSize: z.coerce.number().int().positive().optional().default(500),
+            maxItems: z.coerce.number().int().positive().optional(),
             context: z.string().optional().default('watch')
         });
 
@@ -45,12 +47,7 @@ class SaveVariableScript extends QueryScript {
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{outputPath: string, expression: string, pageSize?: number, maxItems?: number, context?: string}} params
-     * @returns {Promise<object>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscode = bridgeContext.vscode;
         const session = vscode.debug.activeDebugSession;
 
@@ -72,7 +69,7 @@ class SaveVariableScript extends QueryScript {
             );
         }
 
-        const workspaceDir = bridgeContext.workspaceFolder?.uri?.fsPath || process.cwd();
+        const workspaceDir = (bridgeContext as any).workspaceFolder?.uri?.fsPath || process.cwd();
         const resolvedOutputPath = path.isAbsolute(outputPathParam)
             ? outputPathParam
             : path.resolve(workspaceDir, outputPathParam);
@@ -80,9 +77,9 @@ class SaveVariableScript extends QueryScript {
         await fs.promises.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
 
         // Ensure the debugger is paused and capture frame/thread information
-        let threadId;
-        let frameId;
-        let frameInfo;
+        let threadId: number;
+        let frameId: number;
+        let frameInfo: any;
 
         try {
             const threadsResponse = await session.customRequest('threads');
@@ -94,7 +91,7 @@ class SaveVariableScript extends QueryScript {
                 );
             }
 
-            const pausedThread = threads.find(t => t.presentationHint === 'paused' || t.stopped) || threads[0];
+            const pausedThread = threads.find((t: any) => t.presentationHint === 'paused' || t.stopped) || threads[0];
             threadId = pausedThread.id;
 
             const stackResponse = await session.customRequest('stackTrace', {
@@ -112,7 +109,7 @@ class SaveVariableScript extends QueryScript {
 
             frameInfo = stackResponse.stackFrames[0];
             frameId = frameInfo.id;
-        } catch (error) {
+        } catch (error: any) {
             return ScriptResult.failure(
                 'Debugger must be paused at a breakpoint',
                 ErrorCode.E_OPERATION_FAILED
@@ -120,14 +117,14 @@ class SaveVariableScript extends QueryScript {
         }
 
         // Evaluate expression to get variablesReference metadata
-        let evalResponse;
+        let evalResponse: any;
         try {
             evalResponse = await session.customRequest('evaluate', {
                 expression,
                 frameId,
                 context
             });
-        } catch (error) {
+        } catch (error: any) {
             return ScriptResult.failure(
                 `Failed to evaluate expression "${expression}": ${error.message}`,
                 ErrorCode.E_OPERATION_FAILED
@@ -152,7 +149,7 @@ class SaveVariableScript extends QueryScript {
 
         const writeStream = fs.createWriteStream(resolvedOutputPath, { encoding: 'utf8' });
 
-        const writeLine = (record) => new Promise((resolve, reject) => {
+        const writeLine = (record: any) => new Promise<void>((resolve, reject) => {
             const payload = JSON.stringify(record) + '\n';
             if (!writeStream.write(payload, 'utf8')) {
                 writeStream.once('drain', resolve);
@@ -189,7 +186,7 @@ class SaveVariableScript extends QueryScript {
             timestamp: new Date().toISOString()
         });
 
-        const ensureFinished = () => new Promise((resolve, reject) => {
+        const ensureFinished = () => new Promise<void>((resolve, reject) => {
             writeStream.once('finish', resolve);
             writeStream.once('error', reject);
             writeStream.end();
@@ -197,7 +194,7 @@ class SaveVariableScript extends QueryScript {
 
         const shouldStop = () => maxItems !== null && (counts.named + counts.indexed) >= maxItems;
 
-        const streamWithFilter = async (filter, totalHint) => {
+        const streamWithFilter = async (filter: string | undefined, totalHint: number | null) => {
             let start = 0;
             let fetched = 0;
 
@@ -214,7 +211,7 @@ class SaveVariableScript extends QueryScript {
                     count = Math.min(count, remaining);
                 }
 
-                const request = {
+                const request: any = {
                     variablesReference: rootReference,
                     start,
                     count,
@@ -225,10 +222,10 @@ class SaveVariableScript extends QueryScript {
                     delete request.filter;
                 }
 
-                let response;
+                let response: any;
                 try {
                     response = await session.customRequest('variables', request);
-                } catch (error) {
+                } catch (error: any) {
                     if (filter) {
                         console.warn(`[STREAM] filter "${filter}" not supported: ${error.message}`);
                         return false;
@@ -324,5 +321,3 @@ class SaveVariableScript extends QueryScript {
         });
     }
 }
-
-module.exports = { SaveVariableScript };

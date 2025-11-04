@@ -1,18 +1,15 @@
-const { z } = require('zod');
-
-// Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-
-/**
- * @typedef {any} ScriptContext
- */
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * Get debug threads query script
  * Returns information about active threads in the debug session
  */
-class ThreadsDebugScript extends QueryScript {
+@RegisterScript('debug.threads')
+export class ThreadsDebugScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
@@ -20,12 +17,7 @@ class ThreadsDebugScript extends QueryScript {
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{sessionId?: string}} params
-     * @returns {Promise<{threads: Array<{id: number, name: string}>}>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         try {
             const vscode = bridgeContext.vscode;
 
@@ -76,10 +68,8 @@ class ThreadsDebugScript extends QueryScript {
                 activeThreadId: activeFrame?.threadId || 1,
                 note: 'Full thread information requires DAP integration'
             });
-        } catch (error) {
+        } catch (error: any) {
             return ScriptResult.fromError(error, ErrorCode.E_OPERATION_FAILED);
         }
     }
 }
-
-module.exports = { ThreadsDebugScript };

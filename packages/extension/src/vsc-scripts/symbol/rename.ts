@@ -1,12 +1,13 @@
-const { z } = require('zod');
-const { ActionScript } = require('@script-base');
-const { ScriptResult } = require('@core/scripts/ScriptResult');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-const {
+import * as fs from 'fs';
+import { z } from 'zod';
+import { ActionScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
+import {
     resolveSymbolInput,
     getLSPResultWithTimeout
-} = require('@core/util/symbol-resolver');
-const fs = require('fs');
+} from '@core/util/symbol-resolver';
 
 /**
  * Symbol rename script - rename symbols workspace-wide using LSP
@@ -14,7 +15,8 @@ const fs = require('fs');
  *
  * DESTRUCTIVE OPERATION: Modifies files atomically (all or nothing)
  */
-class RenameScript extends ActionScript {
+@RegisterScript('symbol.rename')
+export class RenameScript extends ActionScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
@@ -44,11 +46,8 @@ class RenameScript extends ActionScript {
 
     /**
      * Execute symbol rename
-     * @param {any} bridgeContext
-     * @param {{nodeId?: string, path?: string, symbol?: string, newName: string}} params
-     * @returns {Promise<ActionResult>}
      */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscode = bridgeContext.vscode;
 
         try {
@@ -60,7 +59,7 @@ class RenameScript extends ActionScript {
             });
 
             if (!resolution) {
-                const error = new Error(
+                const error: any = new Error(
                     params.nodeId
                         ? `Symbol not found for Flowspace ID "${params.nodeId}"`
                         : `Symbol "${params.symbol}" not found in ${params.path}`
@@ -78,7 +77,7 @@ class RenameScript extends ActionScript {
             );
 
             if (!workspaceEdit) {
-                const error = new Error('No rename provider available for this file type');
+                const error: any = new Error('No rename provider available for this file type');
                 error.code = 'E_NO_LANGUAGE_SERVER';
                 throw error;
             }
@@ -91,7 +90,7 @@ class RenameScript extends ActionScript {
             const applied = await this._applyWorkspaceEditSafely(vscode, workspaceEdit);
 
             if (!applied) {
-                const error = new Error(
+                const error: any = new Error(
                     'Cannot apply rename. Common causes: ' +
                     '(1) File locked by another application, ' +
                     '(2) File modified concurrently, ' +
@@ -118,7 +117,7 @@ class RenameScript extends ActionScript {
                 }
             });
 
-        } catch (error) {
+        } catch (error: any) {
             // Handle errors with appropriate error codes
             const errorCode = error.code || ErrorCode.E_INTERNAL;
             const details = {
@@ -135,16 +134,12 @@ class RenameScript extends ActionScript {
     /**
      * Execute rename provider with timeout protection
      */
-    async _executeRenameProvider(vscode, uri, position, newName) {
-        const result = await getLSPResultWithTimeout(
-            'vscode.executeDocumentRenameProvider',
-            uri,
-            position,
-            newName
-        );
+    async _executeRenameProvider(vscode: any, uri: any, position: any, newName: string) {
+        const promise = vscode.commands.executeCommand('vscode.executeDocumentRenameProvider', uri, position, newName);
+        const result = await getLSPResultWithTimeout(promise);
 
         if (result === 'timeout') {
-            const error = new Error('LSP rename provider timeout (10s)');
+            const error: any = new Error('LSP rename provider timeout (10s)');
             error.code = 'E_TIMEOUT';
             throw error;
         }
@@ -155,7 +150,7 @@ class RenameScript extends ActionScript {
     /**
      * Extract unique file paths from WorkspaceEdit
      */
-    _extractFilesFromEdit(edit) {
+    _extractFilesFromEdit(edit: any) {
         const files = [];
         for (const [uri, _edits] of edit.entries()) {
             files.push(uri.fsPath);
@@ -166,11 +161,11 @@ class RenameScript extends ActionScript {
     /**
      * Validate all files are writable (Discovery 07 - pre-validation)
      */
-    async _validateFilesWritable(files) {
+    async _validateFilesWritable(files: string[]) {
         for (const file of files) {
             // Check file exists
             if (!fs.existsSync(file)) {
-                const error = new Error(`Cannot apply edit: ${file} does not exist`);
+                const error: any = new Error(`Cannot apply edit: ${file} does not exist`);
                 error.code = 'E_NOT_FOUND';
                 throw error;
             }
@@ -179,7 +174,7 @@ class RenameScript extends ActionScript {
             try {
                 fs.accessSync(file, fs.constants.W_OK);
             } catch {
-                const error = new Error(`Cannot apply edit: ${file} is read-only`);
+                const error: any = new Error(`Cannot apply edit: ${file} is read-only`);
                 error.code = 'E_FILE_READ_ONLY';
                 throw error;
             }
@@ -189,7 +184,7 @@ class RenameScript extends ActionScript {
     /**
      * Apply WorkspaceEdit with error handling and save all affected documents
      */
-    async _applyWorkspaceEditSafely(vscode, edit) {
+    async _applyWorkspaceEditSafely(vscode: any, edit: any) {
         const applied = await vscode.workspace.applyEdit(edit);
 
         if (!applied) {
@@ -209,7 +204,7 @@ class RenameScript extends ActionScript {
     /**
      * Format change summary from WorkspaceEdit
      */
-    _formatChangeSummary(edit) {
+    _formatChangeSummary(edit: any) {
         const changes = [];
         let totalEdits = 0;
 
@@ -229,4 +224,4 @@ class RenameScript extends ActionScript {
     }
 }
 
-module.exports = { RenameScript };
+export default RenameScript;

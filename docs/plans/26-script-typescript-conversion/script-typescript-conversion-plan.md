@@ -31,7 +31,7 @@
 **Problem Statement**: VSC-Bridge scripts cannot be debugged because they are dynamically loaded at runtime using `eval('require')`, which bypasses source maps and prevents breakpoint setting. This was discovered while attempting to debug the `code.replace-method` script's symbol resolution issues.
 
 **Solution Approach**:
-- Convert all 41 JavaScript scripts to TypeScript
+- Convert all 40 JavaScript scripts to TypeScript
 - Replace dynamic loading with static imports
 - Implement decorator-based registration system
 - Maintain full backward compatibility with CLI and MCP
@@ -54,7 +54,7 @@
 ## Technical Context
 
 **Current System State**:
-- 41 JavaScript scripts in `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/`
+- 40 JavaScript scripts in `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/`
 - Scripts use CommonJS with `require()` for dependencies
 - Webpack bundles scripts but they're loaded dynamically via `eval('require')`
 - tsconfig.json explicitly excludes scripts from TypeScript compilation
@@ -216,9 +216,9 @@ export class SetBreakpointScript extends ActionScript { }
 
 ---
 
-### 📊 Medium Discovery 07: 41 Scripts Organized in Categories
+### 📊 Medium Discovery 07: 40 Scripts Organized in Categories
 **Impact**: Medium
-**Sources**: File system analysis
+**Sources**: File system analysis (updated 2025-11-04 with actual counts)
 **Problem**: Large number of scripts to convert in organized structure
 **Root Cause**: Feature growth over time
 **Solution**: Batch conversion by category to maintain organization
@@ -226,14 +226,13 @@ export class SetBreakpointScript extends ActionScript { }
 - breakpoint (5 scripts)
 - code (1 script - the problematic replace-method)
 - dap (8 scripts)
-- debug (14 scripts)
+- debug (17 scripts)
 - diag (1 script)
 - editor (3 scripts)
 - search (1 script)
-- symbol (3 scripts)
-- tests (2 scripts)
-- utils (2 scripts)
-- bridge (1 script)
+- symbol (2 scripts)
+- tests (1 script)
+- utils (1 script)
 **Action Required**: Convert in two batches for manageable changes
 **Affects Phases**: Phase 3-4
 
@@ -440,10 +439,10 @@ export class SetBreakpointScript extends ActionScript { }
 
 ### Phase 4: Script Conversion (Batch 2)
 
-**Objective**: Convert remaining scripts from JavaScript to TypeScript (21 scripts).
+**Objective**: Convert remaining scripts from JavaScript to TypeScript (25 scripts).
 
 **Deliverables**:
-- Converted scripts: debug/*, editor/*, search/*, symbol/*, tests/*, utils/*, bridge/*
+- Converted scripts: debug/*, editor/*, search/*, symbol/*, tests/*, utils/*
 - All scripts fully typed
 - Complete conversion done
 
@@ -458,16 +457,15 @@ export class SetBreakpointScript extends ActionScript { }
 
 | #   | Status | Task | Success Criteria | Log | Notes |
 |-----|--------|------|------------------|-----|-------|
-| 4.0 | [ ] | Write scratch tests for batch 2 conversion | Tests verify remaining scripts execute in Extension Host | - | Extend tests/scratch/script-conversion.test.ts |
-| 4.1 | [ ] | Convert debug/ scripts (14 files) | All debug scripts in TypeScript with decorators | - | Largest category. Checklist: ✓ All 14 have @RegisterScript (Insight #3) |
-| 4.2 | [ ] | Convert editor/ scripts (3 files) | Editor scripts converted with decorators | - | get-context, goto-line, show-testing-ui. Checklist: ✓ All 3 have decorators |
-| 4.3 | [ ] | Convert search/ scripts (1 file) | symbol-search.ts works with decorator | - | Single search script. Checklist: ✓ Decorator added |
-| 4.4 | [ ] | Convert symbol/ scripts (3 files) | Symbol scripts converted with decorators | - | navigate, rename, [one more]. Checklist: ✓ All 3 have decorators |
-| 4.5 | [ ] | Convert tests/ scripts (2 files) | Test scripts converted with decorators | - | debug-single, [one more]. Checklist: ✓ Both have decorators |
-| 4.6 | [ ] | Convert utils/ scripts (2 files) | Utility scripts converted with decorators | - | restart-vscode, [one more]. Checklist: ✓ Both have decorators |
-| 4.7 | [ ] | Convert bridge/ script (1 file) | Bridge status script converted with decorator | - | Final script. Checklist: ✓ Decorator added |
-| 4.8 | [ ] | Verify ScriptResult pattern compliance | All batch 2 scripts use ScriptResult factory | - | Check error-handling-architecture.md compliance |
-| 4.9 | [ ] | Verify all 41 scripts converted | No .js files remain in vsc-scripts | - | Complete conversion |
+| 4.0 | [x] | Write scratch tests for batch 2 conversion | Tests verify remaining scripts execute in Extension Host | [📋](tasks/phase-4-script-conversion-batch-2/execution.log.md) | Extended tests/scratch/script-conversion.test.ts |
+| 4.1 | [x] | Convert debug/ scripts (17 files) | All debug scripts in TypeScript with decorators | [📋](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-41-convert-debug-scripts-17-files) | All 17 scripts converted [^28] |
+| 4.2 | [x] | Convert editor/ scripts (3 files) | Editor scripts converted with decorators | [📋](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-42-convert-editor-scripts-3-files) | All 3 scripts converted [^29] |
+| 4.3 | [x] | Convert search/ scripts (1 file) | symbol-search.ts works with decorator | [📋](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-43-convert-search-scripts-1-file) | Script converted [^30] |
+| 4.4 | [x] | Convert symbol/ scripts (2 files) | Symbol scripts converted with decorators | [📋](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-44-convert-symbol-scripts-2-files) | Both scripts converted [^31] |
+| 4.5 | [x] | Convert tests/ scripts (1 file) | Test script converted with decorator | [📋](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-45-convert-tests-scripts-1-file) | Script converted [^32] |
+| 4.6 | [x] | Convert utils/ scripts (1 file) | Utility script converted with decorator | [📋](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-46-convert-utils-scripts-1-file) | Script converted [^33] |
+| 4.7 | [x] | Verify ScriptResult pattern compliance | All batch 2 scripts use ScriptResult factory | [📋](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-47-verify-scriptresult-pattern-compliance) | 100% compliance verified |
+| 4.8 | [x] | Verify all 40 scripts converted | No .js files remain in vsc-scripts | [📋](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-48-verify-all-40-scripts-converted) | Complete conversion validated (15 Phase 3 + 25 Phase 4 = 40 total) |
 
 ### Phase 5: Registry Integration
 
@@ -495,7 +493,7 @@ export class SetBreakpointScript extends ActionScript { }
 | 5.1 | [ ] | Create central script import file | All scripts imported statically | - | /workspaces/vscode-bridge/packages/extension/src/vsc-scripts/index.ts |
 | 5.2 | [ ] | Update ScriptRegistry to use decorators | Registry reads decorator metadata | - | Remove loadModuleFromDisk |
 | 5.3 | [ ] | Remove dynamicLoader usage | No more eval('require') | - | Clean removal |
-| 5.4 | [ ] | Verify all scripts register | 41 scripts in registry | - | Count at runtime |
+| 5.4 | [ ] | Verify all scripts register | 40 scripts in registry | - | Count at runtime |
 | 5.4a | [ ] | Add manifest-decorator validation | Registry logs warnings for missing decorators or name mismatches | - | Compares manifest.json to decorator metadata, prevents "ghost scripts" (Insight #1 from Phase 2 /didyouknow) |
 | 5.5 | [ ] | Test debugging across all scripts | Breakpoints work everywhere | - | Sample 5-10 scripts |
 | 5.6 | [ ] | Remove old duck-typing code | Clean type-safe registration | - | Simplify ScriptRegistry |
@@ -593,12 +591,14 @@ docs/how/
 - [x] Phase 1: TypeScript Infrastructure Setup - COMPLETE
 - [x] Phase 2: Decorator System Implementation - COMPLETE
 - [x] Phase 3: Script Conversion (Batch 1) - COMPLETE (23/23 tasks - 100%)
-- [ ] Phase 4: Script Conversion (Batch 2)
+- [x] Phase 4: Script Conversion (Batch 2) - COMPLETE (8/8 tasks - 100%)
 - [ ] Phase 5: Registry Integration
 - [ ] Phase 6: Validation & Testing
 - [ ] Phase 7: Documentation
 
-**Overall Progress**: 4/8 phases (50%)
+**Overall Progress**: 5/8 phases (62.5%)
+
+**Script Conversion Progress**: 40/40 scripts (100%)
 
 ### Primary Goal
 - [x] **Can debug code.replace-method to find symbol resolution issue** - ACHIEVED in Phase 3!
@@ -725,6 +725,55 @@ docs/how/
 [^27]: Phase 3 Task 3.10 (T022) - Fix package.json manifest:build script path
   - [`file:packages/extension/package.json`](packages/extension/package.json) - Corrected manifest:build script reference
   - See: [Execution Log](tasks/phase-3-script-conversion-batch-1/execution.log.md#task-t022) for fix details
+
+[^28]: Phase 4 Task 4.1 - Convert debug/ scripts (17 files)
+  - [`file:packages/extension/src/vsc-scripts/debug/continue.ts`](packages/extension/src/vsc-scripts/debug/continue.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/evaluate.ts`](packages/extension/src/vsc-scripts/debug/evaluate.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/get-variable.ts`](packages/extension/src/vsc-scripts/debug/get-variable.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/list-variables.ts`](packages/extension/src/vsc-scripts/debug/list-variables.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/restart.ts`](packages/extension/src/vsc-scripts/debug/restart.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/save-variable.ts`](packages/extension/src/vsc-scripts/debug/save-variable.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/scopes.ts`](packages/extension/src/vsc-scripts/debug/scopes.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/set-variable.ts`](packages/extension/src/vsc-scripts/debug/set-variable.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/stack.ts`](packages/extension/src/vsc-scripts/debug/stack.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/start.ts`](packages/extension/src/vsc-scripts/debug/start.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/step-into.ts`](packages/extension/src/vsc-scripts/debug/step-into.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/step-out.ts`](packages/extension/src/vsc-scripts/debug/step-out.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/step-over.ts`](packages/extension/src/vsc-scripts/debug/step-over.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/stop.ts`](packages/extension/src/vsc-scripts/debug/stop.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/threads.ts`](packages/extension/src/vsc-scripts/debug/threads.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/tracker.ts`](packages/extension/src/vsc-scripts/debug/tracker.ts)
+  - [`file:packages/extension/src/vsc-scripts/debug/wait-for-hit.ts`](packages/extension/src/vsc-scripts/debug/wait-for-hit.ts)
+  - All converted to TypeScript with @RegisterScript decorators
+  - See: [Execution Log](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-41-convert-debug-scripts-17-files)
+
+[^29]: Phase 4 Task 4.2 - Convert editor/ scripts (3 files)
+  - [`file:packages/extension/src/vsc-scripts/editor/get-context.ts`](packages/extension/src/vsc-scripts/editor/get-context.ts)
+  - [`file:packages/extension/src/vsc-scripts/editor/goto-line.ts`](packages/extension/src/vsc-scripts/editor/goto-line.ts)
+  - [`file:packages/extension/src/vsc-scripts/editor/show-testing-ui.ts`](packages/extension/src/vsc-scripts/editor/show-testing-ui.ts)
+  - All converted to TypeScript with @RegisterScript decorators
+  - See: [Execution Log](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-42-convert-editor-scripts-3-files)
+
+[^30]: Phase 4 Task 4.3 - Convert search/ scripts (1 file)
+  - [`file:packages/extension/src/vsc-scripts/search/symbol-search.ts`](packages/extension/src/vsc-scripts/search/symbol-search.ts)
+  - Converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-43-convert-search-scripts-1-file)
+
+[^31]: Phase 4 Task 4.4 - Convert symbol/ scripts (2 files)
+  - [`file:packages/extension/src/vsc-scripts/symbol/navigate.ts`](packages/extension/src/vsc-scripts/symbol/navigate.ts)
+  - [`file:packages/extension/src/vsc-scripts/symbol/rename.ts`](packages/extension/src/vsc-scripts/symbol/rename.ts)
+  - Both converted to TypeScript with @RegisterScript decorators
+  - See: [Execution Log](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-44-convert-symbol-scripts-2-files)
+
+[^32]: Phase 4 Task 4.5 - Convert tests/ scripts (1 file)
+  - [`file:packages/extension/src/vsc-scripts/tests/debug-single.ts`](packages/extension/src/vsc-scripts/tests/debug-single.ts)
+  - Converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-45-convert-tests-scripts-1-file)
+
+[^33]: Phase 4 Task 4.6 - Convert utils/ scripts (1 file)
+  - [`file:packages/extension/src/vsc-scripts/utils/restart-vscode.ts`](packages/extension/src/vsc-scripts/utils/restart-vscode.ts)
+  - Converted to TypeScript with @RegisterScript decorator
+  - See: [Execution Log](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-46-convert-utils-scripts-1-file)
 
 **Initial State**:
 ```markdown

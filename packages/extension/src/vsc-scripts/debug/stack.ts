@@ -1,18 +1,15 @@
-const { z } = require('zod');
-
-// Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-
-/**
- * @typedef {any} ScriptContext
- */
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * Get call stack query script
  * Returns the current call stack frames
  */
-class StackDebugScript extends QueryScript {
+@RegisterScript('debug.stack')
+export class StackDebugScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
@@ -20,12 +17,7 @@ class StackDebugScript extends QueryScript {
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{sessionId?: string}} params
-     * @returns {Promise<{frames: Array<{id: string, name: string, source: {path: string, name: string}, line: number, column: number}>}>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         try {
             const vscode = bridgeContext.vscode;
 
@@ -48,7 +40,7 @@ class StackDebugScript extends QueryScript {
             if (!activeFrame) {
                 return ScriptResult.failure(
                     'Debugger must be stopped to get call stack',
-                    ErrorCode.E_NOT_STOPPED
+                    ErrorCode.E_NO_SESSION // E_NOT_STOPPED doesn't exist, use E_NO_SESSION
                 );
             }
 
@@ -58,15 +50,16 @@ class StackDebugScript extends QueryScript {
 
             // Add the active frame
             if (activeFrame) {
+                const frame = activeFrame as any; // Type assertion for missing properties
                 frames.push({
-                    id: activeFrame.id || '0',
-                    name: activeFrame.name || 'unknown',
+                    id: frame.id || '0',
+                    name: frame.name || 'unknown',
                     source: {
-                        path: activeFrame.source?.path || 'unknown',
-                        name: activeFrame.source?.name || 'unknown'
+                        path: frame.source?.path || 'unknown',
+                        name: frame.source?.name || 'unknown'
                     },
-                    line: activeFrame.line || 0,
-                    column: activeFrame.column || 0
+                    line: frame.line || 0,
+                    column: frame.column || 0
                 });
             }
 
@@ -79,13 +72,11 @@ class StackDebugScript extends QueryScript {
 
             return ScriptResult.success({
                 frames,
-                threadId: activeFrame?.threadId || 0,
+                threadId: (activeFrame as any)?.threadId || 0,
                 note: 'Full stack trace requires DAP integration'
             });
-        } catch (error) {
+        } catch (error: any) {
             return ScriptResult.fromError(error, ErrorCode.E_OPERATION_FAILED);
         }
     }
 }
-
-module.exports = { StackDebugScript };

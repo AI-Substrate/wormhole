@@ -1,43 +1,33 @@
-const { z } = require('zod');
-
-// Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
-const { ScriptResult } = require('@core/scripts/ScriptResult');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-const { getActiveThreadId } = require('@core/debug/session-helpers');
-
-/**
- * @typedef {any} ScriptContext
- */
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
+import { getActiveThreadId } from '@core/debug/session-helpers';
 
 /**
  * Evaluate expression query script
  * Evaluates an expression in the context of a debug frame
  */
-class EvaluateScript extends QueryScript {
+@RegisterScript('debug.evaluate')
+export class EvaluateScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
             expression: z.string().min(1),
-            frameId: z.number().int().min(0).optional(),
+            frameId: z.coerce.number().int().min(0).optional(),
             context: z.enum(['repl', 'watch', 'hover']).optional(),
             sessionId: z.string().optional()
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{expression: string, frameId?: number, context?: 'repl'|'watch'|'hover', sessionId?: string}} params
-     * @returns {Promise<{success: boolean, data?: any, reason?: string}>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscode = bridgeContext.vscode;
 
         // Get the target session
         let session;
         if (params.sessionId) {
             // Find specific session by ID
-            // Fixed: was vscode.debug.breakpoints (wrong), now iterate active sessions
             const allSessions = vscode.debug.activeDebugSession
                 ? [vscode.debug.activeDebugSession]
                 : [];
@@ -65,7 +55,6 @@ class EvaluateScript extends QueryScript {
             if (frameId === undefined) {
                 try {
                     // Use shared thread detection logic (same as step commands)
-                    // This ensures we use the SAME thread that step operations just used
                     const threadId = await getActiveThreadId(session, bridgeContext.vscode);
 
                     // Get stack trace for the active thread
@@ -105,7 +94,7 @@ class EvaluateScript extends QueryScript {
                 namedVariables: result.namedVariables,
                 indexedVariables: result.indexedVariables
             });
-        } catch (e) {
+        } catch (e: any) {
             return ScriptResult.failure(
                 `Failed to evaluate expression: ${e.message}`,
                 ErrorCode.E_INTERNAL
@@ -113,5 +102,3 @@ class EvaluateScript extends QueryScript {
         }
     }
 }
-
-module.exports = { EvaluateScript };

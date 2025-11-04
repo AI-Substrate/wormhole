@@ -1,8 +1,8 @@
-const { z } = require('zod');
-
-// Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * Debug Adapter Protocol (DAP) Tracker
@@ -18,6 +18,15 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  */
 
 // Store tracked data globally (survives across script runs in same session)
+declare global {
+    var debugTrackerData: {
+        sessions: Map<string, any>;
+        capabilities: any;
+        lastStopped: any;
+        breakpointMappings: Map<number, any>;
+    };
+}
+
 global.debugTrackerData = global.debugTrackerData || {
     sessions: new Map(),
     capabilities: null,
@@ -25,7 +34,8 @@ global.debugTrackerData = global.debugTrackerData || {
     breakpointMappings: new Map()
 };
 
-class DebugTrackerScript extends QueryScript {
+@RegisterScript('debug.tracker')
+export class DebugTrackerScript extends QueryScript<any> {
     constructor() {
         super();
         // No required parameters
@@ -37,12 +47,7 @@ class DebugTrackerScript extends QueryScript {
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {object} params
-     * @returns {Promise<object>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscode = bridgeContext.vscode;
 
         console.log("=" + "=".repeat(58) + "=");
@@ -55,7 +60,7 @@ class DebugTrackerScript extends QueryScript {
 
         // Create the tracker factory
         const trackerFactory = {
-            createDebugAdapterTracker(session) {
+            createDebugAdapterTracker(session: any) {
                 console.log(`[TRACKER] ✅ Created for session: ${session.id}`);
                 console.log(`[TRACKER] Session type: ${session.type}`);
                 console.log(`[TRACKER] Session name: ${session.name}`);
@@ -73,7 +78,7 @@ class DebugTrackerScript extends QueryScript {
 
                 return {
                     // Messages TO the debug adapter
-                    onWillReceiveMessage(message) {
+                    onWillReceiveMessage(message: any) {
                         const sessionData = global.debugTrackerData.sessions.get(session.id);
 
                         // Log outgoing commands
@@ -110,7 +115,7 @@ class DebugTrackerScript extends QueryScript {
                     },
 
                     // Messages FROM the debug adapter
-                    onDidSendMessage(message) {
+                    onDidSendMessage(message: any) {
                         const sessionData = global.debugTrackerData.sessions.get(session.id);
 
                         // Handle responses
@@ -143,7 +148,7 @@ class DebugTrackerScript extends QueryScript {
 
                                 if (pending) {
                                     // Map DAP IDs to VS Code breakpoints
-                                    breakpoints.forEach((bp, index) => {
+                                    breakpoints.forEach((bp: any, index: number) => {
                                         if (bp.id) {
                                             console.log(`  - Breakpoint ID ${bp.id}: line ${bp.line}, verified: ${bp.verified}`);
                                             sessionData.breakpoints.set(bp.id, {
@@ -185,7 +190,7 @@ class DebugTrackerScript extends QueryScript {
                                     console.log(`  - Hit breakpoint IDs: ${message.body.hitBreakpointIds.join(', ')}`);
 
                                     // Look up breakpoint info
-                                    message.body.hitBreakpointIds.forEach(id => {
+                                    message.body.hitBreakpointIds.forEach((id: number) => {
                                         const bpInfo = sessionData.breakpoints.get(id);
                                         if (bpInfo) {
                                             console.log(`    - Breakpoint ${id}: ${bpInfo.source}:${bpInfo.line}`);
@@ -247,13 +252,13 @@ class DebugTrackerScript extends QueryScript {
                         console.log(`[LIFECYCLE] Session ${session.id} stopping...`);
                     },
 
-                    onExit(code, signal) {
+                    onExit(code: any, signal: any) {
                         console.log(`[LIFECYCLE] Debug adapter exited: code=${code}, signal=${signal}`);
                         // Clean up session data
                         global.debugTrackerData.sessions.delete(session.id);
                     },
 
-                    onError(error) {
+                    onError(error: any) {
                         console.error(`[ERROR] Debug adapter error:`, error);
                     }
                 };
@@ -264,7 +269,7 @@ class DebugTrackerScript extends QueryScript {
         const disposable = vscode.debug.registerDebugAdapterTrackerFactory('*', trackerFactory);
 
         // Store disposable for cleanup
-        bridgeContext.extensionContext.subscriptions.push(disposable);
+        (bridgeContext as any).extensionContext.subscriptions.push(disposable);
 
         // Return status and any previously captured data
         const result = {
@@ -292,5 +297,3 @@ class DebugTrackerScript extends QueryScript {
         return ScriptResult.success(result);
     }
 }
-
-module.exports = { DebugTrackerScript };

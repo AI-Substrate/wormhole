@@ -1,10 +1,9 @@
-const { z } = require('zod');
-
-// Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
-const { RuntimeInspectionService } = require('@core/runtime-inspection/RuntimeInspectionService');
-const { ScriptResult } = require('@core/scripts/ScriptResult');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { RuntimeInspectionService } from '@core/runtime-inspection/RuntimeInspectionService';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * Get Variable Query Script
@@ -20,13 +19,14 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  * Usage:
  *   vscb script run debug.get-variable --variablesReference=123 --start=0 --count=100
  */
-class GetVariableScript extends QueryScript {
+@RegisterScript('debug.get-variable')
+export class GetVariableScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
-            variablesReference: z.number().int().positive(),
-            start: z.number().int().min(0).optional().default(0),
-            count: z.number().int().positive().optional().default(100),
+            variablesReference: z.coerce.number().int().positive(),
+            start: z.coerce.number().int().min(0).optional().default(0),
+            count: z.coerce.number().int().positive().optional().default(100),
             filter: z.enum(['indexed', 'named', 'all']).optional().default('all')
         });
 
@@ -43,12 +43,7 @@ class GetVariableScript extends QueryScript {
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{variablesReference: number, start?: number, count?: number, filter?: string}} params
-     * @returns {Promise<object>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscode = bridgeContext.vscode;
         const session = vscode.debug.activeDebugSession;
         const { variablesReference, start, count, filter } = params;
@@ -124,11 +119,9 @@ class GetVariableScript extends QueryScript {
                 }
             });
 
-        } catch (error) {
+        } catch (error: any) {
             // Unexpected error
             return ScriptResult.fromError(error, ErrorCode.E_INTERNAL);
         }
     }
 }
-
-module.exports = { GetVariableScript };

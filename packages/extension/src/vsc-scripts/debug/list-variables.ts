@@ -1,10 +1,9 @@
-const { z } = require('zod');
-
-// Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
-// Lazy-load RuntimeInspectionService to avoid importing vscode at module load time
-const { ScriptResult } = require('@core/scripts/ScriptResult');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
+import { z } from 'zod';
+import { QueryScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { RuntimeInspectionService } from '@core/runtime-inspection/RuntimeInspectionService';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * List Variables Query Script
@@ -18,12 +17,13 @@ const { ErrorCode } = require('@core/response/errorTaxonomy');
  * - Cycle detection
  * - Memory budget tracking
  */
-class ListVariablesScript extends QueryScript {
+@RegisterScript('debug.list-variables')
+export class ListVariablesScript extends QueryScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
             scope: z.enum(['local', 'closure', 'global', 'all']).optional().default('all'),
-            maxDepth: z.number().int().min(0).max(10).optional().default(3)
+            maxDepth: z.coerce.number().int().min(0).max(10).optional().default(3)
         });
 
         this.resultSchema = z.object({
@@ -39,15 +39,7 @@ class ListVariablesScript extends QueryScript {
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{scope?: 'local' | 'closure' | 'global' | 'all', maxDepth?: number}} params
-     * @returns {Promise<object>}
-     */
-    async execute(bridgeContext, params) {
-        // Lazy-load RuntimeInspectionService here to avoid vscode import at module load time
-        const { RuntimeInspectionService } = require('@core/runtime-inspection/RuntimeInspectionService');
-        
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscode = bridgeContext.vscode;
         const session = vscode.debug.activeDebugSession;
         const scope = params.scope || 'all';
@@ -98,5 +90,3 @@ class ListVariablesScript extends QueryScript {
         });
     }
 }
-
-module.exports = { ListVariablesScript };

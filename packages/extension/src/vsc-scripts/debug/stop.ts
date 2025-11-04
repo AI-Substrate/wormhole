@@ -1,16 +1,15 @@
-const { z } = require('zod');
-const { ActionScript, ScriptResult } = require('@script-base');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-
-/**
- * @typedef {any} ScriptContext
- */
+import { z } from 'zod';
+import { ActionScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * Stop debug session action script
  * Stops the active or specified debug session
  */
-class StopDebugScript extends ActionScript {
+@RegisterScript('debug.stop')
+export class StopDebugScript extends ActionScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
@@ -18,12 +17,7 @@ class StopDebugScript extends ActionScript {
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{sessionId?: string}} params
-     * @returns {Promise<{success: boolean, reason?: string, details?: any}>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         try {
             const vscode = bridgeContext.vscode;
 
@@ -71,7 +65,7 @@ class StopDebugScript extends ActionScript {
                 }
 
                 stoppedSessions.push(session.id);
-            } catch (e) {
+            } catch (e: any) {
                 // Log error
                 if (bridgeContext.outputChannel) {
                     bridgeContext.outputChannel.appendLine(
@@ -93,10 +87,8 @@ class StopDebugScript extends ActionScript {
                 stoppedCount: stoppedSessions.length,
                 stoppedSessions
             });
-        } catch (error) {
+        } catch (error: any) {
             return ScriptResult.fromError(error, ErrorCode.E_OPERATION_FAILED);
         }
     }
 }
-
-module.exports = { StopDebugScript };

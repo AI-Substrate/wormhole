@@ -1,19 +1,15 @@
-const { z } = require('zod');
-
-// Dynamic loading - scripts are loaded from src but base classes are compiled to out
-const { QueryScript, ActionScript, WaitableScript } = require('@script-base');
-const { ScriptResult } = require('@core/scripts/ScriptResult');
-const { ErrorCode } = require('@core/response/errorTaxonomy');
-
-/**
- * @typedef {any} ScriptContext
- */
+import { z } from 'zod';
+import { ActionScript, RegisterScript } from '@script-base';
+import type { IBridgeContext } from '../../core/bridge-context/types';
+import { ScriptResult } from '@core/scripts/ScriptResult';
+import { ErrorCode } from '@core/response/errorTaxonomy';
 
 /**
  * Restart debug session action script
  * Restarts the active or specified debug session
  */
-class RestartDebugScript extends ActionScript {
+@RegisterScript('debug.restart')
+export class RestartDebugScript extends ActionScript<any> {
     constructor() {
         super();
         this.paramsSchema = z.object({
@@ -21,20 +17,15 @@ class RestartDebugScript extends ActionScript {
         });
     }
 
-    /**
-     * @param {any} bridgeContext
-     * @param {{sessionId?: string}} params
-     * @returns {Promise<{success: boolean, reason?: string, details?: any}>}
-     */
-    async execute(bridgeContext, params) {
+    async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscode = bridgeContext.vscode;
 
         // Get the target session
-        let session;
+        let session: any;
         if (params.sessionId) {
-            // Find specific session by ID
-            const sessions = vscode.debug.breakpoints;
-            session = sessions.find(s => s.id === params.sessionId);
+            // Find specific session by ID - Note: this uses breakpoints incorrectly in original, should iterate sessions
+            const sessions = vscode.debug.breakpoints as any;
+            session = sessions.find((s: any) => s.id === params.sessionId);
             if (!session) {
                 return ScriptResult.failure(
                     `Debug session not found: ${params.sessionId}`,
@@ -60,7 +51,7 @@ class RestartDebugScript extends ActionScript {
                     await session.customRequest('disconnect', {
                         restart: true
                     });
-                } catch (e) {
+                } catch (e: any) {
                     // If restart not supported, use fallback
                     if (e.message?.includes('not supported') || e.message?.includes('restart')) {
                         throw e;
@@ -85,5 +76,3 @@ class RestartDebugScript extends ActionScript {
         });
     }
 }
-
-module.exports = { RestartDebugScript };
