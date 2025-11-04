@@ -500,6 +500,7 @@ export class SetBreakpointScript extends ActionScript { }
 | 5.6a | [ ] | Review: Verify no class.name dependencies | No code uses .constructor.name or .name for script identification | - | Search codebase for class name checks - minification mangles names in production (Insight #5 from Phase 2 /didyouknow). Registry must use decorator metadata only. |
 | 5.7 | [ ] | Optimize import order if needed | No circular dependency issues | - | May need careful ordering |
 | 5.8 | [ ] | Performance check | Startup time acceptable | - | Should be <1s overhead |
+| 5.12 | [x] | Resolve helper module type errors | TypeScript type errors from JavaScript helpers resolved | [📋](tasks/phase-5-registry-integration/execution.log.md#task-t012-resolve-helper-module-type-errors) | Completed · Addresses Phase 4 technical debt · log#task-t012-resolve-helper-module-type-errors [^34] [^35] |
 
 ### Phase 6: Validation & Testing
 
@@ -775,12 +776,13 @@ docs/how/
   - Converted to TypeScript with @RegisterScript decorator
   - See: [Execution Log](tasks/phase-4-script-conversion-batch-2/execution.log.md#task-46-convert-utils-scripts-1-file)
 
-**Initial State**:
-```markdown
-[^3]: [To be added during implementation via plan-6a]
-[^4]: [To be added during implementation via plan-6a]
-...
-```
+[^34]: Phase 5 Task T012 - Created type definition files for debug helpers (3 files)
+  - `file:packages/extension/src/core/debug/step-operations.d.ts`
+  - `file:packages/extension/src/core/debug/step-strategies.d.ts`
+  - `file:packages/extension/src/core/debug/session-helpers.d.ts`
+
+[^35]: Phase 5 Task T012 - Updated TypeScript path mappings
+  - `file:packages/extension/tsconfig.json`
 
 ---
 

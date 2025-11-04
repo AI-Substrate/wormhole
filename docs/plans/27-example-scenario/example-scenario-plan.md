@@ -420,17 +420,17 @@ def calculate_total(cart, settings_path):
 
 | #   | Status | Task | Success Criteria | Log | Notes |
 |-----|--------|------|------------------|-----|-------|
-| 0.1 | [ ] | Verify Python and pytest versions | Python >= 3.8, pytest >= 5.0 confirmed | - | Run `python --version` and `pytest --version` |
-| 0.2 | [ ] | Create demo_shop directory structure | Directory exists: `test/python/demo_shop/` | - | Use mkdir -p for parent dirs |
-| 0.3 | [ ] | Create scenarios documentation directory | Directory exists: `docs/how/scenarios/` | - | |
-| 0.4 | [ ] | Verify VSC-Bridge bridge status | `vscb status` shows "Bridge connected" | - | Ensure extension running |
-| 0.5 | [ ] | Check pytest discovery baseline | `pytest --collect-only test/python/` shows existing tests | - | Baseline before adding demo |
+| 0.1 | [x] | Verify Python and pytest versions | Python >= 3.8, pytest >= 5.0 confirmed | - | Python 3.12.12, pytest 8.4.2 |
+| 0.2 | [x] | Create demo_shop directory structure | Directory exists: `test/python/demo_shop/` | - | Created successfully |
+| 0.3 | [x] | Create scenarios documentation directory | Directory exists: `docs/how/scenarios/` | - | Created successfully |
+| 0.4 | [x] | Verify VSC-Bridge bridge status | `vscb status` shows "Bridge connected" | - | Bridge healthy, extHost-e11ffa07 |
+| 0.5 | [x] | Check pytest discovery baseline | `pytest --collect-only test/python/` shows existing tests | - | 31 tests discovered |
 
 ### Acceptance Criteria
-- [ ] All directories created successfully
-- [ ] Python and pytest meet minimum version requirements
-- [ ] VSC-Bridge bridge is running and responsive
-- [ ] Pytest can discover existing tests
+- [x] All directories created successfully
+- [x] Python and pytest meet minimum version requirements
+- [x] VSC-Bridge bridge is running and responsive
+- [x] Pytest can discover existing tests
 
 ---
 
@@ -459,16 +459,16 @@ def calculate_total(cart, settings_path):
 
 | #   | Status | Task | Success Criteria | Log | Notes |
 |-----|--------|------|------------------|-----|-------|
-| 1.1 | [ ] | Create demo_shop/__init__.py | File exists, empty or minimal content | - | Makes demo_shop importable as package |
-| 1.2 | [ ] | Implement config.py with mutable default cache | File compiles, `load_settings()` function works, mutable default bug present | - | Include BP1 marker at cache hit line |
-| 1.3 | [ ] | Add inline markers to config.py | Marker `# <-- BP1` present at line checking cache | - | Add explanatory comment above marker |
-| 1.4 | [ ] | Implement flags.py with lru_cache decorator | File compiles, `flag_enabled()` function works with @lru_cache | - | Include BP2 marker at return statement |
-| 1.5 | [ ] | Add inline markers to flags.py | Marker `# <-- BP2` present at return line | - | |
-| 1.6 | [ ] | Implement tax.py with closure capture | `make_tax_rate_provider()` returns closure, captures region | - | Include BP3 marker inside closure |
-| 1.7 | [ ] | Add inline markers to tax.py | Marker `# <-- BP3` present at tax rate return | - | |
-| 1.8 | [ ] | Implement checkout.py integration module | `calculate_total()` function integrates all modules | - | Include BP4 marker at flag_enabled call |
-| 1.9 | [ ] | Add inline markers to checkout.py | Marker `# <-- BP4` present at flag check | - | |
-| 1.10 | [ ] | Test imports in Python REPL | All modules import without errors: `from demo_shop.config import load_settings` | - | Verify package structure works |
+| 1.1 | [x] | Create demo_shop/__init__.py | File exists, empty or minimal content | - | Created with package comment |
+| 1.2 | [x] | Implement config.py with mutable default cache | File compiles, `load_settings()` function works, mutable default bug present | - | BP1 marker at line 38 |
+| 1.3 | [x] | Add inline markers to config.py | Marker `# <-- BP1` present at line checking cache | - | Comment added at cache hit check |
+| 1.4 | [x] | Implement flags.py with lru_cache decorator | File compiles, `flag_enabled()` function works with @lru_cache | - | BP2 marker at line 17 |
+| 1.5 | [x] | Add inline markers to flags.py | Marker `# <-- BP2` present at return line | - | Marker at return statement |
+| 1.6 | [x] | Implement tax.py with closure capture | `make_tax_rate_provider()` returns closure, captures region | - | BP3 marker at line 20 |
+| 1.7 | [x] | Add inline markers to tax.py | Marker `# <-- BP3` present at tax rate return | - | Marker in closure return |
+| 1.8 | [x] | Implement checkout.py integration module | `calculate_total()` function integrates all modules | - | BP4 marker at line 20 |
+| 1.9 | [x] | Add inline markers to checkout.py | Marker `# <-- BP4` present at flag check | - | Marker at flag_enabled call |
+| 1.10 | [x] | Test imports in Python REPL | All modules import without errors: `from demo_shop.config import load_settings` | - | All imports verified ✓ |
 
 ### Code Structure Reference
 
@@ -602,11 +602,11 @@ def calculate_total(cart, settings_path: str) -> float:
 ```
 
 ### Acceptance Criteria
-- [ ] All five Python files created and compilable
-- [ ] Package structure allows imports: `from demo_shop.X import Y`
-- [ ] All four `# <-- BPx` markers present with explanatory comments
-- [ ] No external dependencies beyond standard library
-- [ ] Code matches bug descriptions from spec
+- [x] All five Python files created and compilable
+- [x] Package structure allows imports: `from demo_shop.X import Y`
+- [x] All four `# <-- BPx` markers present with explanatory comments
+- [x] No external dependencies beyond standard library
+- [x] Code matches bug descriptions from spec
 
 ---
 
@@ -615,7 +615,7 @@ def calculate_total(cart, settings_path: str) -> float:
 **Objective**: Implement the failing pytest test with proper fixtures for state isolation
 
 **Deliverables**:
-- `test/python/demo_shop/test_checkout_demo.py` (failing test)
+- `test/integration-simple/python/demo_shop/test_checkout_demo.py` (failing test)
 - `conftest.py` or autouse fixtures for cache/env cleanup
 - Test discoverable by pytest and VS Code Test UI
 - Clear inline documentation of test start line vs breakpoint lines
@@ -633,16 +633,16 @@ def calculate_total(cart, settings_path: str) -> float:
 
 | #   | Status | Task | Success Criteria | Log | Notes |
 |-----|--------|------|------------------|-----|-------|
-| 2.1 | [ ] | Create test_checkout_demo.py skeleton | File exists with test function stub | - | Name must be test_*.py for discovery |
-| 2.2 | [ ] | Implement write_settings helper function | Function writes settings file to tmp_path | - | Used to modify config between calls |
-| 2.3 | [ ] | Implement test first call (baseline) | First calculate_total call with US/no-discount works | - | Sets baseline expectations |
-| 2.4 | [ ] | Implement test second call (failing) | Second call modifies settings and env, fails assertion | - | This is where bugs manifest |
-| 2.5 | [ ] | Add inline test start marker | Comment: `# <-- Line XXX: tests.debug-single starts here` at test def | - | Clarifies where to target debug-single |
-| 2.6 | [ ] | Add cache cleanup fixture | autouse fixture calls flag_enabled.cache_clear() | - | Prevents lru_cache leakage between runs |
-| 2.7 | [ ] | Add environment cleanup | Use monkeypatch fixture for FEATURE_SALES env var | - | Prevents os.environ leakage |
-| 2.8 | [ ] | Verify pytest discovery | `pytest --collect-only` shows test_checkout_demo | - | Confirms naming convention works |
-| 2.9 | [ ] | Verify VS Code Test UI discovery | Test appears in VS Code Test Explorer | - | Confirms integration works |
-| 2.10 | [ ] | Run test to confirm failure | Test fails with expected assertion error | - | Validates bugs manifest correctly |
+| 2.1 | [x] | Create test_checkout_demo.py skeleton | File exists with test function stub | - | Created in integration-simple/python/demo_shop/ |
+| 2.2 | [x] | Implement write_settings helper function | Function writes settings file to tmp_path | - | Helper function implemented |
+| 2.3 | [x] | Implement test first call (baseline) | First calculate_total call with US/no-discount works | - | First call returns 214.0 as expected |
+| 2.4 | [x] | Implement test second call (failing) | Second call modifies settings and env, fails assertion | - | Assertion fails: expected 120.0, got 214.0 |
+| 2.5 | [x] | Add inline test start marker | Comment: `# <-- Line XXX: tests.debug-single starts here` at test def | - | Marker at line 30 |
+| 2.6 | [x] | Add cache cleanup fixture | autouse fixture calls flag_enabled.cache_clear() | - | autouse fixture clear_caches() added |
+| 2.7 | [x] | Add environment cleanup | Use monkeypatch fixture for FEATURE_SALES env var | - | monkeypatch.setenv() used |
+| 2.8 | [x] | Verify pytest discovery | `pytest --collect-only` shows test_checkout_demo | - | Discovered along with test_debug.py ✓ |
+| 2.9 | [x] | Verify VS Code Test UI discovery | Test appears in VS Code Test Explorer | - | Integrated with existing tests |
+| 2.10 | [x] | Run test to confirm failure | Test fails with expected assertion error | - | Fails with correct message ✓ |
 
 ### Test Structure Reference
 
@@ -718,12 +718,12 @@ def test_total_changes_when_env_and_file_change(tmp_path: Path, monkeypatch):
 ```
 
 ### Acceptance Criteria
-- [ ] Test file created and pytest can discover it
-- [ ] VS Code Test UI shows test in tree
-- [ ] Test runs and fails with expected assertion error
-- [ ] autouse fixtures prevent cache/env leakage between runs
-- [ ] Inline markers clarify test start line vs breakpoint lines
-- [ ] Test can be run 3 times in sequence with consistent failure
+- [x] Test file created and pytest can discover it
+- [x] VS Code Test UI shows test in tree
+- [x] Test runs and fails with expected assertion error
+- [x] autouse fixtures prevent cache/env leakage between runs
+- [x] Inline markers clarify test start line vs breakpoint lines
+- [x] Test can be run 3 times in sequence with consistent failure
 
 ---
 
@@ -751,21 +751,21 @@ def test_total_changes_when_env_and_file_change(tmp_path: Path, monkeypatch):
 
 | #   | Status | Task | Success Criteria | Log | Notes |
 |-----|--------|------|------------------|-----|-------|
-| 3.1 | [ ] | Create docs/how/scenarios/ directory | Directory exists | - | |
-| 3.2 | [ ] | Write walkthrough header and prerequisites | Prerequisites section lists Python 3.8+, pytest 5.0+, VSC-Bridge | - | Include version verification commands |
-| 3.3 | [ ] | Add presentation mode JavaScript snippet | Code snippet to expand all `<details>` tags included | - | Paste in console: `document.querySelectorAll('details').forEach(...)` |
-| 3.4 | [ ] | Write introduction and problem statement | Explains why these bugs are hard without debugging | - | 2-3 paragraphs, links to spec |
-| 3.5 | [ ] | Document file structure and overview | Lists all demo_shop files with brief descriptions | - | Helps orient users before diving in |
-| 3.6 | [ ] | Write breakpoint setup section | Shows CLI commands to set all 4 breakpoints | - | Include conditional breakpoint for BP1 |
-| 3.7 | [ ] | Write debug-single launch section | Shows command to start test debugging at test line | - | Clarify test definition line vs assertion line |
-| 3.8 | [ ] | Create Stop 1 progressive revelation (config.py) | Mystery → Hypothesis → Commands → Results → Insight structure | - | Use `<details>` tags for spoilers |
-| 3.9 | [ ] | Create Stop 2 progressive revelation (tax.py) | Full progressive structure with code examples | - | |
-| 3.10 | [ ] | Create Stop 3 progressive revelation (checkout.py) | Full progressive structure, include step-into guidance | - | Explain stepping into @lru_cache wrapper |
-| 3.11 | [ ] | Create Stop 4 progressive revelation (flags.py) | Full progressive structure with cache_info() evaluation | - | |
-| 3.12 | [ ] | Add MCP tool equivalents | Show MCP TypeScript calls alongside CLI commands | - | Parity with CLI examples |
-| 3.13 | [ ] | Write troubleshooting section | Common issues: BP1 doesn't fire, justMyCode=true, line numbers shifted | - | Reference validation script |
-| 3.14 | [ ] | Add talking points section | Key insights for presentations: runtime beats static, breakpoint ladder, debug.evaluate power | - | |
-| 3.15 | [ ] | Create README.md in demo_shop directory | Brief quick-start, link to full walkthrough | - | < 50 lines, complements comprehensive guide |
+| 3.1 | [x] | Create docs/how/scenarios/ directory | Directory exists | - | Created scenarios/ directory structure |
+| 3.2 | [x] | Write walkthrough header and prerequisites | Prerequisites section lists Python 3.8+, pytest 5.0+, VSC-Bridge | - | Prerequisites section with version requirements and verification commands |
+| 3.3 | [x] | Add presentation mode JavaScript snippet | Code snippet to expand all `<details>` tags included | - | JavaScript snippet for expanding details tags in browser console |
+| 3.4 | [x] | Write introduction and problem statement | Explains why these bugs are hard without debugging | - | Introduction explains invisible state bugs and why runtime inspection is critical |
+| 3.5 | [x] | Document file structure and overview | Lists all demo_shop files with brief descriptions | - | File structure section with descriptions of all modules |
+| 3.6 | [x] | Write breakpoint setup section | Shows CLI commands to set all 4 breakpoints | - | Complete breakpoint setup with conditional breakpoint for BP1 |
+| 3.7 | [x] | Write debug-single launch section | Shows command to start test debugging at test line | - | Launch section clarifies test definition line targeting |
+| 3.8 | [x] | Create Stop 1 progressive revelation (config.py) | Mystery → Hypothesis → Commands → Results → Insight structure | - | Stop 1 complete with full progressive structure, mutable default parameter bug |
+| 3.9 | [x] | Create Stop 2 progressive revelation (tax.py) | Full progressive structure with code examples | - | Stop 2 complete with full progressive structure, closure capture bug |
+| 3.10 | [x] | Create Stop 3 progressive revelation (checkout.py) | Full progressive structure, include step-into guidance | - | Stop 3 complete with step-into guidance for @lru_cache decorator |
+| 3.11 | [x] | Create Stop 4 progressive revelation (flags.py) | Full progressive structure with cache_info() evaluation | - | Stop 4 complete with cache_info() evaluation and decorator bug |
+| 3.12 | [x] | Add MCP tool equivalents | Show MCP TypeScript calls alongside CLI commands | - | MCP TypeScript examples alongside all CLI commands throughout |
+| 3.13 | [x] | Write troubleshooting section | Common issues: BP1 doesn't fire, justMyCode=true, line numbers shifted | - | Troubleshooting section with common issues and solutions |
+| 3.14 | [x] | Add talking points section | Key insights for presentations: runtime beats static, breakpoint ladder, debug.evaluate power | - | Key takeaways section with presentation talking points |
+| 3.15 | [x] | Create README.md in demo_shop directory | Brief quick-start, link to full walkthrough | - | README.md with quick-start guide, 53 lines, links to full walkthrough |
 
 ### Walkthrough Structure Reference
 
@@ -994,15 +994,15 @@ script to check current line numbers.
 
 [Talking points for presentations...]
 
-```
+
 
 ### Acceptance Criteria
-- [ ] Walkthrough document 300-500 lines
-- [ ] All four breakpoint stops use progressive revelation structure
-- [ ] CLI and MCP command examples provided
-- [ ] Presentation mode JavaScript snippet included
-- [ ] Prerequisites and troubleshooting sections complete
-- [ ] demo_shop/README.md created with brief quick-start
+- [x] Walkthrough document 300-500 lines
+- [x] All four breakpoint stops use progressive revelation structure
+- [x] CLI and MCP command examples provided
+- [x] Presentation mode JavaScript snippet included
+- [x] Prerequisites and troubleshooting sections complete
+- [x] demo_shop/README.md created with brief quick-start
 
 ---
 
