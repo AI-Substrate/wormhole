@@ -601,4 +601,37 @@ export class CLIRunner implements DebugRunner {
             };
         }
     }
+
+    // ========== Code Manipulation Operations ==========
+
+    /**
+     * Replace method via CLI
+     */
+    async replaceMethod(path: string, symbol: string, replacement: string): Promise<RunnerResponse<void>> {
+        try {
+            const absolutePath = this.resolvePath(path);
+            // Escape replacement text for shell - use heredoc-style approach via file
+            const result = await this.runCLI(
+                `script run code.replace-method --param path="${absolutePath}" --param symbol="${symbol}" --param replacement="${replacement.replace(/"/g, '\\"')}"`
+            );
+
+            if (!result.ok) {
+                return {
+                    success: false,
+                    error: 'Failed to replace method',
+                    rawError: result
+                };
+            }
+
+            return {
+                success: true
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error replacing method',
+                rawError: error
+            };
+        }
+    }
 }

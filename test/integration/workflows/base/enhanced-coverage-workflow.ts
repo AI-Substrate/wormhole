@@ -71,6 +71,13 @@ export interface EnhancedWorkflowConfig {
     retryTestDiscovery?: boolean;            // Default: false
     retryMaxAttempts?: number;                // Default: 5
     retryDelayMs?: number;                    // Default: 2000
+
+    // Method replacement test (Phase 4 validation)
+    methodReplacement?: {
+        functionName: string;        // Symbol name to replace (e.g., 'add', 'Add')
+        modifiedCode: string;        // Modified version with extra local variable
+        originalCode: string;        // Original version to restore
+    };
 }
 
 /**
@@ -102,6 +109,32 @@ export async function enhancedCoverageWorkflow(
     const gotoResult = await runner.gotoLine(config.testFile, config.breakpoint1Line);
     expect(gotoResult.success, `Failed to navigate: ${gotoResult.error}`).toBe(true);
     console.log('✅ Navigated to breakpoint line');
+
+    // METHOD REPLACEMENT VALIDATION (Phase 4)
+    if (config.methodReplacement) {
+        console.log('🔄 Testing method replacement (Phase 4 validation)...');
+
+        // Step 1: Replace method with modified version
+        console.log(`📝 Step 1: Replacing ${config.methodReplacement.functionName}() with modified version...`);
+        const replaceResult1 = await runner.replaceMethod(
+            config.testFile,
+            config.methodReplacement.functionName,
+            config.methodReplacement.modifiedCode
+        );
+        expect(replaceResult1.success, `Failed to replace method: ${replaceResult1.error}`).toBe(true);
+        console.log('✅ Method replaced successfully');
+
+        // Step 2: Replace back to original
+        console.log('🔄 Step 2: Replacing back to original version...');
+        const replaceResult2 = await runner.replaceMethod(
+            config.testFile,
+            config.methodReplacement.functionName,
+            config.methodReplacement.originalCode
+        );
+        expect(replaceResult2.success, `Failed to restore method: ${replaceResult2.error}`).toBe(true);
+        console.log('✅ Method restored to original');
+        console.log('✅ Method replacement transaction complete');
+    }
 
     // Set first breakpoint
     console.log(`📍 Setting breakpoint 1 at ${config.testFile}:${config.breakpoint1Line}...`);

@@ -1506,7 +1506,7 @@ describe('Symbol Rename - Workspace-Wide', () => {
 
 | # | Status | Task | Success Criteria | Log | Notes |
 |---|--------|------|------------------|-----|-------|
-| 4.1 | [ ] | Create code/replace-method.js extending ActionScript | File structure correct, extends ActionScript (NOT QueryScript) | - | New category: code/ - destructive operation |
+| 4.1 | [x] | Create code/replace-method.js extending ActionScript | File structure correct, extends ActionScript (NOT QueryScript) | [📋](tasks/phase-4-method-replacement-tool/execution.log.md#t027-manual-cli-testing-completed) | Completed · log#t027-manual-cli-testing-completed [^8] |
 | 4.2 | [ ] | Create code/replace-method.meta.yaml | Defines nodeId, path, symbol, replacement params (no mode param) | - | Simplified to whole-symbol only |
 | 4.3 | [ ] | Write dynamic scripts for exploration | explore-whole-symbol.js, explore-signature-change.js | - | TAD with 0s rebuild |
 | 4.4 | [ ] | Implement symbol resolution + WorkspaceEdit | Reuse Phase 1 resolveSymbolInput, create TextEdit with symbol.range | - | No body detection needed |
@@ -2309,6 +2309,11 @@ vscb script run symbol.rename \
 ---
 
 **✅ Plan Status**: DRAFT - Ready for validation via `/plan-4-complete-the-plan`
+
+[^8]: Task 4.1 (T027) - Manual CLI testing completed
+  - `class:packages/extension/src/vsc-scripts/code/replace-method.ts:ReplaceMethodScript`
+  - `file:packages/extension/src/vsc-scripts/code/replace-method.meta.yaml`
+
 [^phase-4]: Phase 4 - Method Replacement Tool - COMPLETED 2025-10-29
   - `file:packages/extension/src/vsc-scripts/code/replace-method.js` (306 lines) - Complete ActionScript implementation
   - `file:packages/extension/src/vsc-scripts/code/replace-method.meta.yaml` (246 lines) - Comprehensive MCP metadata

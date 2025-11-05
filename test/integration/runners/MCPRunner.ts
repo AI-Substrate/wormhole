@@ -661,4 +661,27 @@ export class MCPRunner implements DebugRunner {
             };
         }
     }
+
+    // ========== Code Manipulation Operations ==========
+
+    async replaceMethod(path: string, symbol: string, replacement: string): Promise<RunnerResponse<void>> {
+        try {
+            const absolutePath = this.resolvePath(path);
+            await this.callMCPTool('code_replace_method', {
+                path: absolutePath,
+                symbol: symbol,
+                replacement: replacement
+            });
+
+            return {
+                success: true
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error replacing method',
+                rawError: error
+            };
+        }
+    }
 }

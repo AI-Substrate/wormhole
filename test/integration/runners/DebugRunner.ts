@@ -320,4 +320,19 @@ export interface DebugRunner extends PathResolver {
      * @returns Evaluation result with value and type
      */
     evaluate(expression: string): Promise<RunnerResponse<EvaluateResult>>;
+
+    // ========== Code Manipulation Operations ==========
+
+    /**
+     * Replace an entire method declaration using LSP-based symbol resolution
+     *
+     * This operation uses the code.replace-method script/tool to perform
+     * whole-symbol replacement of a method's signature and body.
+     *
+     * @param path - Absolute path to file containing the method
+     * @param symbol - Symbol name (e.g., "add" for function, "Calculator.add" for method)
+     * @param replacement - Complete replacement text (entire method declaration)
+     * @returns Success/error indication with change details
+     */
+    replaceMethod(path: string, symbol: string, replacement: string): Promise<RunnerResponse<void>>;
 }
