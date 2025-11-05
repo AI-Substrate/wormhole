@@ -12,10 +12,11 @@ import { BridgeContext, BridgeContextFactory, withContext } from '../bridge-cont
 import { typeGuards } from '../bridge-context/type-guards';
 import { EditorContextProvider } from '../context/EditorContextProvider';
 import { ITelemetry, scrubPII } from '../telemetry';
+import { getScriptMetadata } from '../scripts/decorators';
 
-// Using ESM dynamic imports with webpackIgnore comment to load scripts at runtime.
-// This bypasses webpack's module system and allows loading scripts from disk.
-// The webpackIgnore comment prevents webpack from trying to bundle these modules.
+// Import all baked-in scripts from central import file
+// This enables debugging with source maps and replaces dynamic loading
+import * as ScriptClasses from '../../vsc-scripts/index';
 
 /**
  * Registry for managing and executing scripts
@@ -98,49 +99,144 @@ export class ScriptRegistry {
             }
         }
 
-        console.log(`[ScriptRegistry] ✅ Successfully loaded ${this.scripts.size} scripts at ${new Date().toISOString()}`);
+        // Phase 5 Task T005: Verify script count matches manifest
+        const manifestCount = Object.keys(manifest.scripts).length;
+        const loadedCount = this.scripts.size;
+
+        console.log(`[ScriptRegistry] ✅ Successfully loaded ${loadedCount} scripts at ${new Date().toISOString()}`);
+
+        if (loadedCount !== manifestCount) {
+            console.error(`[ScriptRegistry] ⚠️  WARNING: Script count mismatch!`);
+            console.error(`[ScriptRegistry]    Manifest entries: ${manifestCount}`);
+            console.error(`[ScriptRegistry]    Successfully loaded: ${loadedCount}`);
+            console.error(`[ScriptRegistry]    Missing: ${manifestCount - loadedCount} scripts`);
+
+            // Find which scripts failed to load
+            const loadedAliases = new Set(this.scripts.keys());
+            const missingAliases = Object.keys(manifest.scripts).filter(alias => !loadedAliases.has(alias));
+            if (missingAliases.length > 0) {
+                console.error(`[ScriptRegistry]    Failed to load: ${missingAliases.join(', ')}`);
+            }
+        } else {
+            console.log(`[ScriptRegistry] ✅ All ${loadedCount} manifest scripts loaded successfully`);
+        }
+
+        // Phase 5 Task T006: Validate manifest entries have decorator metadata
+        this.validateDecoratorMetadata(manifest);
     }
 
     /**
-     * Load a single script
+     * Validate that all manifest scripts have corresponding decorator metadata.
+     *
+     * Phase 5 Task T006: Prevents "ghost scripts" (in manifest but missing decorator)
+     * which would fail at runtime when registry can't find them.
+     */
+    private validateDecoratorMetadata(manifest: ScriptManifest): void {
+        const metadata = getScriptMetadata();
+        const decoratedAliases = new Set<string>();
+
+        // Collect all aliases from decorated classes
+        for (const value of Object.values(ScriptClasses)) {
+            if (typeof value === 'function') {
+                const scriptName = metadata.get(value);
+                if (scriptName) {
+                    decoratedAliases.add(scriptName);
+                }
+            }
+        }
+
+        // Check each manifest entry has decorator
+        const missingDecorators: string[] = [];
+        const nameMismatches: Array<{alias: string, expected: string}> = [];
+
+        for (const alias of Object.keys(manifest.scripts)) {
+            if (!decoratedAliases.has(alias)) {
+                missingDecorators.push(alias);
+            }
+        }
+
+        if (missingDecorators.length > 0) {
+            console.warn(`[ScriptRegistry] ⚠️  WARNING: ${missingDecorators.length} scripts missing @RegisterScript decorator:`);
+            for (const alias of missingDecorators) {
+                console.warn(`[ScriptRegistry]    - ${alias} (will fail at runtime if not dynamically loaded)`);
+            }
+        } else {
+            console.log(`[ScriptRegistry] ✅ All manifest scripts have @RegisterScript decorators`);
+        }
+
+        // Also check for decorated scripts not in manifest (informational only)
+        const extraDecorated: string[] = [];
+        for (const decoratedAlias of decoratedAliases) {
+            if (!manifest.scripts[decoratedAlias]) {
+                extraDecorated.push(decoratedAlias);
+            }
+        }
+
+        if (extraDecorated.length > 0) {
+            console.log(`[ScriptRegistry] ℹ️  ${extraDecorated.length} decorated scripts not in manifest (may be deprecated):`);
+            for (const alias of extraDecorated) {
+                console.log(`[ScriptRegistry]    - ${alias}`);
+            }
+        }
+    }
+
+    /**
+     * Load a single script using decorator metadata and static imports.
+     *
+     * Phase 5: Uses static imports from central index file for baked-in scripts,
+     * enabling full debugging support. Falls back to dynamic loading only for
+     * @dynamic scripts loaded at runtime.
      */
     private async loadScript(alias: string, entry: ManifestEntry, baseDir: string): Promise<void> {
         const scriptPath = path.join(baseDir, entry.scriptRelPath);
 
-        // Check if script file exists
-        if (!fs.existsSync(scriptPath)) {
-            throw new Error(`Script file not found: ${scriptPath}`);
-        }
+        // Get decorator metadata for all statically imported scripts
+        const metadata = getScriptMetadata();
 
-        // Use cross-platform dynamic loader (works on macOS, Linux, WSL, Windows)
-        const module = await loadModuleFromDisk(scriptPath);
-
-        // Find the exported script class
-        // We need to check if it's a subclass of ScriptBase in a way that works
-        // even when modules are loaded from different paths
+        // Try to find script class by decorator metadata (baked-in scripts)
         let ScriptClass: any;
-
-        // Check all exports for a class that looks like a ScriptBase subclass
-        for (const exportName of Object.keys(module)) {
-            const exported = module[exportName];
-            if (typeof exported === 'function' && exported.prototype) {
-                // Check if it has the expected ScriptBase methods/properties
-                // This is more reliable than instanceof when dealing with module loading issues
-                const proto = exported.prototype;
-                if (proto.execute && (proto.constructor.name.includes('Script') ||
-                    proto.constructor.name.includes('ActionScript') ||
-                    proto.constructor.name.includes('QueryScript') ||
-                    proto.constructor.name.includes('WaitableScript') ||
-                    proto.constructor.name.includes('StreamScript'))) {
-                    ScriptClass = exported;
+        for (const [key, value] of Object.entries(ScriptClasses)) {
+            if (typeof value === 'function') {
+                const scriptName = metadata.get(value);
+                if (scriptName === alias) {
+                    ScriptClass = value;
+                    console.log(`[ScriptRegistry]   ✔ Found script via decorator: ${alias} (${key})`);
                     break;
                 }
             }
         }
 
+        // If not found in static imports, fall back to dynamic loading (@dynamic scripts)
+        // This maintains flexibility for AI agents to load custom scripts at runtime
         if (!ScriptClass) {
-            // Try default export with same checks
-            if (module.default && typeof module.default === 'function' && module.default.prototype) {
+            console.log(`[ScriptRegistry]   ⚠ Script ${alias} not found in static imports, using dynamic loader`);
+
+            // Check if script file exists
+            if (!fs.existsSync(scriptPath)) {
+                throw new Error(`Script file not found: ${scriptPath}`);
+            }
+
+            // Use cross-platform dynamic loader (works on macOS, Linux, WSL, Windows)
+            // NOTE: Dynamic loader is kept for @dynamic script support (Phase 5 Task T004)
+            const module = await loadModuleFromDisk(scriptPath);
+
+            // Find the exported script class (duck typing fallback for dynamic scripts)
+            for (const exportName of Object.keys(module)) {
+                const exported = module[exportName];
+                if (typeof exported === 'function' && exported.prototype) {
+                    const proto = exported.prototype;
+                    if (proto.execute && (proto.constructor.name.includes('Script') ||
+                        proto.constructor.name.includes('ActionScript') ||
+                        proto.constructor.name.includes('QueryScript') ||
+                        proto.constructor.name.includes('WaitableScript') ||
+                        proto.constructor.name.includes('StreamScript'))) {
+                        ScriptClass = exported;
+                        break;
+                    }
+                }
+            }
+
+            if (!ScriptClass && module.default && typeof module.default === 'function' && module.default.prototype) {
                 const proto = module.default.prototype;
                 if (proto.execute && proto.constructor.name.includes('Script')) {
                     ScriptClass = module.default;
@@ -148,7 +244,6 @@ export class ScriptRegistry {
             }
 
             if (!ScriptClass) {
-                // Log what we found for debugging
                 console.error(`[ScriptRegistry] No script class found in ${scriptPath}. Module exports:`, Object.keys(module));
                 throw new Error(`No ScriptBase class found in ${scriptPath}`);
             }
@@ -164,7 +259,7 @@ export class ScriptRegistry {
         this.scripts.set(alias, script);
         this.manifests.set(alias, entry);
 
-        console.log(`[ScriptRegistry]   ✔ Loaded script: ${alias} from ${scriptPath}`);
+        console.log(`[ScriptRegistry]   ✔ Registered: ${alias}`);
     }
 
 

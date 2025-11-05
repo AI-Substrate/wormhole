@@ -45,6 +45,7 @@
 	},
 	"exclude": [
 		"test/**/*",
-		"scripts/**/*"
+		"scripts/**/*",
+		"vitest.config.ts"
 	]
 }

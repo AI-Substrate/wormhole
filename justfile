@@ -12,7 +12,7 @@ install:
     @echo "✅ All dependencies installed via workspace"
 
 # Build everything properly
-build: validate-paths build-manifest build-base-classes build-extension build-cli build-docs
+build: validate-paths validate-script-imports build-manifest build-base-classes build-extension build-cli build-docs
     @echo "✅ Full build complete!"
     @echo "Run 'just install-global' to make vscb available globally"
 
@@ -20,6 +20,11 @@ build: validate-paths build-manifest build-base-classes build-extension build-cl
 validate-paths:
     @echo "Validating webpack and TypeScript paths..."
     @node scripts/validate-paths.cjs
+
+# Validate script imports match manifest (Phase 5: Registry Integration)
+validate-script-imports: build-manifest
+    @echo "Validating script imports match manifest..."
+    @node scripts/validate-script-imports.cjs
 
 # Build script manifest (required for script loading)
 build-manifest:
