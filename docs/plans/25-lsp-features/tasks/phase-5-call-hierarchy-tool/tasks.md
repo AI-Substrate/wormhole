@@ -7,15 +7,17 @@
 **Plan**: [lsp-features-plan.md](../../lsp-features-plan.md#phase-5-call-hierarchy-tool)
 **Status**: PLANNING
 
+> **Note**: Call hierarchy placed in `symbol` category alongside `navigate` and `rename` since finding callers/callees is fundamentally symbol navigation.
+
 ---
 
 ## Tasks
 
 | Status | ID | Task | Type | Dependencies | Absolute Path(s) | Validation | Subtasks | Notes |
 |--------|----|----|------|--------------|------------------|------------|----------|-------|
-| [ ] | T001 | Create hierarchy/ directory if not exists | Setup | – | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/` | Directory exists | – | New category for call hierarchy scripts |
-| [ ] | T002 | Create calls.js extending QueryScript | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.js` | File exists, imports QueryScript from @script-base | – | Discovery 01 - QueryScript for read-only operations |
-| [ ] | T003 | Create calls.meta.yaml skeleton with parameters | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.meta.yaml` | File exists, defines nodeId/path/symbol/direction params | – | Discovery 02 - dual-file registration |
+| [ ] | T001 | Verify symbol/ directory exists | Setup | – | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/` | Directory exists (created in Phase 2) | – | Reusing existing symbol category |
+| [ ] | T002 | Create calls.js extending QueryScript | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | File exists, imports QueryScript from @script-base | – | Discovery 01 - QueryScript for read-only operations |
+| [ ] | T003 | Create calls.meta.yaml skeleton with parameters | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.meta.yaml` | File exists, defines nodeId/path/symbol/direction params | – | Discovery 02 - dual-file registration |
 | [ ] | T004 | Create dynamic script: explore-call-hierarchy-prepare.js | Test | T002, T003 | `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-call-hierarchy-prepare.js` | Script tests prepareCallHierarchy with real LSP | – | TAD with dynamic scripts; Discovery 09 - two-step process requires separate exploration |
 | [ ] | T005 | Iterate dynamic script: validate CallHierarchyItem structure | Test | T004 | `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-call-hierarchy-prepare.js` | Script logs item properties (name, kind, uri, range) | – | Understand LSP response structure; hot-reload testing |
 | [ ] | T006 | Iterate dynamic script: test prepare with symbol name resolution | Test | T005 | `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-call-hierarchy-prepare.js` | Script validates Phase 1 resolveSymbolInput integration | – | Confirm symbol resolver works for call hierarchy |
@@ -29,34 +31,34 @@
 | [ ] | T014 | Iterate dynamic script: validate CallHierarchyOutgoingCall structure | Test | T013 | `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-outgoing-calls.js` | Script logs call.to (CallHierarchyItem) and call.fromRanges (Range[]) | – | Understand response structure for outgoing calls |
 | [ ] | T015 | Iterate dynamic script: test empty outgoing calls (no callees) | Test | T014 | `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-outgoing-calls.js` | Script validates empty array for leaf functions | – | Edge case - return empty array gracefully |
 | [ ] | T016 | Document outgoing calls findings in execution log | Doc | T015 | `/workspaces/vscode-bridge/docs/plans/25-lsp-features/tasks/phase-5-call-hierarchy-tool/execution.log.md` | Log captures outgoing call structure, direction differences | – | TAD learning captured |
-| [ ] | T017 | Implement execute() method skeleton in calls.js | Core | T002 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.js` | Method defined, accepts bridgeContext and params | – | Discovery 20 - BridgeContext injection |
-| [ ] | T018 | Implement input resolution using symbol-resolver | Core | T017 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.js` | Calls resolveSymbolInput from @core/util/symbol-resolver | – | Phase 1 dependency - uses exported API |
-| [ ] | T019 | Implement _prepareCallHierarchy() with timeout protection | Core | T018 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.js` | Wraps vscode.commands.executeCommand('vscode.prepareCallHierarchy') with getLSPResultWithTimeout | – | Discovery 04 - timeout wrapper; Discovery 09 - first step of two-step process |
-| [ ] | T020 | Add prepare step validation (null/empty check) | Core | T019 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.js` | Throws E_NO_LANGUAGE_SERVER if items null/empty | – | Discovery 09 - prepare can return null when unsupported |
-| [ ] | T021 | Implement _executeIncomingCalls() with timeout protection | Core | T019 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.js` | Wraps vscode.commands.executeCommand('vscode.provideIncomingCalls') with timeout | – | Discovery 04 - timeout wrapper; Discovery 09 - second step for incoming direction |
-| [ ] | T022 | Implement _executeOutgoingCalls() with timeout protection | Core | T019 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.js` | Wraps vscode.commands.executeCommand('vscode.provideOutgoingCalls') with timeout | – | Discovery 04 - timeout wrapper; Discovery 09 - second step for outgoing direction |
-| [ ] | T023 | Implement direction routing dispatcher (incoming vs outgoing) | Core | T021, T022 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.js` | params.direction determines which provide command to call | – | Parallel to navigate.js action routing |
+| [ ] | T017 | Implement execute() method skeleton in calls.js | Core | T002 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | Method defined, accepts bridgeContext and params | – | Discovery 20 - BridgeContext injection |
+| [ ] | T018 | Implement input resolution using symbol-resolver | Core | T017 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | Calls resolveSymbolInput from @core/util/symbol-resolver | – | Phase 1 dependency - uses exported API |
+| [ ] | T019 | Implement _prepareCallHierarchy() with timeout protection | Core | T018 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | Wraps vscode.commands.executeCommand('vscode.prepareCallHierarchy') with getLSPResultWithTimeout | – | Discovery 04 - timeout wrapper; Discovery 09 - first step of two-step process |
+| [ ] | T020 | Add prepare step validation (null/empty check) | Core | T019 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | Throws E_NO_LANGUAGE_SERVER if items null/empty | – | Discovery 09 - prepare can return null when unsupported |
+| [ ] | T021 | Implement _executeIncomingCalls() with timeout protection | Core | T019 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | Wraps vscode.commands.executeCommand('vscode.provideIncomingCalls') with timeout | – | Discovery 04 - timeout wrapper; Discovery 09 - second step for incoming direction |
+| [ ] | T022 | Implement _executeOutgoingCalls() with timeout protection | Core | T019 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | Wraps vscode.commands.executeCommand('vscode.provideOutgoingCalls') with timeout | – | Discovery 04 - timeout wrapper; Discovery 09 - second step for outgoing direction |
+| [ ] | T023 | Implement direction routing dispatcher (incoming vs outgoing) | Core | T021, T022 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | params.direction determines which provide command to call | – | Parallel to navigate.js action routing |
 | [ ] | T024 | Validate two-step process with dynamic scripts | Test | T019, T021, T022, T023 | `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-call-hierarchy-prepare.js`, `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-incoming-calls.js`, `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-outgoing-calls.js` | Scripts confirm calls.js logic matches explored behavior | – | TAD validation - instant feedback loop |
-| [ ] | T025 | Implement normalizeCallHierarchyResult() for incoming calls | Core | T021 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.js` | Converts CallHierarchyIncomingCall[] to standard response format | – | Format: { from: { name, nodeId?, uri, range }, fromRanges: Range[] } |
-| [ ] | T026 | Implement normalizeCallHierarchyResult() for outgoing calls | Core | T022 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.js` | Converts CallHierarchyOutgoingCall[] to standard response format | – | Format: { to: { name, nodeId?, uri, range }, fromRanges: Range[] } |
-| [ ] | T027 | Implement optional Flowspace ID enrichment for call items | Core | T025, T026 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.js` | Uses buildFlowspaceIdAtPosition when enrichWithFlowspaceIds=true | – | Discovery 15 - optional for performance; Phase 1 dependency |
-| [ ] | T028 | Add error handling for timeout, undefined, and exceptions | Core | T027 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.js` | Three-state handling (result, null, timeout) with clear error messages | – | Discovery 04 - LSP race condition; Discovery 08 - error codes |
-| [ ] | T029 | Implement getLanguageHint() for call hierarchy limitations | Core | T028 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.js` | Returns helpful hints for JavaScript/Python call hierarchy limitations | – | Discovery 18 - language support matrix; JavaScript has limited call hierarchy |
-| [ ] | T030 | Write comprehensive MCP llm.when_to_use guidance | Doc | T003 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.meta.yaml` | Includes USE FOR, DON'T USE FOR, PREREQUISITES, PATTERNS, two-step process explanation | – | Discovery 05 - significant time investment; explain prepare→provide workflow |
-| [ ] | T031 | Write detailed MCP parameter_hints for all parameters | Doc | T030 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.meta.yaml` | Each parameter has description, examples, notes, pitfalls (especially direction values) | – | Discovery 05 - comprehensive guidance |
-| [ ] | T032 | Add MCP error_contract with E_NO_LANGUAGE_SERVER, E_NOT_FOUND, E_TIMEOUT, E_INVALID_INPUT | Doc | T030 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.meta.yaml` | All error codes documented with fix hints, prepare step failure explanation | – | Discovery 08 - hybrid error strategy; Discovery 09 - prepare failure scenarios |
-| [ ] | T033 | Add MCP relationships and safety flags | Doc | T030 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/hierarchy/calls.meta.yaml` | Defines requires (Phase 1 symbol-resolver), idempotent=true, read_only=true | – | Follows existing meta.yaml patterns |
-| [ ] | T034 | Promote test: incoming calls with Flowspace ID (critical path) | Test | T024 | `/workspaces/vscode-bridge/test-cli/integration-mcp/hierarchy-calls.test.ts` | Test with complete Test Doc block (5 fields), validates two-step process | – | TAD promotion - critical path coverage; document two-step workflow |
-| [ ] | T035 | Promote test: outgoing calls with symbol name (alternative input) | Test | T024 | `/workspaces/vscode-bridge/test-cli/integration-mcp/hierarchy-calls.test.ts` | Test with complete Test Doc block, validates direction routing | – | TAD promotion - dual input format + direction parameter |
-| [ ] | T036 | Promote test: empty incoming calls (opaque behavior) | Test | T024 | `/workspaces/vscode-bridge/test-cli/integration-mcp/hierarchy-calls.test.ts` | Test validates empty array (not error) for unused functions with Test Doc block | – | TAD promotion - edge case handling |
-| [ ] | T037 | Promote test: unsupported language error (edge case) | Test | T024 | `/workspaces/vscode-bridge/test-cli/integration-mcp/hierarchy-calls.test.ts` | Test validates E_NO_LANGUAGE_SERVER when prepare returns null/empty | – | TAD promotion - error contract; language support validation |
-| [ ] | T038 | Promote test: invalid direction parameter (edge case) | Test | T024 | `/workspaces/vscode-bridge/test-cli/integration-mcp/hierarchy-calls.test.ts` | Test validates E_INVALID_INPUT for direction="invalid" | – | TAD promotion - input validation |
+| [ ] | T025 | Implement normalizeCallHierarchyResult() for incoming calls | Core | T021 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | Converts CallHierarchyIncomingCall[] to standard response format | – | Format: { from: { name, nodeId?, uri, range }, fromRanges: Range[] } |
+| [ ] | T026 | Implement normalizeCallHierarchyResult() for outgoing calls | Core | T022 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | Converts CallHierarchyOutgoingCall[] to standard response format | – | Format: { to: { name, nodeId?, uri, range }, fromRanges: Range[] } |
+| [ ] | T027 | Implement optional Flowspace ID enrichment for call items | Core | T025, T026 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | Uses buildFlowspaceIdAtPosition when enrichWithFlowspaceIds=true | – | Discovery 15 - optional for performance; Phase 1 dependency |
+| [ ] | T028 | Add error handling for timeout, undefined, and exceptions | Core | T027 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | Three-state handling (result, null, timeout) with clear error messages | – | Discovery 04 - LSP race condition; Discovery 08 - error codes |
+| [ ] | T029 | Implement getLanguageHint() for call hierarchy limitations | Core | T028 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | Returns helpful hints for JavaScript/Python call hierarchy limitations | – | Discovery 18 - language support matrix; JavaScript has limited call hierarchy |
+| [ ] | T030 | Write comprehensive MCP llm.when_to_use guidance | Doc | T003 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.meta.yaml` | Includes USE FOR, DON'T USE FOR, PREREQUISITES, PATTERNS, two-step process explanation | – | Discovery 05 - significant time investment; explain prepare→provide workflow |
+| [ ] | T031 | Write detailed MCP parameter_hints for all parameters | Doc | T030 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.meta.yaml` | Each parameter has description, examples, notes, pitfalls (especially direction values) | – | Discovery 05 - comprehensive guidance |
+| [ ] | T032 | Add MCP error_contract with E_NO_LANGUAGE_SERVER, E_NOT_FOUND, E_TIMEOUT, E_INVALID_INPUT | Doc | T030 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.meta.yaml` | All error codes documented with fix hints, prepare step failure explanation | – | Discovery 08 - hybrid error strategy; Discovery 09 - prepare failure scenarios |
+| [ ] | T033 | Add MCP relationships and safety flags | Doc | T030 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.meta.yaml` | Defines requires (Phase 1 symbol-resolver), idempotent=true, read_only=true | – | Follows existing meta.yaml patterns |
+| [ ] | T034 | Promote test: incoming calls with Flowspace ID (critical path) | Test | T024 | `/workspaces/vscode-bridge/test-cli/integration-mcp/symbol-calls.test.ts` | Test with complete Test Doc block (5 fields), validates two-step process | – | TAD promotion - critical path coverage; document two-step workflow |
+| [ ] | T035 | Promote test: outgoing calls with symbol name (alternative input) | Test | T024 | `/workspaces/vscode-bridge/test-cli/integration-mcp/symbol-calls.test.ts` | Test with complete Test Doc block, validates direction routing | – | TAD promotion - dual input format + direction parameter |
+| [ ] | T036 | Promote test: empty incoming calls (opaque behavior) | Test | T024 | `/workspaces/vscode-bridge/test-cli/integration-mcp/symbol-calls.test.ts` | Test validates empty array (not error) for unused functions with Test Doc block | – | TAD promotion - edge case handling |
+| [ ] | T037 | Promote test: unsupported language error (edge case) | Test | T024 | `/workspaces/vscode-bridge/test-cli/integration-mcp/symbol-calls.test.ts` | Test validates E_NO_LANGUAGE_SERVER when prepare returns null/empty | – | TAD promotion - error contract; language support validation |
+| [ ] | T038 | Promote test: invalid direction parameter (edge case) | Test | T024 | `/workspaces/vscode-bridge/test-cli/integration-mcp/symbol-calls.test.ts` | Test validates E_INVALID_INPUT for direction="invalid" | – | TAD promotion - input validation |
 | [ ] | T039 | Keep dynamic scripts as permanent samples | Doc | T034, T035, T036, T037, T038 | `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-call-hierarchy-prepare.js`, `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-incoming-calls.js`, `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-outgoing-calls.js` | Scripts remain as usage examples and dogfooding tools | – | Unlike Vitest scratch tests, dynamic scripts are kept (3 scripts for prepare + incoming + outgoing) |
-| [ ] | T040 | Run `just build` to generate manifest and schemas | Integration | T039 | `/workspaces/vscode-bridge/` | Build succeeds, manifest.json updated with hierarchy.calls | – | Discovery 02 - dual-file registration validation |
-| [ ] | T041 | Verify schema generation for hierarchy.calls parameters | Integration | T040 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/manifest.json` | Schema includes nodeId, path, symbol, direction, enrichWithFlowspaceIds | – | Build validation |
-| [ ] | T042 | Manual test: vscb script run hierarchy.calls with real file (incoming) | Integration | T040 | – | Command returns incoming calls for test/javascript/UserService.getUser | – | End-to-end validation; requires Extension Host |
-| [ ] | T043 | Manual test: vscb script run hierarchy.calls with real file (outgoing) | Integration | T042 | – | Command returns outgoing calls for test/javascript/UserController.handleRequest | – | Validate direction routing |
-| [ ] | T044 | Manual test: MCP tool call via stdio client | Integration | T043 | – | MCP client can call hierarchy_calls and receive results | – | MCP integration validation |
+| [ ] | T040 | Run `just build` to generate manifest and schemas | Integration | T039 | `/workspaces/vscode-bridge/` | Build succeeds, manifest.json updated with symbol.calls | – | Discovery 02 - dual-file registration validation |
+| [ ] | T041 | Verify schema generation for symbol.calls parameters | Integration | T040 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/manifest.json` | Schema includes nodeId, path, symbol, direction, enrichWithFlowspaceIds | – | Build validation |
+| [ ] | T042 | Manual test: vscb script run symbol.calls with real file (incoming) | Integration | T040 | – | Command returns incoming calls for test/javascript/UserService.getUser | – | End-to-end validation; requires Extension Host |
+| [ ] | T043 | Manual test: vscb script run symbol.calls with real file (outgoing) | Integration | T042 | – | Command returns outgoing calls for test/javascript/UserController.handleRequest | – | Validate direction routing |
+| [ ] | T044 | Manual test: MCP tool call via stdio client | Integration | T043 | – | MCP client can call symbol_calls and receive results | – | MCP integration validation |
 
 ---
 
@@ -74,7 +76,7 @@ This section synthesizes findings from Phases 1-4 execution that directly inform
 - **`resolveSymbolInput(params)`** - Primary entry point for symbol resolution
   - Handles both Flowspace ID (`nodeId`) and symbol name (`path + symbol`) inputs
   - Returns `{ uri, position, symbol, meta: { resolvedVia } }`
-  - **Phase 5 Usage**: Resolve target function/method before calling prepareCallHierarchy
+  - **Phase 5 Usage**: Resolve target function/method for symbol.calls before calling prepareCallHierarchy
 
 - **`getLSPResultWithTimeout(lspPromise, timeoutMs)`** - Timeout protection wrapper
   - Returns: `result | null | 'timeout'` (three-state handling)
@@ -189,7 +191,7 @@ This section synthesizes findings from Phases 1-4 execution that directly inform
 
 ### Objective Recap
 
-**Phase Goal**: Implement `hierarchy.calls` tool for navigating incoming and outgoing call relationships using semantic identifiers (Flowspace IDs or symbol names).
+**Phase Goal**: Implement `symbol.calls` tool for navigating incoming and outgoing call relationships using semantic identifiers (Flowspace IDs or symbol names).
 
 **Behavior Checklist** (from plan acceptance criteria):
 - [ ] All promoted tests passing (~5 tests: incoming, outgoing, empty results, unsupported language, invalid direction)
@@ -226,12 +228,12 @@ This phase addresses **7 critical discoveries** from the plan:
 #### 🚨 Critical Discovery 01: Three-Tier Base Class Architecture
 - **Constraint**: Call hierarchy is read-only query → extend QueryScript (not ActionScript)
 - **Requirement**: `execute()` returns data object directly (e.g., `{ calls: [...], direction, total }`)
-- **Implementation**: `class CallsScript extends QueryScript`
+- **Implementation**: `class CallsScript extends QueryScript` in symbol/calls.js
 - **Tasks**: T002 (base class selection)
 
 #### 🚨 Critical Discovery 02: Dual-File Registration Pattern
 - **Constraint**: Requires both `.js` AND `.meta.yaml` files with identical base names
-- **Requirement**: Create `hierarchy/calls.js` + `hierarchy/calls.meta.yaml`
+- **Requirement**: Create `symbol/calls.js` + `symbol/calls.meta.yaml`
 - **Validation**: `just build` must succeed, manifest.json updated
 - **Tasks**: T002, T003, T040 (file creation + build validation)
 
@@ -353,11 +355,11 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     participant User as User/AI Agent
-    participant Script as hierarchy.calls
+    participant Script as symbol.calls
     participant Resolver as Symbol Resolver<br/>(Phase 1)
     participant LSP as VS Code LSP<br/>(Language Server)
 
-    User->>Script: Call hierarchy.calls<br/>nodeId="method:src/UserService.ts:getUser"<br/>direction="incoming"
+    User->>Script: Call symbol.calls<br/>nodeId="method:src/UserService.ts:getUser"<br/>direction="incoming"
 
     Script->>Resolver: resolveSymbolInput(params)
     Resolver->>Resolver: Parse Flowspace ID
@@ -445,8 +447,8 @@ sequenceDiagram
 **Step-by-step mapped to tasks**:
 
 #### 1. Setup & Skeleton (T001-T003)
-- Create `hierarchy/` directory (new category)
-- Create `calls.js` extending QueryScript
+- Verify `symbol/` directory exists (created in Phase 2)
+- Create `calls.js` extending QueryScript in symbol/ category
 - Create `calls.meta.yaml` with parameters (nodeId, path, symbol, direction, enrichWithFlowspaceIds)
 
 #### 2. TAD Exploration (T004-T016)
@@ -484,7 +486,7 @@ sequenceDiagram
   - Implement direction routing (params.direction determines which to call)
 
 - **Validation with Dynamic Scripts** (T024):
-  - Run all 3 dynamic scripts to confirm calls.js matches explored behavior
+  - Run all 3 dynamic scripts to confirm symbol/calls.js matches explored behavior
   - Instant feedback loop (0s rebuild)
 
 - **Response Normalization** (T025-T027):
@@ -526,7 +528,7 @@ sequenceDiagram
 #### 6. Build & Validation (T040-T044)
 - Run `just build` to generate manifest and schemas
 - Verify schema includes all parameters
-- Manual tests via `vscb script run hierarchy.calls`
+- Manual tests via `vscb script run symbol.calls`
 - MCP integration test via stdio client
 
 ---
@@ -560,11 +562,11 @@ vscb script run -f ../scripts/sample/dynamic/explore-outgoing-calls.js \
 just build
 
 # Verify manifest
-cat packages/extension/src/vsc-scripts/manifest.json | jq '.scripts["hierarchy.calls"]'
+cat packages/extension/src/vsc-scripts/manifest.json | jq '.scripts["symbol.calls"]'
 
 # Manual test (from test/ workspace)
 cd /workspaces/vscode-bridge/test
-vscb script run hierarchy.calls \
+vscb script run symbol.calls \
   --param nodeId="method:javascript/UserService.js:UserService.getUser" \
   --param direction=incoming
 ```
@@ -572,7 +574,7 @@ vscb script run hierarchy.calls \
 **Integration Tests**:
 ```bash
 # From project root
-npm run test:integration -- hierarchy-calls.test.ts
+npm run test:integration -- symbol-calls.test.ts
 
 # Or via Vitest UI
 npm run test:integration:ui
@@ -625,8 +627,8 @@ npm run test:integration:ui
 
 **Example format** (populated during implementation):
 ```markdown
-[^1]: Modified [method:packages/extension/src/vsc-scripts/hierarchy/calls.js:CallsScript.execute](packages/extension/src/vsc-scripts/hierarchy/calls.js#L45) - Implemented symbol resolution and two-step call hierarchy workflow
-[^2]: Created [file:packages/extension/src/vsc-scripts/hierarchy/calls.meta.yaml](packages/extension/src/vsc-scripts/hierarchy/calls.meta.yaml) - Comprehensive MCP metadata with two-step process explanation
+[^1]: Modified [method:packages/extension/src/vsc-scripts/symbol/calls.js:CallsScript.execute](packages/extension/src/vsc-scripts/symbol/calls.js#L45) - Implemented symbol resolution and two-step call hierarchy workflow
+[^2]: Created [file:packages/extension/src/vsc-scripts/symbol/calls.meta.yaml](packages/extension/src/vsc-scripts/symbol/calls.meta.yaml) - Comprehensive MCP metadata with two-step process explanation
 ```
 
 ---
