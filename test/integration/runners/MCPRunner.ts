@@ -684,4 +684,30 @@ export class MCPRunner implements DebugRunner {
             };
         }
     }
+
+    async callHierarchy(
+        path: string,
+        symbol: string,
+        direction: 'incoming' | 'outgoing'
+    ): Promise<RunnerResponse<import('./DebugRunner').CallHierarchyResult>> {
+        try {
+            const absolutePath = this.resolvePath(path);
+            const data = await this.callMCPTool('symbol_calls', {
+                path: absolutePath,
+                symbol: symbol,
+                direction: direction
+            });
+
+            return {
+                success: true,
+                data: data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error getting call hierarchy',
+                rawError: error
+            };
+        }
+    }
 }

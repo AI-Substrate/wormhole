@@ -1766,14 +1766,13 @@ describe('Hierarchy Calls - Two-Step Process', () => {
 
 ### Phase 6: Multi-Language Integration Testing
 
-**Objective**: Validate all 4 LSP tools work correctly across TypeScript, Python, and Java with comprehensive integration tests.
+**Objective**: Validate call hierarchy tool works correctly across TypeScript, Python, and Java by enhancing existing integration tests.
 
 **Deliverables**:
-- Integration test suite in `test-cli/integration-mcp/lsp-multi-language.test.ts`
-- Test coverage for TypeScript, Python, Java (minimum required by spec)
-- Cross-tool integration scenarios (navigate → rename workflow)
-- Performance benchmarks (cold start vs warm start)
-- Language support matrix documentation
+- Enhanced MCP integration tests with call hierarchy assertions (`symbol-navigate.test.ts`, `stdio-e2e.test.ts`)
+- Updated workflow files with `callHierarchy()` method in DebugRunner interface
+- Cross-language validation (TypeScript, Python, Java) in existing workflow tests
+- Language support matrix documentation (updated with call hierarchy support)
 
 **Dependencies**: Phases 2, 3, 4, 5 complete (all 4 tools implemented)
 
@@ -1781,198 +1780,194 @@ describe('Hierarchy Calls - Two-Step Process', () => {
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
-| Java language server slow to start | High | Low | Increase timeout to 30s for Java tests |
-| Python limited LSP features | Medium | Low | Document limitations, skip unsupported operations |
-| Cross-platform path issues | Low | Medium | Test Windows paths explicitly (forward slashes) |
+| Existing tests too fragile for new assertions | Low | Medium | Add assertions after existing validations, use non-breaking patterns |
+| DebugRunner interface changes break existing tests | Medium | High | Add optional method first, test incrementally |
+| Call hierarchy not supported in all languages | Medium | Low | Document language-specific support, graceful degradation |
 
 ### Tasks (TAD Approach)
 
 | # | Status | Task | Success Criteria | Log | Notes |
 |---|--------|------|------------------|-----|-------|
-| 6.1 | [ ] | Create lsp-multi-language.test.ts suite | Test file structure with TypeScript, Python, Java describes | - | |
-| 6.2 | [ ] | Add TypeScript test fixtures if needed | test/typescript/ has classes, interfaces, methods suitable for LSP testing | - | May already exist |
-| 6.3 | [ ] | Add Python test fixtures if needed | test/python/ has classes and functions | - | test_example.py may suffice |
-| 6.4 | [ ] | Add Java test fixtures if needed | test/java/ has at least one class with methods | - | |
-| 6.5 | [ ] | Write TypeScript navigation tests | All 4 tools tested: navigate, rename, replace-method, calls | - | |
-| 6.6 | [ ] | Write Python navigation tests | All 4 tools tested (document limitations: no implementations) | - | |
-| 6.7 | [ ] | Write Java navigation tests | All 4 tools tested (static typing, interfaces) | - | |
-| 6.8 | [ ] | Write cross-tool workflow test | navigate → rename workflow: find references, then rename symbol | - | |
-| 6.9 | [ ] | Write performance benchmark test | Measure cold start vs warm start for workspace symbol search | - | Discovery 13 |
-| 6.10 | [ ] | Document language support matrix | Create table: Tool × Language × Support Status | - | For Phase 7 documentation |
-| 6.11 | [ ] | Verify Windows path handling | Test Flowspace IDs with C:/ paths | - | Discovery 03 |
-| 6.12 | [ ] | All integration tests passing | 100% pass rate for promoted multi-language tests | - | |
+| 6.1 | [ ] | Add call hierarchy assertions to symbol-navigate.test.ts | 2-3 new test assertions validating incoming/outgoing calls for Python function | - | Enhance existing tests at lines 71-97, 221-243 |
+| 6.2 | [ ] | Add call hierarchy validation to stdio-e2e.test.ts | Validate symbol_calls during Python debug session | - | Add after variable validation around line 426 |
+| 6.3 | [ ] | Add callHierarchy() method to DebugRunner interface | Method signature defined in DebugRunner.ts with JSDoc | - | Supports both CLI and MCP runners |
+| 6.4 | [ ] | Implement callHierarchy() in CLIRunner | Wraps `vscb script run symbol.calls` command | - | test/integration/runners/CLIRunner.ts |
+| 6.5 | [ ] | Implement callHierarchy() in MCPRunner | Wraps MCP tool call to symbol_calls | - | test/integration/runners/MCPRunner.ts |
+| 6.6 | [ ] | Add call hierarchy validation to python-workflow.ts | Stage 1.5: validate add() function incoming callers after method replacement | - | Insert after line 91, before breakpoint setting |
+| 6.7 | [ ] | Add call hierarchy validation to typescript-workflow.ts | Stage 1.5: validate function callers using same pattern as Python | - | Match python-workflow.ts structure |
+| 6.8 | [ ] | Add call hierarchy validation to java-workflow.ts | Stage 1.5: validate method callers using same pattern | - | Match python-workflow.ts structure |
+| 6.9 | [ ] | Run `just test-integration` and verify all tests pass | 100% pass rate with new call hierarchy assertions, no regressions | - | Full integration test suite validation |
+| 6.10 | [ ] | Update language support matrix documentation | Add "Call Hierarchy" row showing Python/TypeScript/Java support status | - | Prepare for Phase 7 documentation |
 
 ### Test Examples
 
+#### Example 1: Enhanced symbol-navigate.test.ts
+
 ```typescript
-describe('Multi-Language Integration - All Tools', () => {
-  describe('TypeScript Support', () => {
-    test('All 4 LSP tools work with TypeScript files', async () => {
-      /*
-      Test Doc:
-      - Why: TypeScript is primary language with full LSP support
-      - Contract: All navigation, rename, replacement, call hierarchy work
-      - Usage Notes: TypeScript tests serve as reference implementation
-      - Quality Contribution: Validates complete feature set in well-supported language
-      - Worked Example: navigate → rename → replace-method → hierarchy.calls all succeed
-      */
+// test-cli/integration-mcp/symbol-navigate.test.ts
+// Add after existing reference test (around line 97)
 
-      // Test navigate
-      const navResult = await env.client.request({
-        method: 'tools/call',
-        params: {
-          name: 'symbol_navigate',
-          arguments: {
-            nodeId: 'method:typescript/Calculator.ts:Calculator.add',
-            action: 'references'
-          }
+it('Given Flowspace ID for Python function When finding call hierarchy Then returns incoming callers', async () => {
+  /*
+  Test Doc:
+  - Why: Validate symbol_calls tool works via MCP transport
+  - Contract: Returns list of incoming calls (callers) for Python function
+  - Usage Notes: Call hierarchy complements references by showing function call graph
+  - Quality Contribution: Validates Phase 5 implementation via MCP protocol
+  - Worked Example: symbol_calls finds test_simple_addition calling add() function
+  */
+  const nodeId = 'function:test/python/test_example.py:add';
+
+  const result = await env.client.request(
+    {
+      method: 'tools/call',
+      params: {
+        name: 'symbol_calls',
+        arguments: {
+          nodeId,
+          direction: 'incoming'
         }
-      }, CallToolResultSchema);
-      expect(JSON.parse(navResult.content[0].text).ok).toBe(true);
+      }
+    },
+    { timeout: 15000 }
+  );
 
-      // Test rename (skipped to avoid modifying test files)
+  expect(result.content).toBeDefined();
+  if (result.structuredContent) {
+    const data = result.structuredContent;
+    expect(data.direction).toBe('incoming');
+    expect(data.calls).toBeDefined();
+    expect(Array.isArray(data.calls)).toBe(true);
+    expect(data.calls.length).toBeGreaterThan(0);
 
-      // Test replace-method
-      const replaceResult = await env.client.request({
-        method: 'tools/call',
-        params: {
-          name: 'code_replace_method',
-          arguments: {
-            nodeId: 'method:typescript/Calculator.ts:Calculator.add',
-            replacement: 'return a + b;',
-            mode: 'replace-body'
-          }
-        }
-      }, CallToolResultSchema);
-      expect(JSON.parse(replaceResult.content[0].text).ok).toBe(true);
+    // Validate call structure
+    const firstCall = data.calls[0];
+    expect(firstCall.caller).toBeDefined();
+    expect(firstCall.location).toBeDefined();
+    expect(firstCall.location.path).toContain('test_example.py');
+  }
+}, 20000);
+```
 
-      // Test hierarchy.calls
-      const callsResult = await env.client.request({
-        method: 'tools/call',
-        params: {
-          name: 'hierarchy_calls',
-          arguments: {
-            nodeId: 'method:typescript/Calculator.ts:Calculator.add',
-            direction: 'incoming'
-          }
-        }
-      }, CallToolResultSchema);
-      expect(JSON.parse(callsResult.content[0].text).ok).toBe(true);
-    }, 60000);
-  });
+#### Example 2: Enhanced python-workflow.ts
 
-  describe('Python Support', () => {
-    test('Navigate and calls work, implementations limited', async () => {
-      /*
-      Test Doc:
-      - Why: Python is widely used but has language-specific limitations (no interfaces)
-      - Contract: References and call hierarchy work; implementations return helpful hint
-      - Usage Notes: Python lacks interfaces, so implementations operation not applicable
-      - Quality Contribution: Validates graceful handling of language-specific limitations
-      - Worked Example: references succeed, implementations return hint about no interfaces
-      */
+```typescript
+// test/integration/workflows/python-workflow.ts
+// Insert after method replacement validation (after line 91)
 
-      // Navigate works
-      const navResult = await env.client.request({
-        method: 'tools/call',
-        params: {
-          name: 'symbol_navigate',
-          arguments: {
-            path: 'python/test_example.py',
-            symbol: 'test_function',
-            action: 'references'
-          }
-        }
-      }, CallToolResultSchema);
-      expect(JSON.parse(navResult.content[0].text).ok).toBe(true);
+// NEW Stage 1.5: Call Hierarchy Validation (Phase 5/6)
+console.log('🔍 Stage 1.5: Testing call hierarchy...');
+const callsResult = await runner.callHierarchy(
+  PYTHON_TEST_FILE,
+  'add',
+  'incoming'
+);
+expect(callsResult.success, `Failed to get call hierarchy: ${callsResult.error}`).toBe(true);
+expect(callsResult.data?.calls).toBeDefined();
+expect(callsResult.data!.calls.length).toBeGreaterThan(0);
 
-      // Implementations provides hint
-      const implResult = await env.client.request({
-        method: 'tools/call',
-        params: {
-          name: 'symbol_navigate',
-          arguments: {
-            path: 'python/test_example.py',
-            symbol: 'BaseClass',
-            action: 'implementations'
-          }
-        }
-      }, CallToolResultSchema);
-      const implData = JSON.parse(implResult.content[0].text);
-      expect(implData.meta.hint).toContain('Python');
-    }, 45000);
-  });
+const firstCaller = callsResult.data!.calls[0];
+expect(firstCaller.caller).toBe('test_simple_addition');
+expect(firstCaller.location.path).toContain('test_debug.py');
+console.log(`✅ Found ${callsResult.data!.calls.length} incoming call(s) to add()`);
+console.log(`   Primary caller: ${firstCaller.caller} at ${firstCaller.location.path}:${firstCaller.location.line}`);
+```
 
-  describe('Java Support', () => {
-    test('All tools work with static typing and interfaces', async () => {
-      /*
-      Test Doc:
-      - Why: Java is statically typed with robust LSP support
-      - Contract: Implementations work well (interfaces common), all operations supported
-      - Usage Notes: Java language server may have longer cold start
-      - Quality Contribution: Validates support for strongly-typed language with interfaces
-      - Worked Example: All 4 tools succeed, implementations returns interface implementations
-      */
+#### Example 3: DebugRunner Interface Addition
 
-      // Java tests similar structure to TypeScript
-      // ...
-    }, 90000); // Longer timeout for Java language server cold start
-  });
+```typescript
+// test/integration/runners/DebugRunner.ts
+// Add to interface after replaceMethod (after line 337)
 
-  describe('Cross-Tool Workflows', () => {
-    test('Navigate to find references, then rename symbol', async () => {
-      /*
-      Test Doc:
-      - Why: Common workflow: understand impact (navigate) before refactoring (rename)
-      - Contract: Tools compose correctly - navigate results inform rename decision
-      - Usage Notes: Use navigate to check reference count before rename
-      - Quality Contribution: Validates tools work together for real-world workflows
-      - Worked Example: navigate finds 5 references → rename updates all 5 locations
-      */
+/**
+ * Get call hierarchy for a symbol (incoming/outgoing calls)
+ *
+ * This operation uses the symbol.calls script/tool to query LSP Call Hierarchy.
+ * Supports both incoming calls (callers) and outgoing calls (callees).
+ *
+ * @param path - Absolute path to file containing the symbol
+ * @param symbol - Symbol name (e.g., "add" for function, "Calculator.add" for method)
+ * @param direction - 'incoming' for callers, 'outgoing' for callees
+ * @returns Call hierarchy data with caller/callee information
+ */
+callHierarchy(
+  path: string,
+  symbol: string,
+  direction: 'incoming' | 'outgoing'
+): Promise<RunnerResponse<CallHierarchyResult>>;
 
-      // Step 1: Navigate to see impact
-      const navResult = await env.client.request({
-        method: 'tools/call',
-        params: {
-          name: 'symbol_navigate',
-          arguments: {
-            nodeId: 'method:javascript/sample.test.js:MyClass.oldMethod',
-            action: 'references'
-          }
-        }
-      }, CallToolResultSchema);
-      const navData = JSON.parse(navResult.content[0].text);
-      const refCount = navData.data.references.length;
+// Add type definition
+export interface CallHierarchyResult {
+  direction: 'incoming' | 'outgoing';
+  calls: Array<{
+    caller: string;  // For incoming direction
+    callee?: string; // For outgoing direction
+    location: {
+      path: string;
+      line: number;
+      character: number;
+    };
+  }>;
+}
+```
 
-      // Step 2: Rename (skipped to avoid modifying test files, but pattern validated)
-      // const renameResult = await env.client.request({...});
+#### Example 4: CLIRunner Implementation
 
-      expect(refCount).toBeGreaterThan(0); // Validates workflow pattern
-    }, 30000);
-  });
-});
+```typescript
+// test/integration/runners/CLIRunner.ts
+// Implement callHierarchy method
+
+async callHierarchy(
+  path: string,
+  symbol: string,
+  direction: 'incoming' | 'outgoing'
+): Promise<RunnerResponse<CallHierarchyResult>> {
+  const absolutePath = this.resolvePath(path);
+
+  const result = await this.runCommand(
+    `script run symbol.calls --param path="${absolutePath}" --param symbol="${symbol}" --param direction="${direction}"`
+  );
+
+  if (!result.success || !result.data) {
+    return {
+      success: false,
+      error: result.error || 'Call hierarchy failed',
+      rawError: result.rawError
+    };
+  }
+
+  return {
+    success: true,
+    data: result.data as CallHierarchyResult
+  };
+}
 ```
 
 ### Non-Happy-Path Coverage
 
-- [ ] Mixed languages in workspace (TypeScript + Python files)
-- [ ] Large workspace with >1000 files (performance test)
-- [ ] Concurrent tool calls (race condition testing)
-- [ ] Invalid Flowspace IDs across languages
-- [ ] Cross-file symbol resolution (class in file A, method usage in file B)
+Built into existing tests:
+- [x] Mixed languages in workspace (TypeScript + Python + Java workflows)
+- [x] Invalid Flowspace IDs (handled by symbol-navigate.test.ts error cases)
+- [x] Cross-file symbol resolution (existing workflow tests span multiple files)
+
+New coverage from call hierarchy enhancements:
+- [ ] Call hierarchy with no callers/callees (empty result handling)
+- [ ] Call hierarchy for language without LSP support (graceful degradation)
+- [ ] Call hierarchy during active debug session (concurrent operations)
 
 ### Acceptance Criteria
 
-- [ ] All integration tests passing (100%)
-- [ ] TypeScript: All 4 tools work
-- [ ] Python: navigate, rename, replace-method, calls work (implementations documented as limited)
-- [ ] Java: All 4 tools work
-- [ ] Cross-tool workflow test passes
-- [ ] Performance benchmark documented (cold start vs warm)
-- [ ] Language support matrix complete
-- [ ] Windows path handling validated
-- [ ] No test failures due to language server unavailability
-- [ ] Test suite runs in < 5 minutes
+- [ ] All integration tests passing (100%) - no regressions from existing tests
+- [ ] symbol-navigate.test.ts: 2+ new call hierarchy assertions added and passing
+- [ ] stdio-e2e.test.ts: Call hierarchy validation during Python debug session passing
+- [ ] DebugRunner interface: callHierarchy() method added with proper types
+- [ ] CLIRunner: callHierarchy() implementation working with CLI transport
+- [ ] MCPRunner: callHierarchy() implementation working with MCP transport
+- [ ] python-workflow.ts: Stage 1.5 call hierarchy validation passing
+- [ ] typescript-workflow.ts: Stage 1.5 call hierarchy validation passing
+- [ ] java-workflow.ts: Stage 1.5 call hierarchy validation passing
+- [ ] Language support matrix: Call hierarchy row added for Python/TypeScript/Java
+- [ ] `just test-integration` runs in < 5 minutes with all new assertions
 
 ---
 

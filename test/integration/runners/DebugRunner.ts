@@ -335,4 +335,46 @@ export interface DebugRunner extends PathResolver {
      * @returns Success/error indication with change details
      */
     replaceMethod(path: string, symbol: string, replacement: string): Promise<RunnerResponse<void>>;
+
+    /**
+     * Get call hierarchy for a symbol (incoming/outgoing calls)
+     *
+     * This operation uses the symbol.calls script/tool to query LSP Call Hierarchy.
+     * Supports both incoming calls (callers) and outgoing calls (callees).
+     *
+     * @param path - Absolute path to file containing the symbol
+     * @param symbol - Symbol name (e.g., "add" for function, "Calculator.add" for method)
+     * @param direction - 'incoming' for callers, 'outgoing' for callees
+     * @returns Call hierarchy data with caller/callee information
+     */
+    callHierarchy(
+        path: string,
+        symbol: string,
+        direction: 'incoming' | 'outgoing'
+    ): Promise<RunnerResponse<CallHierarchyResult>>;
+}
+
+/**
+ * Call hierarchy result returned by call hierarchy operations
+ */
+export interface CallHierarchyResult {
+    direction: 'incoming' | 'outgoing';
+    calls: Array<{
+        name: string;
+        containerName?: string;
+        kind?: number;
+        from?: {
+            name: string;
+            kind?: number;
+            uri: string;
+            range: {
+                start: { line: number; character: number };
+                end: { line: number; character: number };
+            };
+        };
+        fromRanges?: Array<{
+            start: { line: number; character: number };
+            end: { line: number; character: number };
+        }>;
+    }>;
 }

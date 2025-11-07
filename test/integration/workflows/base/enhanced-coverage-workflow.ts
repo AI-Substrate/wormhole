@@ -78,6 +78,10 @@ export interface EnhancedWorkflowConfig {
         modifiedCode: string;        // Modified version with extra local variable
         originalCode: string;        // Original version to restore
     };
+
+    // Call hierarchy support (Phase 6 validation)
+    // Set to false for languages that don't support LSP Call Hierarchy (e.g., C#)
+    supportsCallHierarchy?: boolean;  // Default: true
 }
 
 /**
@@ -110,6 +114,11 @@ export async function enhancedCoverageWorkflow(
     expect(gotoResult.success, `Failed to navigate: ${gotoResult.error}`).toBe(true);
     console.log('✅ Navigated to breakpoint line');
 
+    // Wait for file to settle after navigation (prevents file lock/dirty state issues)
+    console.log('⏱️  Waiting 2 seconds for file to settle...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    console.log('✅ File settled');
+
     // METHOD REPLACEMENT VALIDATION (Phase 4)
     if (config.methodReplacement) {
         console.log('🔄 Testing method replacement (Phase 4 validation)...');
@@ -134,6 +143,24 @@ export async function enhancedCoverageWorkflow(
         expect(replaceResult2.success, `Failed to restore method: ${replaceResult2.error}`).toBe(true);
         console.log('✅ Method restored to original');
         console.log('✅ Method replacement transaction complete');
+
+        // STAGE 1.5: Call Hierarchy Validation (Phase 6)
+        // Only run if language supports call hierarchy (default: true, but C# sets to false)
+        const supportsCallHierarchy = config.supportsCallHierarchy !== false;
+        if (supportsCallHierarchy) {
+            console.log(`🔍 Stage 1.5: Testing call hierarchy for ${config.methodReplacement.functionName}()...`);
+            const callsResult = await runner.callHierarchy(
+                config.testFile,
+                config.methodReplacement.functionName,
+                'incoming'
+            );
+            expect(callsResult.success, `Failed to get call hierarchy: ${callsResult.error}`).toBe(true);
+            expect(callsResult.data?.calls).toBeDefined();
+            expect(callsResult.data?.calls.length).toBeGreaterThan(0);
+            console.log(`✅ Stage 1.5 validation: Found ${callsResult.data?.calls.length} incoming calls to ${config.methodReplacement.functionName}()`);
+        } else {
+            console.log(`ℹ️  Stage 1.5: Skipping call hierarchy validation (${config.language} does not support LSP Call Hierarchy)`);
+        }
     }
 
     // Set first breakpoint

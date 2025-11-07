@@ -135,7 +135,13 @@ export function findAllMatchingSymbols(
 
     function traverse(syms: vscode.DocumentSymbol[]): void {
         for (const symbol of syms) {
+            // Exact match
             if (symbol.name === symbolName) {
+                matches.push(symbol);
+            }
+            // Java-style signature match: "add" should match "add(int, int)"
+            // This handles Java LSP which returns method names with parameter types
+            else if (symbol.name.startsWith(symbolName + '(')) {
                 matches.push(symbol);
             }
 
