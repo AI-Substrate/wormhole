@@ -68,7 +68,8 @@ export { ShowTestingUIScript } from './editor/show-testing-ui';
 // Search Scripts (1)
 export { SymbolSearchScript } from './search/symbol-search';
 
-// Symbol Scripts (2)
+// Symbol Scripts (3)
+export { CallHierarchyScript } from './symbol/calls';
 export { NavigateScript } from './symbol/navigate';
 export { RenameScript } from './symbol/rename';
 

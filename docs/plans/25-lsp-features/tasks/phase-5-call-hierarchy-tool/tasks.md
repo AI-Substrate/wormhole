@@ -13,11 +13,13 @@
 
 ## Tasks
 
+> **Implementation Note**: Tasks T001-T029 were consolidated into a simplified implementation approach (Option B). See execution log for details: `log#phase-5-implementation-simplified-approach`
+
 | Status | ID | Task | Type | Dependencies | Absolute Path(s) | Validation | Subtasks | Notes |
 |--------|----|----|------|--------------|------------------|------------|----------|-------|
-| [ ] | T001 | Verify symbol/ directory exists | Setup | – | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/` | Directory exists (created in Phase 2) | – | Reusing existing symbol category |
-| [ ] | T002 | Create calls.js extending QueryScript | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.js` | File exists, imports QueryScript from @script-base | – | Discovery 01 - QueryScript for read-only operations |
-| [ ] | T003 | Create calls.meta.yaml skeleton with parameters | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.meta.yaml` | File exists, defines nodeId/path/symbol/direction params | – | Discovery 02 - dual-file registration |
+| [x] | T001 | Verify symbol/ directory exists | Setup | – | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/` | Directory exists (created in Phase 2) | – | Reusing existing symbol category · log#phase-5-implementation-simplified-approach |
+| [x] | T002 | Create calls.ts extending QueryScript | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.ts` | File exists, imports QueryScript from @script-base | – | Consolidated T002+T017-T029 into unified implementation · log#phase-5-implementation-simplified-approach [^9] |
+| [x] | T003 | Create calls.meta.yaml with comprehensive MCP metadata | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.meta.yaml` | File exists, defines all parameters and guidance | – | Consolidated T003+T030-T033 into complete metadata · log#phase-5-implementation-simplified-approach [^10] |
 | [ ] | T004 | Create dynamic script: explore-call-hierarchy-prepare.js | Test | T002, T003 | `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-call-hierarchy-prepare.js` | Script tests prepareCallHierarchy with real LSP | – | TAD with dynamic scripts; Discovery 09 - two-step process requires separate exploration |
 | [ ] | T005 | Iterate dynamic script: validate CallHierarchyItem structure | Test | T004 | `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-call-hierarchy-prepare.js` | Script logs item properties (name, kind, uri, range) | – | Understand LSP response structure; hot-reload testing |
 | [ ] | T006 | Iterate dynamic script: test prepare with symbol name resolution | Test | T005 | `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-call-hierarchy-prepare.js` | Script validates Phase 1 resolveSymbolInput integration | – | Confirm symbol resolver works for call hierarchy |
@@ -54,10 +56,10 @@
 | [ ] | T037 | Promote test: unsupported language error (edge case) | Test | T024 | `/workspaces/vscode-bridge/test-cli/integration-mcp/symbol-calls.test.ts` | Test validates E_NO_LANGUAGE_SERVER when prepare returns null/empty | – | TAD promotion - error contract; language support validation |
 | [ ] | T038 | Promote test: invalid direction parameter (edge case) | Test | T024 | `/workspaces/vscode-bridge/test-cli/integration-mcp/symbol-calls.test.ts` | Test validates E_INVALID_INPUT for direction="invalid" | – | TAD promotion - input validation |
 | [ ] | T039 | Keep dynamic scripts as permanent samples | Doc | T034, T035, T036, T037, T038 | `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-call-hierarchy-prepare.js`, `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-incoming-calls.js`, `/workspaces/vscode-bridge/scripts/sample/dynamic/explore-outgoing-calls.js` | Scripts remain as usage examples and dogfooding tools | – | Unlike Vitest scratch tests, dynamic scripts are kept (3 scripts for prepare + incoming + outgoing) |
-| [ ] | T040 | Run `just build` to generate manifest and schemas | Integration | T039 | `/workspaces/vscode-bridge/` | Build succeeds, manifest.json updated with symbol.calls | – | Discovery 02 - dual-file registration validation |
-| [ ] | T041 | Verify schema generation for symbol.calls parameters | Integration | T040 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/manifest.json` | Schema includes nodeId, path, symbol, direction, enrichWithFlowspaceIds | – | Build validation |
-| [ ] | T042 | Manual test: vscb script run symbol.calls with real file (incoming) | Integration | T040 | – | Command returns incoming calls for test/javascript/UserService.getUser | – | End-to-end validation; requires Extension Host |
-| [ ] | T043 | Manual test: vscb script run symbol.calls with real file (outgoing) | Integration | T042 | – | Command returns outgoing calls for test/javascript/UserController.handleRequest | – | Validate direction routing |
+| [x] | T040 | Run `just build` to generate manifest and schemas | Integration | T039 | `/workspaces/vscode-bridge/` | Build succeeds, manifest.json updated with symbol.calls | – | Build completed successfully · log#phase-5-implementation-simplified-approach [^11] |
+| [x] | T041 | Verify schema generation for symbol.calls parameters | Integration | T040 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/manifest.json` | Schema includes nodeId, path, symbol, direction, enrichWithFlowspaceIds | – | Schema generation verified · log#phase-5-implementation-simplified-approach |
+| [x] | T042 | Manual test: vscb script run symbol.calls with real file (incoming) | Integration | T040 | – | Command returns incoming calls for test/javascript/UserService.getUser | – | End-to-end validation; requires Extension Host · log#task-514-cli-testing-and-validation |
+| [x] | T043 | Manual test: vscb script run symbol.calls with real file (outgoing) | Integration | T042 | – | Command returns outgoing calls for test/javascript/UserController.handleRequest | – | Validate direction routing · log#task-514-cli-testing-and-validation |
 | [ ] | T044 | Manual test: MCP tool call via stdio client | Integration | T043 | – | MCP client can call symbol_calls and receive results | – | MCP integration validation |
 
 ---
@@ -621,15 +623,27 @@ npm run test:integration:ui
 
 ## Phase Footnote Stubs
 
-| Task ID | Flowspace Node ID | Description |
-|---------|-------------------|-------------|
-| _Footnotes will be added during plan-6 (implementation phase)_ | | |
+[^9]: Phase 5 - CallHierarchyScript implementation (T002 consolidated tasks T017-T029)
+  - [class:packages/extension/src/vsc-scripts/symbol/calls.ts:CallHierarchyScript](packages/extension/src/vsc-scripts/symbol/calls.ts#L21)
+  - [method:packages/extension/src/vsc-scripts/symbol/calls.ts:CallHierarchyScript.execute](packages/extension/src/vsc-scripts/symbol/calls.ts#L28)
+  - [method:packages/extension/src/vsc-scripts/symbol/calls.ts:CallHierarchyScript._prepareCallHierarchy](packages/extension/src/vsc-scripts/symbol/calls.ts#L67)
+  - [method:packages/extension/src/vsc-scripts/symbol/calls.ts:CallHierarchyScript._provideCalls](packages/extension/src/vsc-scripts/symbol/calls.ts#L94)
+  - [method:packages/extension/src/vsc-scripts/symbol/calls.ts:CallHierarchyScript._formatCalls](packages/extension/src/vsc-scripts/symbol/calls.ts#L129)
+  - [method:packages/extension/src/vsc-scripts/symbol/calls.ts:CallHierarchyScript._findSymbolAtPosition](packages/extension/src/vsc-scripts/symbol/calls.ts#L165)
+  - [method:packages/extension/src/vsc-scripts/symbol/calls.ts:CallHierarchyScript._handleError](packages/extension/src/vsc-scripts/symbol/calls.ts#L187)
+  - Simplified approach: Consolidated symbol resolution, two-step LSP workflow (prepare → provide), direction routing, response normalization, and error handling into unified implementation
 
-**Example format** (populated during implementation):
-```markdown
-[^1]: Modified [method:packages/extension/src/vsc-scripts/symbol/calls.js:CallsScript.execute](packages/extension/src/vsc-scripts/symbol/calls.js#L45) - Implemented symbol resolution and two-step call hierarchy workflow
-[^2]: Created [file:packages/extension/src/vsc-scripts/symbol/calls.meta.yaml](packages/extension/src/vsc-scripts/symbol/calls.meta.yaml) - Comprehensive MCP metadata with two-step process explanation
-```
+[^10]: Phase 5 - MCP metadata (T003 consolidated tasks T030-T033)
+  - [file:packages/extension/src/vsc-scripts/symbol/calls.meta.yaml](packages/extension/src/vsc-scripts/symbol/calls.meta.yaml)
+  - Comprehensive MCP guidance including two-step process explanation, parameter hints for all fields, error contract (E_NO_LANGUAGE_SERVER, E_NOT_FOUND, E_TIMEOUT, E_INVALID_INPUT), relationships, and safety flags
+
+[^11]: Phase 5 - Registry integration and build validation (T040-T041)
+  - [file:packages/extension/src/vsc-scripts/index.ts](packages/extension/src/vsc-scripts/index.ts)
+  - Build system successfully registered symbol.calls script, generated manifest.json schema with all parameters
+
+[^12]: Phase 5 - Dynamic validation script (kept as permanent sample)
+  - [file:scripts/sample/dynamic/test-call-hierarchy.js](scripts/sample/dynamic/test-call-hierarchy.js)
+  - Unified exploration script for testing prepare → provide workflow with real LSP; demonstrates both incoming and outgoing directions
 
 ---
 

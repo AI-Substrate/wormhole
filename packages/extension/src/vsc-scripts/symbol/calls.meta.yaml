@@ -1,0 +1,224 @@
+alias: symbol.calls
+name: Call Hierarchy Navigation
+category: symbol
+description: Find incoming/outgoing calls using LSP Call Hierarchy (two-step process)
+dangerOnly: false
+
+params:
+  nodeId:
+    type: string
+    required: false
+    description: Flowspace ID (e.g., "method:src/Calculator.ts:Calculator.add")
+  path:
+    type: string
+    required: false
+    description: File path (required with symbol parameter, alternative to nodeId)
+    resolve: cwd-relative
+  symbol:
+    type: string
+    required: false
+    description: Symbol name (e.g., "Calculator.add", required with path parameter)
+  direction:
+    type: string
+    required: false
+    default: "incoming"
+    description: Call direction - "incoming" (callers) or "outgoing" (callees)
+    values: ["incoming", "outgoing"]
+  enrichWithFlowspaceIds:
+    type: boolean
+    required: false
+    default: false
+    description: Add Flowspace IDs to each call result (slower, requires symbol resolution)
+
+response: query
+result:
+  direction:
+    type: string
+    description: Direction queried (incoming or outgoing)
+  calls:
+    type: array
+    description: Array of call hierarchy items
+  total:
+    type: number
+    description: Total number of calls found
+  targetSymbol:
+    type: object
+    description: Target symbol that was resolved
+  prepareSuccess:
+    type: boolean
+    description: Whether prepareCallHierarchy succeeded
+  message:
+    type: string
+    description: Additional context message (optional)
+
+errors:
+  - E_NOT_FOUND
+  - E_NO_LANGUAGE_SERVER
+  - E_TIMEOUT
+  - E_INVALID_INPUT
+  - E_AMBIGUOUS_SYMBOL
+
+cli:
+  command: symbol calls
+  description: Find incoming or outgoing calls using Call Hierarchy
+  examples:
+    - vscb script run symbol.calls --param nodeId="method:src/Calculator.ts:Calculator.add" --param direction="incoming"
+    - vscb script run symbol.calls --param path="src/UserService.ts" --param symbol="UserService.getUser" --param direction="outgoing"
+    - vscb script run symbol.calls --param nodeId="function:lib/utils.py:format_date" --param enrichWithFlowspaceIds=true
+
+llm:
+  when_to_use: |
+    USE FOR:
+    - Finding all callers of a function/method (incoming direction)
+    - Finding all callees from a function/method (outgoing direction)
+    - Understanding call relationships in code navigation
+    - Discovering usage patterns across codebase
+    - Identifying refactoring impact (who calls this method?)
+
+    DON'T USE FOR:
+    - Finding all references (use symbol.navigate action=references instead)
+    - Simple text search (use search tools instead)
+    - Languages without LSP Call Hierarchy support (C# OmniSharp)
+
+    PREREQUISITES:
+    - Language server must support Call Hierarchy (LSP 3.16+)
+    - Symbol must exist and be indexable by language server
+    - File must be part of workspace (not external dependencies)
+
+    PATTERNS:
+    - **Two-step LSP process**: prepareCallHierarchy → provide{Incoming|Outgoing}Calls
+    - **Position-sensitive**: Uses DocumentSymbol.selectionRange.start (identifier token)
+    - **Empty results OK**: Returns empty array if symbol has no calls (not an error)
+
+    SUPPORTED LANGUAGES:
+    - ✅ TypeScript/JavaScript (built-in TS server)
+    - ✅ Python (Pylance)
+    - ✅ Java (JDT LS)
+    - ✅ Dart (Dart Analysis Server)
+    - ✅ Go (gopls - with lambda caveats)
+    - ❌ C# (OmniSharp - not supported; C# Dev Kit status unclear)
+
+  parameter_hints:
+    nodeId:
+      description: Flowspace ID to identify the symbol
+      examples:
+        - method:src/Calculator.ts:Calculator.add
+        - function:lib/utils.py:format_date
+        - method:com/example/UserService.java:UserService.getUser
+      notes:
+        - Must use forward slashes for Windows paths (C:/Users/ not C:\Users\)
+        - Alternative to path+symbol parameters (mutually exclusive)
+      pitfalls:
+        - Incorrect path separators will cause parse errors
+        - Symbol must exist at exact location specified
+
+    path:
+      description: Absolute file path (used with symbol parameter)
+      examples:
+        - /workspaces/project/src/Calculator.ts
+        - C:/Users/dev/project/lib/utils.py
+      notes:
+        - Must be absolute path, not relative
+        - Used together with symbol parameter
+        - Alternative to nodeId parameter (mutually exclusive)
+      pitfalls:
+        - Relative paths will fail to resolve
+        - File must exist and be part of workspace
+
+    symbol:
+      description: Symbol name to find (used with path parameter)
+      examples:
+        - Calculator.add (method in class)
+        - format_date (top-level function)
+        - UserService.getUser (Java method)
+      notes:
+        - Use qualified name for class methods (ClassName.methodName)
+        - Must match exact symbol name in code
+        - Case-sensitive matching
+      pitfalls:
+        - Ambiguous names (multiple matches) will cause errors
+        - Missing class qualifier for methods will fail
+
+    direction:
+      description: Call direction to query
+      examples:
+        - incoming (find callers - who calls this symbol?)
+        - outgoing (find callees - what does this symbol call?)
+      notes:
+        - Default is "incoming" if omitted
+        - Determines which LSP command is used (provideIncomingCalls vs provideOutgoingCalls)
+      pitfalls:
+        - Invalid values (not "incoming" or "outgoing") cause E_INVALID_INPUT
+        - Empty results mean no calls in that direction (not an error)
+
+    enrichWithFlowspaceIds:
+      description: Add Flowspace IDs to call results (slower, optional)
+      examples:
+        - true (include nodeId for each caller/callee)
+        - false (omit nodeId, faster response)
+      notes:
+        - Default is false for performance
+        - Adds nodeId field to each call result
+        - Useful when chaining navigation operations
+      pitfalls:
+        - Significantly slower for large call graphs
+        - May fail silently if symbol provider unavailable
+
+  error_contract:
+    E_NOT_FOUND:
+      description: Symbol not found at specified location
+      fix_hints:
+        - Verify symbol name matches code exactly (case-sensitive)
+        - Check file exists and is part of workspace
+        - Ensure language server has indexed the file
+        - For Flowspace IDs, verify path separators (forward slashes)
+
+    E_NO_LANGUAGE_SERVER:
+      description: Language server doesn't support Call Hierarchy or isn't ready
+      fix_hints:
+        - Check language is supported (TypeScript, Python, Java, Dart, Go)
+        - C# OmniSharp does not support Call Hierarchy - use symbol.navigate instead
+        - Wait for language server to finish indexing (first workspace load)
+        - Ensure document symbols are available (prepareCallHierarchy requires them)
+        - Some languages have limited support (JavaScript call hierarchy is partial)
+
+    E_TIMEOUT:
+      description: LSP operation exceeded 10s timeout
+      fix_hints:
+        - Large codebases may take longer to analyze
+        - Wait for language server warm-up and retry
+        - Check VS Code isn't under heavy load
+        - May indicate language server issue - restart extension host
+
+    E_INVALID_INPUT:
+      description: Invalid parameter values
+      fix_hints:
+        - direction must be "incoming" or "outgoing"
+        - Must provide either nodeId OR (path + symbol), not both
+        - path must be absolute, not relative
+
+    E_AMBIGUOUS_SYMBOL:
+      description: Multiple symbols match the name (from symbol-resolver)
+      fix_hints:
+        - Use more specific qualified name (ClassName.methodName)
+        - Provide Flowspace ID instead of symbol name for precision
+        - Check for duplicate symbol definitions in file
+
+mcp:
+  display_name: Find Calls (Call Hierarchy)
+  tool_name: symbol_calls
+  read_only: true
+  idempotent: true
+
+  relationships:
+    requires:
+      - Phase 1 symbol-resolver (resolveSymbolInput, getLSPResultWithTimeout)
+      - VS Code LSP providers (prepareCallHierarchy, provide{Incoming|Outgoing}Calls)
+    related:
+      - symbol.navigate (for references instead of calls)
+      - search.symbol-search (for finding symbols by name)
+
+  safety:
+    side_effects: none
+    data_access: read-only (workspace files via LSP)
+    performance: fast (10s timeout per LSP operation)
