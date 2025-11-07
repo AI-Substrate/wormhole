@@ -65,6 +65,8 @@ print_info() {
 # Component selection flags (T001b)
 INSTALL_CLI=true
 INSTALL_VSIX=true
+# Enable verbose mode by default to help debug issues
+VERBOSE=1
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
@@ -79,15 +81,25 @@ while [[ $# -gt 0 ]]; do
             INSTALL_VSIX=true
             shift
             ;;
+        --quiet)
+            VERBOSE=""
+            shift
+            ;;
+        --verbose)
+            VERBOSE=1
+            shift
+            ;;
         --help)
             echo "Usage: $0 [OPTIONS]"
             echo ""
             echo "Options:"
             echo "  --install-cli    Install CLI only"
             echo "  --install-vsix   Install VS Code extension only"
+            echo "  --verbose        Enable verbose output (default)"
+            echo "  --quiet          Disable verbose output"
             echo "  --help           Show this help message"
             echo ""
-            echo "Default: Install both CLI and extension"
+            echo "Default: Install both CLI and extension with verbose output"
             exit 0
             ;;
         *)
@@ -179,12 +191,48 @@ detect_vscode_cli() {
 
 detect_current_version() {
     # T004 - Detect installed version with fallback chain
-    # Try npm list first (most reliable)
-    if version=$(npm list -g vsc-bridge --depth=0 2>/dev/null | grep vsc-bridge | sed 's/.*@//' | awk '{print $1}'); then
-        if [ -n "$version" ]; then
+    # Output verbose messages to stderr so they show during command substitution
+    if [ -n "${VERBOSE:-}" ]; then
+        echo "  → Checking npm list -g vsc-bridge..." >&2
+    fi
+
+    # Use timeout if available (Linux), otherwise use plain npm list
+    if command -v timeout &>/dev/null; then
+        if [ -n "${VERBOSE:-}" ]; then
+            echo "  → Using timeout (5 seconds)..." >&2
+        fi
+        version=$(timeout 5 npm list -g vsc-bridge --depth=0 2>/dev/null | grep vsc-bridge | sed 's/.*@//' | awk '{print $1}')
+        exit_code=$?
+
+        if [ $exit_code -eq 124 ]; then
+            if [ -n "${VERBOSE:-}" ]; then
+                echo "  ⚠️  npm list timed out after 5 seconds (skipping)" >&2
+            fi
+        elif [ -n "$version" ]; then
+            if [ -n "${VERBOSE:-}" ]; then
+                echo "  ✓ Found version via npm list: $version" >&2
+            fi
             echo "$version"
             return 0
         fi
+    else
+        # No timeout command available (macOS)
+        if [ -n "${VERBOSE:-}" ]; then
+            echo "  → No timeout command available (macOS)" >&2
+        fi
+        if version=$(npm list -g vsc-bridge --depth=0 2>/dev/null | grep vsc-bridge | sed 's/.*@//' | awk '{print $1}'); then
+            if [ -n "$version" ]; then
+                if [ -n "${VERBOSE:-}" ]; then
+                    echo "  ✓ Found version via npm list: $version" >&2
+                fi
+                echo "$version"
+                return 0
+            fi
+        fi
+    fi
+
+    if [ -n "${VERBOSE:-}" ]; then
+        echo "  → npm list didn't find installation, trying vscb --version..." >&2
     fi
 
     # Fallback to vscb --version
@@ -193,39 +241,71 @@ detect_current_version() {
         # Extract just the version number after the slash
         if version=$(vscb --version 2>/dev/null | head -1 | sed 's|.*/||' | awk '{print $1}'); then
             if [ -n "$version" ]; then
+                if [ -n "${VERBOSE:-}" ]; then
+                    echo "  ✓ Found version via vscb --version: $version" >&2
+                fi
                 echo "$version"
                 return 0
             fi
         fi
     fi
 
+    if [ -n "${VERBOSE:-}" ]; then
+        echo "  → No existing installation detected" >&2
+    fi
     echo "not-installed"
-    return 1
+    return 0
 }
 
 show_version_message() {
     # T005 - Display upgrade vs fresh install message
+    if [ -n "${VERBOSE:-}" ]; then
+        print_info "Extracting bundle version information..."
+    fi
+
     # Extract versions from bundle filenames
-    VSIX_FILE=$(ls vsc-bridge-*.vsix 2>/dev/null | head -1)
+    VSIX_FILE=$(find . -maxdepth 1 -name "vsc-bridge-*.vsix" -type f 2>/dev/null | head -1)
     if [ -z "$VSIX_FILE" ]; then
         print_error "VSIX file not found in current directory"
         echo "Expected: vsc-bridge-*.vsix"
+        echo "Current directory: $(pwd)"
+        echo "Files present:"
+        ls -la
         exit 1
     fi
-    VSIX_VERSION="${VSIX_FILE#vsc-bridge-}"
+    if [ -n "${VERBOSE:-}" ]; then
+        echo "  ✓ Found VSIX: $VSIX_FILE"
+    fi
+    VSIX_VERSION="${VSIX_FILE#./vsc-bridge-}"
     VSIX_VERSION="${VSIX_VERSION%.vsix}"
 
-    TARBALL_FILE=$(ls vsc-bridge-*.tgz 2>/dev/null | head -1)
+    TARBALL_FILE=$(find . -maxdepth 1 -name "vsc-bridge-*.tgz" -type f 2>/dev/null | head -1)
     if [ -z "$TARBALL_FILE" ]; then
         print_error "CLI tarball not found in current directory"
         echo "Expected: vsc-bridge-*.tgz"
+        echo "Current directory: $(pwd)"
+        echo "Files present:"
+        ls -la
         exit 1
     fi
-    CLI_VERSION="${TARBALL_FILE#vsc-bridge-}"
+    if [ -n "${VERBOSE:-}" ]; then
+        echo "  ✓ Found tarball: $TARBALL_FILE"
+    fi
+    CLI_VERSION="${TARBALL_FILE#./vsc-bridge-}"
     CLI_VERSION="${CLI_VERSION%.tgz}"
 
     # Detect current installation
+    if [ -n "${VERBOSE:-}" ]; then
+        echo ""
+        print_info "Detecting current version (this may take a moment)..."
+    fi
+
+    # Call detect_current_version (verbose output goes to stderr automatically)
     CURRENT_VERSION=$(detect_current_version)
+
+    if [ -n "${VERBOSE:-}" ]; then
+        echo "  ✓ Detection complete: $CURRENT_VERSION"
+    fi
 
     echo ""
     # Display appropriate message based on build type and current state
@@ -287,7 +367,23 @@ install_cli() {
     print_warning "Note: This requires internet access to download npm dependencies"
     echo ""
 
-    TARBALL_FILE=$(ls vsc-bridge-*.tgz 2>/dev/null | head -1)
+    TARBALL_FILE=$(find . -maxdepth 1 -name "vsc-bridge-*.tgz" -type f 2>/dev/null | head -1)
+    if [ -z "$TARBALL_FILE" ]; then
+        print_error "CLI tarball not found in current directory"
+        echo "Expected: vsc-bridge-*.tgz"
+        echo "Current directory: $(pwd)"
+        echo "Files present:"
+        ls -la
+        exit 1
+    fi
+
+    if [ -n "${VERBOSE:-}" ]; then
+        echo "Found tarball: $TARBALL_FILE"
+        echo "npm prefix: $(npm config get prefix)"
+        echo "npm registry: $(npm config get registry)"
+        echo ""
+    fi
+
     RETRIES=3
     ATTEMPT=1
 
@@ -298,20 +394,44 @@ install_cli() {
 
         echo ""
         print_info "Running: npm install -g $TARBALL_FILE"
+        if [ -n "${VERBOSE:-}" ]; then
+            echo "Command: npm install -g \"$TARBALL_FILE\""
+        fi
         echo ""
 
-        # Run npm install without timeout (not available on macOS)
+        # Run npm install and capture both stdout and stderr
         # Show all output in real-time
-        if npm install -g "$TARBALL_FILE"; then
+        if [ -n "${VERBOSE:-}" ]; then
+            # Verbose mode: show all npm output
+            npm install -g "$TARBALL_FILE" 2>&1
+            NPM_EXIT_CODE=$?
+        else
+            # Quiet mode: still show output but less npm verbosity
+            npm install -g "$TARBALL_FILE"
+            NPM_EXIT_CODE=$?
+        fi
+
+        if [ $NPM_EXIT_CODE -eq 0 ]; then
             echo ""
             print_success "CLI installed successfully"
             return 0
         fi
 
-        # Capture exit code
-        NPM_EXIT_CODE=$?
+        # Installation failed
         echo ""
         print_error "npm install exited with code $NPM_EXIT_CODE"
+
+        if [ -n "${VERBOSE:-}" ]; then
+            echo ""
+            echo "Diagnostic information:"
+            echo "  npm version: $(npm --version)"
+            echo "  Node version: $(node --version)"
+            echo "  npm prefix: $(npm config get prefix)"
+            echo "  Current directory: $(pwd)"
+            echo "  Tarball exists: $([ -f "$TARBALL_FILE" ] && echo "yes" || echo "no")"
+            echo "  Tarball size: $(du -h "$TARBALL_FILE" 2>/dev/null | cut -f1 || echo "unknown")"
+            echo ""
+        fi
 
         if [ $ATTEMPT -eq $RETRIES ]; then
             echo ""
@@ -330,6 +450,10 @@ install_cli() {
             echo "  - Proxy settings -> Check with: npm config get proxy"
             echo "  - Registry access -> Test with: npm ping"
             echo "  - Permissions -> Try with sudo (not recommended): sudo npm install -g $TARBALL_FILE"
+            echo "  - npm cache -> Try clearing: npm cache clean --force"
+            echo ""
+            echo "Debug with verbose npm output:"
+            echo "  npm install -g $TARBALL_FILE --loglevel verbose"
             echo ""
             echo "To retry with this script:"
             echo "  bash $0 --install-cli"
@@ -351,7 +475,21 @@ install_vsix() {
     print_info "Installing VS Code extension..."
     detect_vscode_cli
 
-    VSIX_FILE=$(ls vsc-bridge-*.vsix 2>/dev/null | head -1)
+    VSIX_FILE=$(find . -maxdepth 1 -name "vsc-bridge-*.vsix" -type f 2>/dev/null | head -1)
+    if [ -z "$VSIX_FILE" ]; then
+        print_error "VSIX file not found in current directory"
+        echo "Expected: vsc-bridge-*.vsix"
+        echo "Current directory: $(pwd)"
+        echo "Files present:"
+        ls -la
+        exit 1
+    fi
+
+    if [ -n "${VERBOSE:-}" ]; then
+        echo "Found VSIX: $VSIX_FILE"
+        echo "VS Code CLI: $CODE_CMD"
+        echo ""
+    fi
 
     if "$CODE_CMD" --install-extension "$VSIX_FILE" 2>&1; then
         print_success "Extension installed (using $CODE_CMD)"
@@ -508,6 +646,15 @@ echo ""
 echo "vsc-bridge Offline Installation"
 echo "================================"
 echo ""
+
+if [ -n "${VERBOSE:-}" ]; then
+    print_info "Running in VERBOSE mode"
+    echo "Installation modes:"
+    echo "  CLI: $INSTALL_CLI"
+    echo "  VSIX: $INSTALL_VSIX"
+    echo "  Working directory: $(pwd)"
+    echo ""
+fi
 
 # Step 1: Validate prerequisites
 print_info "Step 1: Checking prerequisites..."

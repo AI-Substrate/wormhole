@@ -65,7 +65,7 @@ See execution log for details: [`log#phase-5-implementation-simplified-approach`
 | [x] | T003 | Create calls.meta.yaml with comprehensive MCP metadata | Core | T001 | `/workspaces/vscode-bridge/packages/extension/src/vsc-scripts/symbol/calls.meta.yaml` | File exists, defines all parameters and guidance | Consolidated T003+T030-T033 (metadata + documentation) · log#phase-5-implementation-simplified-approach [^10] |
 | [x] | T004 | Create dynamic validation script | Test | T002, T003 | `/workspaces/vscode-bridge/scripts/sample/dynamic/test-call-hierarchy.js` | Script validates two-step LSP workflow (prepare → provide) | Consolidated T004-T039 (all exploration, validation, and test promotion tasks) · log#phase-5-implementation-simplified-approach [^12] |
 | [x] | T005 | Run `just build` to generate manifest and schemas | Integration | T004 | `/workspaces/vscode-bridge/` | Build succeeds, manifest.json updated with symbol.calls | Build completed successfully · log#phase-5-implementation-simplified-approach [^11] |
-| [x] | T006 | CLI testing: incoming and outgoing calls (Python + TypeScript) | Integration | T005 | – | Commands return correct call hierarchies for both directions | Validated across Python and TypeScript · log#task-514-cli-testing-and-validation |
+| [x] | T006 | CLI testing: incoming and outgoing calls (Python + TypeScript) | Integration | T005 | – | Commands return correct call hierarchies for both directions | Completed · Validated across 5 languages · log#task-5-phase-5-final-integration-testing [^13] [^14] [^15] |
 | [ ] | T007 | Optional: MCP tool call via stdio client | Integration | T006 | – | MCP client can call symbol_calls and receive results | Optional integration validation (skipped) |
 
 ---
@@ -652,6 +652,15 @@ npm run test:integration:ui
 [^12]: Phase 5 - Dynamic validation script (kept as permanent sample)
   - [file:scripts/sample/dynamic/test-call-hierarchy.js](scripts/sample/dynamic/test-call-hierarchy.js)
   - Unified exploration script for testing prepare → provide workflow with real LSP; demonstrates both incoming and outgoing directions
+
+[^13]: Phase 5 Final Testing - Java symbol resolution fix
+  - `function:packages/extension/src/core/util/symbol-resolver.ts:findAllMatchingSymbols`
+
+[^14]: Phase 5 Final Testing - Test cleanup infrastructure
+  - `function:test/integration/unified-debug.test.ts:afterAll`
+
+[^15]: Phase 5 Final Testing - Test termination handling
+  - `function:test/integration/workflows/base/enhanced-coverage-workflow.ts:enhancedCoverageWorkflow`
 
 ---
 
