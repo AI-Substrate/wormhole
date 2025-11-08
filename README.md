@@ -90,6 +90,49 @@ vscb status
 
 ---
 
+## 🧭 LSP Navigation & Code Intelligence
+
+VSC-Bridge provides semantic code navigation using **Flowspace Node IDs** and symbol names—no cursor positions needed. Navigate, rename, and refactor code across your entire workspace using language server protocols.
+
+### Quick Examples
+
+**Find all references to a method**:
+```bash
+vscb script run symbol.navigate \
+  --param nodeId="method:src/Calculator.ts:Calculator.add" \
+  --param action="references"
+```
+
+**Rename a class workspace-wide**:
+```bash
+vscb script run symbol.rename \
+  --param path="src/Calculator.ts" \
+  --param symbol="Calculator" \
+  --param newName="MathCalculator"
+```
+
+**Replace a method body**:
+```bash
+vscb script run code.replace-method \
+  --param path="src/utils.ts" \
+  --param symbol="formatDate" \
+  --param replacement="export function formatDate(date: Date): string {
+  return date.toISOString();
+}"
+```
+
+**Find who calls this function**:
+```bash
+vscb script run symbol.calls \
+  --param path="src/api.ts" \
+  --param symbol="handleRequest" \
+  --param direction="incoming"
+```
+
+📖 **[Complete LSP Navigation Guide](./docs/how/lsp-navigation/)** - Flowspace IDs, API reference, language support, troubleshooting
+
+---
+
 ### **Configure MCP Server**
 
 The MCP server enables AI assistants to use VSC-Bridge's 35+ debugging tools (breakpoints, stepping, variables, etc.). Choose your AI tool below.
