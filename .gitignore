@@ -48,8 +48,11 @@ develop-eggs/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# Python virtualenv lib directories (but not TypeScript src/lib/)
+/lib/
+/lib64/
+test/**/lib/
+test/**/lib64/
 parts/
 sdist/
 var/
