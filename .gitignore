@@ -20,8 +20,11 @@ pnpm-debug.log*
 **/dist/
 *.map
 *.d.ts
-!extension/src/vsc-scripts/bridge-context.d.ts
-!extension/src/core/debug/debug-polling-helpers.d.ts
+!packages/extension/src/vsc-scripts/bridge-context.d.ts
+!packages/extension/src/core/debug/debug-polling-helpers.d.ts
+!packages/extension/src/core/debug/session-helpers.d.ts
+!packages/extension/src/core/debug/step-operations.d.ts
+!packages/extension/src/core/debug/step-strategies.d.ts
 **/manifest.json
 **/build-manifest.js
 **/*.vsix
