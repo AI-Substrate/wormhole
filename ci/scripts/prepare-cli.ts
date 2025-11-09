@@ -90,6 +90,18 @@ async function main() {
 
     // Build steps
     runCommand('npm run build:manifest', 'Step 1/2: Generating manifest');
+
+    // Diagnostic: Prove what TypeScript version and config are used in CI
+    log('\n🔍 Diagnostic info for CI troubleshooting...');
+    execSync('npx tsc --version', { stdio: 'inherit' });
+    log('Current working directory: ' + process.cwd());
+    log('Checking if source files exist:');
+    execSync('ls -la src/lib/ | head -10', { stdio: 'inherit', shell: '/bin/bash' });
+    log('Checking one problematic import:');
+    execSync('cat src/commands/config.ts | head -15', { stdio: 'inherit', shell: '/bin/bash' });
+    log('Running tsc --showConfig (first 30 lines):');
+    execSync('npx tsc -p tsconfig.json --showConfig | head -30', { stdio: 'inherit', shell: '/bin/bash' });
+
     runCommand('npm run build:cli', 'Step 2/2: Compiling TypeScript');
 
     // Validate output

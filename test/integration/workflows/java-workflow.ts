@@ -76,7 +76,19 @@ export async function javaEnhancedDebugWorkflow(runner: DebugRunner): Promise<vo
         // CRITICAL: Java needs retry logic for test discovery
         retryTestDiscovery: true,
         retryMaxAttempts: 5,
-        retryDelayMs: 2000
+        retryDelayMs: 2000,
+
+        // Method replacement test (Phase 4 validation)
+        methodReplacement: {
+            functionName: 'add',
+            modifiedCode: `    private int add(int a, int b) {
+        int result = a + b;
+        return result;
+    }`,
+            originalCode: `    private int add(int a, int b) {
+        return a + b;
+    }`
+        }
     };
 
     // Execute the enhanced coverage workflow with Java configuration

@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(vscb script run:*)",
+      "Bash(vscb script:*)",
+      "mcp__serena__search_for_pattern",
+      "Read(//Users/jordanknight/github/vsc-bridge/**)",
+      "Bash(just build)",
+      "Bash(npm run vscb:*)",
+      "Bash(npm exec vscb:*)",
+      "mcp__vsc-bridge__debug_status",
+      "mcp__vsc-bridge__debug_evaluate",
+      "mcp__vsc-bridge__debug_list_variables",
+      "mcp__vsc-bridge__debug_restart",
+      "mcp__vsc-bridge__breakpoint_set",
+      "mcp__vsc-bridge__debug_continue",
+      "mcp__vsc-bridge__test_debug_single",
+      "mcp__vsc-bridge__breakpoint_list",
+      "mcp__vsc-bridge__breakpoint_remove",
+      "mcp__vsc-bridge__debug_step_into",
+      "mcp__vsc-bridge__debug_step_out",
+      "mcp__vsc-bridge__debug_start",
+      "mcp__vsc-bridge__editor_goto_line",
+      "Bash(npx @modelcontextprotocol/inspector mcp__vsc-bridge)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "vsc-bridge"
+  ]
+}

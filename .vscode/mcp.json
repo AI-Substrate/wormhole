@@ -2,7 +2,7 @@
 	"servers": {
 		"vsc-bridge": {
 			"type": "stdio",
-			"command": "vscb",
+			"command": "/home/node/.npm-global/bin/vscb",
 			"args": [
 				"mcp",
 				"--workspace",

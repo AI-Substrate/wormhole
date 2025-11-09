@@ -58,6 +58,55 @@ export async function pythonEnhancedDebugWorkflow(runner: DebugRunner): Promise<
     expect(gotoResult.success, `Failed to navigate: ${gotoResult.error}`).toBe(true);
     console.log('✅ Navigated to breakpoint line');
 
+    // Wait for file to settle after navigation (prevents file lock/dirty state issues)
+    console.log('⏱️  Waiting 2 seconds for file to settle...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    console.log('✅ File settled');
+
+    // METHOD REPLACEMENT VALIDATION (Phase 4)
+    // Test code.replace-method functionality before debug workflow
+    console.log('🔄 Testing method replacement (Phase 4 validation)...');
+
+    // Step 1: Replace method with modified version
+    console.log('📝 Step 1: Replacing add() with modified version...');
+    const modifiedAdd = `def add(a: int, b: int) -> int:
+    """Add two numbers"""
+    result = a + b
+    return result`;
+    const replaceResult1 = await runner.replaceMethod(
+        PYTHON_TEST_FILE,
+        'add',
+        modifiedAdd
+    );
+    expect(replaceResult1.success, `Failed to replace method: ${replaceResult1.error}`).toBe(true);
+    console.log('✅ Method replaced successfully');
+
+    // Step 2: Replace back to original
+    console.log('🔄 Step 2: Replacing back to original version...');
+    const originalAdd = `def add(a: int, b: int) -> int:
+    """Add two numbers"""
+    return a + b`;
+    const replaceResult2 = await runner.replaceMethod(
+        PYTHON_TEST_FILE,
+        'add',
+        originalAdd
+    );
+    expect(replaceResult2.success, `Failed to restore method: ${replaceResult2.error}`).toBe(true);
+    console.log('✅ Method restored to original');
+    console.log('✅ Method replacement transaction complete');
+
+    // STAGE 1.5: Call Hierarchy Validation (Phase 6)
+    console.log('🔍 Stage 1.5: Testing call hierarchy for add()...');
+    const callsResult = await runner.callHierarchy(
+        PYTHON_TEST_FILE,
+        'add',
+        'incoming'
+    );
+    expect(callsResult.success, `Failed to get call hierarchy: ${callsResult.error}`).toBe(true);
+    expect(callsResult.data?.calls).toBeDefined();
+    expect(callsResult.data?.calls.length).toBeGreaterThan(0);
+    console.log(`✅ Stage 1.5 validation: Found ${callsResult.data?.calls.length} incoming calls to add()`);
+
     // Set first breakpoint (Python requires explicit breakpoint before debugging)
     console.log(`📍 Setting breakpoint 1 at ${PYTHON_TEST_FILE}:${BREAKPOINT_LINE_1}...`);
     const bpResult = await runner.setBreakpoint(PYTHON_TEST_FILE, BREAKPOINT_LINE_1);

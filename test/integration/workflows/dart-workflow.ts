@@ -54,6 +54,39 @@ export async function dartEnhancedDebugWorkflow(runner: DebugRunner): Promise<vo
     expect(gotoResult.success, `Failed to navigate: ${gotoResult.error}`).toBe(true);
     console.log('✅ Navigated to breakpoint line');
 
+    // METHOD REPLACEMENT VALIDATION (Phase 4)
+    // Test code.replace-method functionality before debug workflow
+    console.log('🔄 Testing method replacement (Phase 4 validation)...');
+
+    // Step 1: Replace method with modified version
+    console.log('📝 Step 1: Replacing add() with modified version...');
+    const modifiedAdd = `int add(int a, int b) {
+  final sum = a + b;
+  return sum;
+}`;
+    const replaceResult1 = await runner.replaceMethod(
+        DART_TEST_FILE,
+        'add',
+        modifiedAdd
+    );
+    expect(replaceResult1.success, `Failed to replace method: ${replaceResult1.error}`).toBe(true);
+    console.log('✅ Method replaced successfully');
+
+    // Step 2: Replace back to original
+    console.log('🔄 Step 2: Replacing back to original version...');
+    const originalAdd = `int add(int a, int b) {
+  final result = a + b;
+  return result;
+}`;
+    const replaceResult2 = await runner.replaceMethod(
+        DART_TEST_FILE,
+        'add',
+        originalAdd
+    );
+    expect(replaceResult2.success, `Failed to restore method: ${replaceResult2.error}`).toBe(true);
+    console.log('✅ Method restored to original');
+    console.log('✅ Method replacement transaction complete');
+
     // Set first breakpoint
     console.log(`📍 Setting breakpoint 1 at ${DART_TEST_FILE}:${BREAKPOINT_LINE_1}...`);
     const bpResult = await runner.setBreakpoint(DART_TEST_FILE, BREAKPOINT_LINE_1);

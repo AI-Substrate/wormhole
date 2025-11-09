@@ -661,4 +661,53 @@ export class MCPRunner implements DebugRunner {
             };
         }
     }
+
+    // ========== Code Manipulation Operations ==========
+
+    async replaceMethod(path: string, symbol: string, replacement: string): Promise<RunnerResponse<void>> {
+        try {
+            const absolutePath = this.resolvePath(path);
+            await this.callMCPTool('code_replace_method', {
+                path: absolutePath,
+                symbol: symbol,
+                replacement: replacement
+            });
+
+            return {
+                success: true
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error replacing method',
+                rawError: error
+            };
+        }
+    }
+
+    async callHierarchy(
+        path: string,
+        symbol: string,
+        direction: 'incoming' | 'outgoing'
+    ): Promise<RunnerResponse<import('./DebugRunner').CallHierarchyResult>> {
+        try {
+            const absolutePath = this.resolvePath(path);
+            const data = await this.callMCPTool('symbol_calls', {
+                path: absolutePath,
+                symbol: symbol,
+                direction: direction
+            });
+
+            return {
+                success: true,
+                data: data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error getting call hierarchy',
+                rawError: error
+            };
+        }
+    }
 }

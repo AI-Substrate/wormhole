@@ -61,11 +61,16 @@ async function discoverScripts(dir: string, baseDir: string = dir): Promise<Mani
             const subEntries = await discoverScripts(fullPath, baseDir);
             entries.push(...subEntries);
         } else if (item.name.endsWith('.meta.yaml')) {
-            // Found a metadata file, check for corresponding .js file
-            const scriptName = item.name.replace('.meta.yaml', '.js');
-            const scriptPath = path.join(dir, scriptName);
+            // Found a metadata file, check for corresponding .ts or .js file
+            const baseName = item.name.replace('.meta.yaml', '');
+            const tsPath = path.join(dir, baseName + '.ts');
+            const jsPath = path.join(dir, baseName + '.js');
 
-            if (fs.existsSync(scriptPath)) {
+            // Prefer .ts over .js during incremental conversion
+            const scriptPath = fs.existsSync(tsPath) ? tsPath :
+                             fs.existsSync(jsPath) ? jsPath : null;
+
+            if (scriptPath) {
                 try {
                     // Read and parse metadata
                     const metaContent = fs.readFileSync(fullPath, 'utf-8');
@@ -74,9 +79,12 @@ async function discoverScripts(dir: string, baseDir: string = dir): Promise<Mani
                     // Calculate relative path from scripts directory
                     const relPath = path.relative(baseDir, scriptPath);
 
+                    // Convert .ts extension to .js for runtime loading from out/ directory
+                    const runtimeRelPath = relPath.replace(/\.ts$/, '.js');
+
                     entries.push({
                         metadata,
-                        scriptRelPath: relPath
+                        scriptRelPath: runtimeRelPath
                     });
 
                     console.log(`✓ Discovered script: ${metadata.alias} (${relPath})`);
@@ -84,7 +92,7 @@ async function discoverScripts(dir: string, baseDir: string = dir): Promise<Mani
                     console.error(`✗ Failed to parse metadata for ${fullPath}:`, error);
                 }
             } else {
-                console.warn(`⚠ Metadata file ${item.name} has no corresponding .js file`);
+                console.warn(`⚠ Metadata file ${item.name} has no corresponding .ts or .js file`);
             }
         }
     }

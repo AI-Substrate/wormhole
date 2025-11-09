@@ -1,6 +1,6 @@
 # VSC-Bridge
 
-**The missing bridge between AI coding agents and VS Code's professional debugger.** VSC-Bridge transforms debugging from a manual, UI-driven activity into a programmable workflow accessible to LLM agents, CLI tools, and automation scripts. Through purpose-built commands spanning breakpoint management, code stepping, variable inspection, and test debugging, your AI pair programmer can now debug like a senior engineer—setting conditional breakpoints, stepping through execution, inspecting nested object properties, and even modifying variables on the fly. Whether it's your coding agent setting a breakpoint at line 42 and evaluating `user.is_authenticated` to find your auth bug, or your CI pipeline capturing pytest output through the Debug Adapter Protocol without fragile log parsing, VSC-Bridge gives you programmatic control over everything you can do in VS Code's debugger UI, and more.
+**The missing bridge between AI coding agents and VS Code's professional debugger.** VSC-Bridge transforms debugging from a manual, UI-driven activity into a programmable workflow accessible to LLM agents, CLI tools, and automation scripts. Through purpose-built commands spanning breakpoint management, code stepping, variable inspection, and test debugging, your AI pair programmer can now debug like a s◊enior engineer—setting conditional breakpoints, stepping through execution, inspecting nested object properties, and even modifying variables on the fly. Whether it's your coding agent setting a breakpoint at line 42 and evaluating `user.is_authenticated` to find your auth bug, or your CI pipeline capturing pytest output through the Debug Adapter Protocol without fragile log parsing, VSC-Bridge gives you programmatic control over everything you can do in VS Code's debugger UI, and more.
 
 **True pair programming through the VS Code interface.** Imagine asking your coding agent to "debug this failing test" and watching it autonomously set breakpoints, launch your test suite, pause when `user_count > 100`, inspect all local variables, step through your authentication logic line-by-line, discover that `session.expired == True`, and report back: "The bug is on line 47—sessions aren't being refreshed." This is the experience VSC-Bridge enables across Python, JavaScript, C#, and Java with unified workflows for popular testing frameworks. Available through the `vscb` CLI, a security-scoped HTTP API (localhost:3001), and native Model Context Protocol integration for Claude Desktop, Cline, Cursor, and GitHub Copilot, VSC-Bridge makes debugging scriptable, automatable, and AI-native—while you collaborate seamlessly through the familiar VS Code interface you already know.
 
@@ -87,6 +87,49 @@ vscb script list
 vscb script run bp.set --param path=/path/to/file.py --param line=10
 vscb status
 ```
+
+---
+
+## 🧭 LSP Navigation & Code Intelligence
+
+VSC-Bridge provides semantic code navigation using **Flowspace Node IDs** and symbol names—no cursor positions needed. Navigate, rename, and refactor code across your entire workspace using language server protocols.
+
+### Quick Examples
+
+**Find all references to a method**:
+```bash
+vscb script run symbol.navigate \
+  --param nodeId="method:src/Calculator.ts:Calculator.add" \
+  --param action="references"
+```
+
+**Rename a class workspace-wide**:
+```bash
+vscb script run symbol.rename \
+  --param path="src/Calculator.ts" \
+  --param symbol="Calculator" \
+  --param newName="MathCalculator"
+```
+
+**Replace a method body**:
+```bash
+vscb script run code.replace-method \
+  --param path="src/utils.ts" \
+  --param symbol="formatDate" \
+  --param replacement="export function formatDate(date: Date): string {
+  return date.toISOString();
+}"
+```
+
+**Find who calls this function**:
+```bash
+vscb script run symbol.calls \
+  --param path="src/api.ts" \
+  --param symbol="handleRequest" \
+  --param direction="incoming"
+```
+
+📖 **[Complete LSP Navigation Guide](./docs/how/lsp-navigation/)** - Flowspace IDs, API reference, language support, troubleshooting
 
 ---
 

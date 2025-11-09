@@ -72,20 +72,28 @@ export class CLIRunner implements DebugRunner {
             }
         );
 
-        // Ignore info logs and warnings in stderr, but throw on real errors
-        // CLI outputs ℹ info messages to stderr, which are not errors
-        if (stderr && !stderr.includes('warning') && !stderr.includes('ℹ')) {
+        // IMPROVED: Better stderr handling
+        // Only throw if stderr contains actual error markers (not just info logs)
+        const errorMarkers = ['Error:', 'ERROR:', 'error:', 'E_OPERATION_FAILED', 'E_NOT_FOUND', 'E_TIMEOUT'];
+        const hasError = stderr && errorMarkers.some(marker => stderr.includes(marker));
+
+        if (hasError) {
             throw new Error(`CLI error: ${stderr}`);
         }
 
         // Parse JSON response from stdout
+        if (!stdout || stdout.trim().length === 0) {
+            throw new Error(`No output from CLI command (stderr: ${stderr.substring(0, 200)})`);
+        }
+
         try {
             return JSON.parse(stdout);
         } catch (e) {
             const parseError = e instanceof Error ? e.message : String(e);
             throw new Error(
                 `Failed to parse CLI response (${stdout.length} bytes): ${parseError}\n` +
-                `First 500 chars: ${stdout.substring(0, 500)}`
+                `Stdout first 500 chars: ${stdout.substring(0, 500)}\n` +
+                `Stderr first 200 chars: ${stderr.substring(0, 200)}`
             );
         }
     }
@@ -597,6 +605,92 @@ export class CLIRunner implements DebugRunner {
             return {
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error evaluating expression',
+                rawError: error
+            };
+        }
+    }
+
+    // ========== Code Manipulation Operations ==========
+
+    /**
+     * Replace method via CLI with retry logic for transient file lock issues
+     */
+    async replaceMethod(path: string, symbol: string, replacement: string): Promise<RunnerResponse<void>> {
+        const absolutePath = this.resolvePath(path);
+        let lastError: any;
+
+        // Retry up to 3 times for transient file lock/dirty state issues
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                // Escape replacement text for shell - use heredoc-style approach via file
+                const result = await this.runCLI(
+                    `script run code.replace-method --param path="${absolutePath}" --param symbol="${symbol}" --param replacement="${replacement.replace(/"/g, '\\"')}"`
+                );
+
+                // Check if result is valid JSON object
+                if (!result || typeof result !== 'object') {
+                    throw new Error(`Invalid response format: ${JSON.stringify(result)}`);
+                }
+
+                if (!result.ok) {
+                    return {
+                        success: false,
+                        error: `Failed to replace method: ${result.error?.message || 'Unknown error'}`,
+                        rawError: result
+                    };
+                }
+
+                return {
+                    success: true
+                };
+            } catch (error) {
+                lastError = error;
+                if (attempt < 3) {
+                    console.log(`🔄 Retry ${attempt}/3: Method replacement failed, retrying in 1s...`);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    continue;
+                }
+            }
+        }
+
+        // All retries exhausted
+        return {
+            success: false,
+            error: lastError instanceof Error ? lastError.message : 'Unknown error replacing method',
+            rawError: lastError
+        };
+    }
+
+    /**
+     * Get call hierarchy via CLI
+     */
+    async callHierarchy(
+        path: string,
+        symbol: string,
+        direction: 'incoming' | 'outgoing'
+    ): Promise<RunnerResponse<import('./DebugRunner').CallHierarchyResult>> {
+        try {
+            const absolutePath = this.resolvePath(path);
+            const result = await this.runCLI(
+                `script run symbol.calls --param path="${absolutePath}" --param symbol="${symbol}" --param direction="${direction}"`
+            );
+
+            if (!result.ok) {
+                return {
+                    success: false,
+                    error: 'Failed to get call hierarchy',
+                    rawError: result
+                };
+            }
+
+            return {
+                success: true,
+                data: result.data
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error getting call hierarchy',
                 rawError: error
             };
         }

@@ -18,7 +18,7 @@ namespace IntegrationSimple
     /// </summary>
     public class DebugTest
     {
-        private int Add(int a, int b) => a + b;
+                                                                                                                                                                                                                                                                        private int Add(int a, int b) => a + b;
 
         private int Subtract(int a, int b) => a - b;
 

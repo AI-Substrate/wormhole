@@ -80,7 +80,22 @@ export async function csharpEnhancedDebugWorkflow(runner: DebugRunner): Promise<
         // C# test discovery can be intermittent - enable retry
         retryTestDiscovery: true,
         retryMaxAttempts: 5,
-        retryDelayMs: 2000
+        retryDelayMs: 2000,
+
+        // Method replacement test (Phase 4 validation)
+        methodReplacement: {
+            functionName: 'Add',
+            modifiedCode: `        private int Add(int a, int b)
+        {
+            int result = a + b;
+            return result;
+        }`,
+            originalCode: `        private int Add(int a, int b) => a + b;`
+        },
+
+        // C# OmniSharp does not support LSP Call Hierarchy (Phase 6)
+        // See: symbol/calls.meta.yaml line 99
+        supportsCallHierarchy: false
     };
 
     // Execute the enhanced coverage workflow with C# configuration

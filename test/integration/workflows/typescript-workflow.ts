@@ -81,7 +81,20 @@ export async function typescriptEnhancedDebugWorkflow(runner: DebugRunner): Prom
         // TypeScript/Vitest needs retry logic for test discovery (like Java)
         retryTestDiscovery: true,
         retryMaxAttempts: 5,
-        retryDelayMs: 2000
+        retryDelayMs: 2000,
+
+        // Method replacement test (Phase 4 validation)
+        methodReplacement: {
+            functionName: 'add',
+            modifiedCode: `function add(a: number, b: number): number {
+    const result = a + b;
+    return result;
+}`,
+            originalCode: `function add(a: number, b: number): number {
+
+    return a + b;
+}`
+        }
     };
 
     // Execute the enhanced coverage workflow with TypeScript configuration

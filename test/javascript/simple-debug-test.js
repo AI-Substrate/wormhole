@@ -2,18 +2,23 @@
  * Simple test file for debugging - no Jest required
  */
 
-function testVariableModification() {
-    let numberVar = 42;
-    let stringVar = "hello";
-    let boolVar = true;
-    let objVar = { x: 1, y: 2 };
-
-    debugger; // Breakpoint here - now we can modify variables
-
-    tconsole.log('numberVar:', numberVar);
-    console.log('stringVar:', stringVar);
-    console.log('boolVar:', boolVar);
-    console.log('objVar:', objVar);
+/**
+ * testVariableModification - Enhanced with documentation
+ * @param {number} a - First number
+ * @param {number} b - Second number
+ * @returns {number} Sum of a and b
+ */
+/**
+ * testVariableModification - Enhanced with documentation
+ * @param {number} a - First number
+ * @param {number} b - Second number
+ * @returns {number} Sum of a and b
+ */
+function testVariableModification(a, b) {
+    if (typeof a !== 'number' || typeof b !== 'number') {
+        throw new TypeError('Arguments must be numbers');
+    }
+    return a + b;
 }
 
 testVariableModification();

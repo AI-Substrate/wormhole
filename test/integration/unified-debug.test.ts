@@ -27,6 +27,13 @@ import { javaEnhancedDebugWorkflow } from './workflows/java-workflow';
 import { csharpEnhancedDebugWorkflow } from './workflows/csharp-workflow';
 import { typescriptEnhancedDebugWorkflow } from './workflows/typescript-workflow';
 import { dartEnhancedDebugWorkflow } from './workflows/dart-workflow';
+import { execSync } from 'child_process';
+import * as path from 'path';
+
+/**
+ * Project root directory (for git restore operations)
+ */
+const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 
 /**
  * Extension Host startup delay (10 seconds)
@@ -177,6 +184,22 @@ function createUnifiedDebugTests(
          */
         afterAll(async () => {
             console.log(`🧹 Cleaning up ${runnerName} test infrastructure...`);
+
+            // CRITICAL: Restore test files modified by method replacement validation
+            // Method replacement tests intentionally modify files in test/integration-simple/
+            // but the restoration has indentation issues, leaving files dirty.
+            // Git restore is the most reliable way to ensure clean state.
+            console.log('🔄 Restoring test files to original state...');
+            try {
+                execSync('git restore test/integration-simple/', {
+                    cwd: PROJECT_ROOT,
+                    stdio: 'pipe'
+                });
+                console.log('✅ Test files restored');
+            } catch (e: any) {
+                // Non-fatal - file might not be modified or git might not be available
+                console.log(`⚠️  Warning: Could not restore test files: ${e.message}`);
+            }
 
             if (runner) {
                 // For MCP runner: cleanup client connection first

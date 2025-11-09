@@ -1,6 +1,11 @@
 import { z } from 'zod';
-import { BridgeContext } from '../bridge-context/BridgeContext';
+import { IBridgeContext } from '../bridge-context/types';
 import { ErrorCode } from '../response/errorTaxonomy';
+import { ScriptResult, ScriptEnvelope } from './ScriptResult';
+
+// Re-export decorator for convenience
+// Allows: import { QueryScript, RegisterScript } from '@script-base'
+export { RegisterScript, getScriptMetadata } from './decorators';
 
 /**
  * Base class for all scripts
@@ -42,7 +47,7 @@ export abstract class ScriptBase<TParams = unknown, TResult = unknown> {
     /**
      * Execute the script
      */
-    abstract execute(bridgeContext: BridgeContext, params: TParams): Promise<TResult>;
+    abstract execute(bridgeContext: IBridgeContext, params: TParams): Promise<TResult>;
 }
 
 /**
@@ -57,10 +62,23 @@ export interface ActionResult {
 
 /**
  * Base class for action scripts (simple success/fail operations)
+ *
+ * MIGRATION NOTE: All ActionScripts should migrate to returning ScriptEnvelope
+ * and using ScriptResult factory instead of this.success()/this.failure()
  */
 export abstract class ActionScript<TParams = unknown> extends ScriptBase<TParams, ActionResult> {
     /**
      * Helper to create success result
+     *
+     * @deprecated Use ScriptResult.success() instead
+     * This method will be removed in a future version
+     *
+     * @example
+     * // OLD (deprecated):
+     * return this.success({ applied: true });
+     *
+     * // NEW (correct):
+     * return ScriptResult.success({ applied: true });
      */
     protected success(details?: unknown): ActionResult {
         return { success: true, details };
@@ -68,6 +86,20 @@ export abstract class ActionScript<TParams = unknown> extends ScriptBase<TParams
 
     /**
      * Helper to create failure result
+     *
+     * @deprecated Use ScriptResult.failure() instead
+     * This method will be removed in a future version
+     *
+     * @example
+     * // OLD (deprecated):
+     * return this.failure('Not found', { path });
+     *
+     * // NEW (correct):
+     * return ScriptResult.failure(
+     *   'Symbol not found in file',
+     *   ErrorCode.E_SYMBOL_NOT_FOUND,
+     *   { path }
+     * );
      */
     protected failure(reason: string | ErrorCode, details?: unknown): ActionResult {
         if (typeof reason === 'string') {
@@ -78,6 +110,9 @@ export abstract class ActionScript<TParams = unknown> extends ScriptBase<TParams
     }
 }
 
+// Re-export ScriptResult and ScriptEnvelope for convenience
+export { ScriptResult, ScriptEnvelope };
+
 /**
  * Base class for waitable scripts (operations that block until condition)
  */
@@ -85,12 +120,12 @@ export abstract class WaitableScript<TParams = unknown, TResult = unknown> exten
     /**
      * Wait for a condition or event
      */
-    protected abstract wait(bridgeContext: BridgeContext, params: TParams): Promise<TResult>;
+    protected abstract wait(bridgeContext: IBridgeContext, params: TParams): Promise<TResult>;
 
     /**
      * Default execute delegates to wait
      */
-    async execute(bridgeContext: BridgeContext, params: TParams): Promise<TResult> {
+    async execute(bridgeContext: IBridgeContext, params: TParams): Promise<TResult> {
         return this.wait(bridgeContext, params);
     }
 
@@ -103,7 +138,7 @@ export abstract class WaitableScript<TParams = unknown, TResult = unknown> exten
      * @returns Structured event data or null on timeout
      */
     protected async waitForDebugEvent(
-        bridgeContext: BridgeContext,
+        bridgeContext: IBridgeContext,
         eventType: string,
         sessionId?: string,
         timeoutMs: number = 30000
@@ -176,7 +211,7 @@ export abstract class WaitableScript<TParams = unknown, TResult = unknown> exten
             };
 
             // Register tracker - use specific session type if we can determine it, otherwise '*'
-            const sessionType = sessionId ? bridgeContext.debug.getSession()?.type || '*' : '*';
+            const sessionType = sessionId ? bridgeContext.debug?.getSession()?.type || '*' : '*';
             const disposable = bridgeContext.vscode.debug?.registerDebugAdapterTrackerFactory?.(sessionType, trackerFactory);
 
             // Cleanup when done
@@ -210,7 +245,7 @@ export abstract class QueryScript<TParams = unknown, TResult = unknown> extends 
  * Placeholder for Phase 3
  */
 export abstract class StreamScript<TParams = unknown, TResult = unknown> extends ScriptBase<TParams, AsyncGenerator<TResult>> {
-    abstract execute(bridgeContext: BridgeContext, params: TParams): Promise<AsyncGenerator<TResult>>;
+    abstract execute(bridgeContext: IBridgeContext, params: TParams): Promise<AsyncGenerator<TResult>>;
 
     /**
      * Helper to create async generator
