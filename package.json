@@ -9,6 +9,7 @@
   },
   "files": [
     "/dist",
+    "/src",
     "/oclif.manifest.json"
   ],
   "private": false,
