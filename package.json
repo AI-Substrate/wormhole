@@ -45,7 +45,7 @@
     "build:extension": "cd packages/extension && npm run compile",
     "build:cli": "tsc -p tsconfig.json && npm run copy-manifest && npm run copy-docs",
     "copy-manifest": "shx cp packages/extension/src/vsc-scripts/manifest.json dist/manifest.json",
-    "copy-docs": "shx mkdir -p dist/lib/mcp/docs && shx cp -r src/lib/mcp/docs/*.md dist/lib/mcp/docs/",
+    "copy-docs": "mkdir -p dist/lib/mcp/docs && cp src/lib/mcp/docs/*.md dist/lib/mcp/docs/ 2>/dev/null || true",
     "prepare": "node ci/scripts/prepare-cli.mjs",
     "dev": "tsx src/index.ts",
     "build:shared-test": "cd packages/shared-test && npm run build",
