@@ -1,0 +1,75 @@
+name: Publish Artifacts
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install just
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: just build
+
+      - name: Package VSIX
+        run: just package-extension
+
+      - name: Package offline bundle
+        run: just package-offline-bundle
+
+      - name: Upload artifacts with retry
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          echo "Uploading artifacts for ${TAG}..."
+
+          # Retry loop: 3 attempts with 10s delays
+          for attempt in 1 2 3; do
+            echo "Upload attempt ${attempt}/3..."
+
+            if gh release upload "${TAG}" artifacts/*.vsix artifacts/*.zip --clobber; then
+              echo "✅ Upload succeeded on attempt ${attempt}"
+              exit 0
+            else
+              if [ $attempt -lt 3 ]; then
+                echo "⚠️  Upload failed (attempt ${attempt}), retrying in 10s..."
+                sleep 10
+              else
+                echo "❌ Upload failed after 3 attempts"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Backup artifacts to workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts-${{ github.event.release.tag_name }}
+          path: |
+            artifacts/*.vsix
+            artifacts/*.zip
+          retention-days: 90

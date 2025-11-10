@@ -1,0 +1,88 @@
+name: Verify Release Tags
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify-tags:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for tag detection
+
+      - name: Find untagged release commits
+        id: find-untagged
+        run: |
+          echo "Finding release commits without corresponding tags..."
+
+          # Find all "chore: release X.Y.Z" commits
+          git log --oneline --grep="^chore: release" --all --format="%H %s" | while read sha msg; do
+            # Extract version from commit message
+            VERSION=$(echo "$msg" | sed -n 's/^chore: release \([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p')
+
+            if [ -n "$VERSION" ]; then
+              # Check if corresponding tag exists
+              if ! git tag -l | grep -q "^v${VERSION}$"; then
+                echo "UNTAGGED: ${sha} → v${VERSION}"
+                echo "${sha}:${VERSION}" >> untagged.txt
+              fi
+            fi
+          done
+
+          if [ -f untagged.txt ]; then
+            echo "Found untagged releases:"
+            cat untagged.txt
+            echo "untagged-found=true" >> $GITHUB_OUTPUT
+          else
+            echo "All release commits have corresponding tags ✅"
+            echo "untagged-found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create missing tags and releases
+        if: steps.find-untagged.outputs.untagged-found == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Creating missing tags and GitHub Releases..."
+
+          while IFS=: read sha version; do
+            TAG="v${version}"
+            echo "Processing: ${sha} → ${TAG}"
+
+            # Check if tag already exists (idempotent)
+            if git tag -l | grep -q "^${TAG}$"; then
+              echo "  Tag ${TAG} already exists, skipping"
+              continue
+            fi
+
+            # Create and push tag
+            git tag "${TAG}" "${sha}"
+            git push origin "${TAG}"
+            echo "  ✅ Created and pushed tag ${TAG}"
+
+            # Extract CHANGELOG entry for this version
+            CHANGELOG_ENTRY=$(awk "/^## \[?${version}\]?/,/^## /" CHANGELOG.md | head -n -1)
+
+            # Create GitHub Release
+            if [ -n "$CHANGELOG_ENTRY" ]; then
+              gh release create "${TAG}" \
+                --title "${TAG}" \
+                --notes "${CHANGELOG_ENTRY}"
+              echo "  ✅ Created GitHub Release ${TAG}"
+            else
+              gh release create "${TAG}" \
+                --title "${TAG}" \
+                --notes "Release ${version}"
+              echo "  ✅ Created GitHub Release ${TAG} (no CHANGELOG entry found)"
+            fi
+          done < untagged.txt
+
+          echo "Tag recovery complete ✅"
