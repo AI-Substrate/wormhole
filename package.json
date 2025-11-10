@@ -36,6 +36,7 @@
     "ink-select-input": "^5.0.0",
     "ink-spinner": "^5.0.0",
     "ink-text-input": "^5.0.1",
+    "js-yaml": "^4.1.0",
     "react": "^18.2.0",
     "zod": "^3.22.4"
   },
@@ -86,7 +87,6 @@
     "cz-conventional-changelog": "^3.3.0",
     "esbuild": "^0.24.0",
     "glob": "^11.0.3",
-    "js-yaml": "^4.1.0",
     "oclif": "^4.1.0",
     "semantic-release": "^22.0.12",
     "shx": "^0.3.4",
