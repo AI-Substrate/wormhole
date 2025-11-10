@@ -44,10 +44,12 @@
     "build:extension": "cd packages/extension && npm run compile",
     "build:cli": "tsc -p tsconfig.json && npm run copy-manifest",
     "copy-manifest": "shx cp packages/extension/src/vsc-scripts/manifest.json dist/manifest.json",
-    "prepare": "tsx ci/scripts/prepare-cli.ts",
+    "prepare": "node ci/scripts/prepare-cli.mjs",
     "dev": "tsx src/index.ts",
     "build:shared-test": "cd packages/shared-test && npm run build",
-    "build:manifest": "tsx scripts/build-manifest.cts",
+    "build:manifest": "node scripts/build-manifest.bundle.cjs",
+    "build:manifest:dev": "tsx scripts/build-manifest.cts",
+    "bundle:manifest": "esbuild scripts/build-manifest.cts --bundle --platform=node --format=cjs --outfile=scripts/build-manifest.bundle.cjs '--external:fs' '--external:path'",
     "watch:manifest": "chokidar 'packages/extension/src/vsc-scripts/**/*.meta.yaml' -c 'npm run build:manifest'",
     "test": "xvfb-run -a vscode-test",
     "test:extension": "xvfb-run -a vscode-test",
@@ -82,6 +84,7 @@
     "@vscode/test-electron": "^2.5.2",
     "commitizen": "^4.3.0",
     "cz-conventional-changelog": "^3.3.0",
+    "esbuild": "^0.24.0",
     "glob": "^11.0.3",
     "js-yaml": "^4.1.0",
     "oclif": "^4.1.0",
@@ -95,9 +98,6 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
-  },
-  "overrides": {
-    "esbuild": "0.21.5"
   },
   "oclif": {
     "bin": "vscb",
