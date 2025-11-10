@@ -4,72 +4,59 @@
 
 **Tasks Covered**: T002-T004 (validation), T005-T014 (GitHub App setup)
 
+**CURRENT STATUS**:
+- ✅ T002 Complete - Token test confirmed GitHub App needed (secret not configured)
+- ⏭️ **NEXT STEP**: T003 - Verify merge strategy (5 minutes)
+- ⏭️ **THEN**: T005-T014 - GitHub App setup (15-20 minutes)
+
 ---
 
 ## Part 1: Pre-Migration Validation (T002-T004)
 
-### T002: Test Organization Token Policy
+### T002: Test Organization Token Policy ✅ COMPLETE
 
-**Objective**: Determine if `SEMANTIC_RELEASE_TOKEN` (PAT) is blocked by org policy or only default `GITHUB_TOKEN`
+**Status**: ✅ Complete - 2025-11-10
 
-**Steps**:
-1. Navigate to: https://github.com/AI-Substrate/wormhole/actions
-2. Manually trigger `build-and-release.yml` workflow
-3. Observe workflow execution:
-   - Does it complete successfully using `SEMANTIC_RELEASE_TOKEN`?
-   - Check logs for "permission denied" or "read-only" errors
-4. Test default token behavior (if possible):
-   - Create temporary workflow using `GITHUB_TOKEN` instead
-   - Attempt label creation: `gh label create test-default`
-   - Expect: "read-only" error (confirms org policy)
+**Result**: `SEMANTIC_RELEASE_TOKEN` secret is not configured (workflow failed at checkout)
 
-**Document Results in** `/workspaces/vscode-bridge/docs/plans/28-release-please-integration/validation/token-policy-test.md`:
-```markdown
-# Token Policy Test Results
+**Finding**: Cannot test org token policy without secret. Current workflow is non-functional.
 
-Date: [DATE]
+**Conclusion**: GitHub App urgency = HIGH. Proceed directly to T005-T014.
 
-## SEMANTIC_RELEASE_TOKEN Test
-- Status: [Works / Blocked]
-- Evidence: [Workflow run URL or error message]
-
-## GITHUB_TOKEN Test
-- Status: [Read-only confirmed / Other]
-- Evidence: [Error message or test output]
-
-## Conclusion
-- Organization policy: [Blocks PATs / Only default token read-only]
-- GitHub App urgency: [High (PATs blocked) / Medium (PATs work but not recommended)]
-```
+**Evidence**: See `/workspaces/vscode-bridge/docs/plans/28-release-please-integration/validation/token-policy-test.md`
 
 ---
 
-### T003: Verify Repository Merge Strategy
+### T003: Verify Repository Merge Strategy ⏭️ NEXT TASK (5 minutes)
 
 **Objective**: Document merge strategy to determine if PR title validation is needed
+
+**Why This Matters**:
+- If "squash merging" is enabled → PR **titles** must follow conventional commits (feat:, fix:, etc.)
+- If only "merge commits" → Individual commit messages matter (PR title doesn't affect releases)
 
 **Steps**:
 1. Navigate to: https://github.com/AI-Substrate/wormhole/settings
 2. Scroll to "Pull Requests" section
 3. Check which merge methods are enabled:
    - [ ] Allow merge commits
-   - [ ] Allow squash merging
+   - [ ] Allow squash merging ← **Most important for release-please**
    - [ ] Allow rebase merging
-4. Note default merge method
+4. Note which box is selected by default
 
-**Document Results in** `/workspaces/vscode-bridge/docs/plans/28-release-please-integration/validation/merge-strategy.md`:
+**Document Results**: Create file `/workspaces/vscode-bridge/docs/plans/28-release-please-integration/validation/merge-strategy.md`:
 ```markdown
 # Repository Merge Strategy
 
-Date: [DATE]
+Date: 2025-11-10
 
 ## Enabled Merge Methods
 - Merge commits: [Yes/No]
-- Squash merging: [Yes/No]
+- Squash merging: [Yes/No]  ← Check this!
 - Rebase merging: [Yes/No]
 
 ## Default Method
-[Merge / Squash / Rebase]
+[Which radio button is selected in UI]
 
 ## Impact on Release-Please
 - If squash merge enabled: PR titles MUST follow conventional commits format
@@ -78,6 +65,8 @@ Date: [DATE]
 ## Recommendation
 [Continue with current strategy / Add PR title validation workflow]
 ```
+
+**After documenting**: Continue to T005 (GitHub App setup)
 
 ---
 
@@ -93,7 +82,15 @@ Date: [DATE]
 
 ---
 
-## Part 2: GitHub App Creation (T005-T014)
+## Part 2: GitHub App Creation (T005-T014) ⏭️ MAIN TASK (15-20 minutes)
+
+**Overview**: Create a GitHub App that can bypass branch protection and create Release PRs automatically.
+
+**Time Required**: 15-20 minutes total for all steps (T005-T014)
+
+**Why This Is Critical**: Without the GitHub App, release-please cannot create Release PRs due to branch protection rules.
+
+---
 
 ### T005: Create GitHub App in Organization
 
@@ -161,35 +158,36 @@ Date: [DATE]
 
 **⚠️ CRITICAL SECURITY WARNINGS**:
 - **NEVER commit the .pem file to git**
-- Store key in secure location (1Password, encrypted vault, etc.)
+- Store key in secure location (password manager, encrypted vault, etc.)
 - Key will be uploaded to GitHub Secrets in T012
+- **Keep the downloaded file** - you'll need it for T012 (uploading to secrets)
 
 **Steps**:
 1. In app settings, scroll to "Private keys" section
 2. Click "Generate a private key"
 3. Key automatically downloads as `[app-name].[date].private-key.pem`
-4. **Immediately move key to secure location**:
-   ```bash
-   # Example: Move to 1Password vault or encrypted directory
-   # DO NOT leave in Downloads folder!
-   ```
-5. **Document key location** (but NOT the key itself):
+4. **Keep the file accessible** for the next few steps (T012 needs it)
+5. **After T012 completes**: Move to secure long-term storage (password manager, etc.)
 
-**Document in** `/workspaces/vscode-bridge/docs/plans/28-release-please-integration/validation/app-key-location.md`:
+**What You'll Need This File For**:
+- T012: Upload entire contents to GitHub Secrets
+- Future key rotations (every 90 days)
+
+**Document key metadata** (but NOT the key itself) in `/workspaces/vscode-bridge/docs/plans/28-release-please-integration/validation/app-key-location.md`:
 ```markdown
 # GitHub App Private Key Location
 
 ⚠️ This file documents WHERE the key is stored, NOT the key itself!
 
-Date Generated: [DATE]
-Key File Name: [app-name].[date].private-key.pem
-Secure Storage Location: [1Password vault / Encrypted directory / etc.]
-Access: [Who has access]
+Date Generated: 2025-11-10
+Key File Name: [exact filename that downloaded]
+Secure Storage Location: [Where you stored it after T012]
+Access: [Who has access to retrieve it]
 
 ## Key Rotation Schedule
 - Created: 2025-11-10
 - Next Rotation Due: 2026-02-08 (90 days)
-- Rotation Procedure: See docs/how/releases/2-github-app-setup.md
+- Rotation Procedure: Repeat T008, T012, T013 with new key
 ```
 
 ---
@@ -259,24 +257,36 @@ Access: [Who has access]
 
 **Objective**: Make private key available to workflows
 
-**Prerequisites**: Private key .pem file from T008
+**Prerequisites**: Private key .pem file from T008 (keep file accessible!)
 
 **Steps**:
 1. Navigate to: https://github.com/AI-Substrate/wormhole/settings/secrets/actions
 2. Click "New repository secret"
 3. Name: `RELEASE_PLEASE_APP_PRIVATE_KEY`
-4. Value: **Entire contents of .pem file** (including `-----BEGIN RSA PRIVATE KEY-----` and `-----END RSA PRIVATE KEY-----`)
+4. Value: **Entire contents of .pem file** (including header/footer lines)
+
+   **How to get the contents**:
    ```bash
-   # To get key contents (do this in secure terminal):
-   cat /path/to/[app-name].[date].private-key.pem
-   # Copy entire output including BEGIN/END lines
+   # Option 1: Open file in text editor, copy all text
+   # Option 2: In terminal:
+   cat ~/Downloads/[app-name].[date].private-key.pem
+   # Copy entire output including these lines:
+   # -----BEGIN RSA PRIVATE KEY-----
+   # [many lines of base64 text]
+   # -----END RSA PRIVATE KEY-----
    ```
-5. Paste complete key contents into "Value" field (multi-line)
+
+5. Paste complete key contents into GitHub "Value" field (it's a multi-line textarea)
 6. Click "Add secret"
 
-**Validation**: Secret `RELEASE_PLEASE_APP_PRIVATE_KEY` visible in repository secrets list (value hidden)
+**Validation**:
+- Secret `RELEASE_PLEASE_APP_PRIVATE_KEY` visible in list
+- Value shows as "•••••" (hidden)
 
-**⚠️ SECURITY**: After uploading, verify key file is securely stored and NOT in git
+**⚠️ AFTER THIS STEP**:
+- Move .pem file to secure long-term storage (password manager, encrypted vault)
+- Update `app-key-location.md` with final storage location
+- Verify .pem file is NOT in git (check with `git status`)
 
 ---
 
@@ -301,57 +311,93 @@ Access: [Who has access]
 
 **Objective**: Verify credentials work before proceeding
 
+**Why This Matters**: If secrets are wrong, release-please workflow will fail. Test now to catch errors early.
+
 **Steps**:
-1. Create temporary test workflow to validate app token generation
-2. Workflow file: `.github/workflows/test-app-token.yml`
-3. Run workflow manually via Actions tab
-4. Check workflow logs for successful token generation
-5. **Delete test workflow after verification**
+1. **Create test workflow file**: `.github/workflows/test-app-token.yml`
 
-**Test Workflow Template**:
-```yaml
-name: Test GitHub App Token
-on: workflow_dispatch
+   Use this template:
+   ```yaml
+   name: Test GitHub App Token
+   on: workflow_dispatch
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Generate App Token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.RELEASE_PLEASE_APP_ID }}
-          private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
+   jobs:
+     test:
+       runs-on: ubuntu-latest
+       steps:
+         - name: Generate App Token
+           id: app-token
+           uses: actions/create-github-app-token@v1
+           with:
+             app-id: ${{ secrets.RELEASE_PLEASE_APP_ID }}
+             private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
 
-      - name: Validate Token
-        run: |
-          echo "Token generated successfully"
-          echo "Token starts with: ghs_..." # Should start with ghs_ prefix
+         - name: Validate Token
+           run: |
+             echo "✅ Token generated successfully"
+             echo "Token starts with: ghs_..."
+   ```
+
+2. **Commit and push** the test workflow to your branch
+3. Navigate to: https://github.com/AI-Substrate/wormhole/actions/workflows/test-app-token.yml
+4. Click "Run workflow" → Select your branch → Click "Run workflow"
+5. Wait for workflow to complete (~30 seconds)
+6. Click into the run and check logs
+
+**Expected Success Output**:
+```
+✅ Token generated successfully
+Token starts with: ghs_...
 ```
 
-**Expected Output**: "Token generated successfully" in workflow logs
+**If It Fails**:
+- Check error message carefully
+- Common issues:
+  - App ID is wrong (double-check the number from T005)
+  - Private key is incomplete (must include BEGIN/END lines)
+  - Private key has extra spaces or line breaks
+  - App not installed on repository (verify T009)
 
-**If Fails**: Check that App ID and private key are correctly stored in secrets
-
-**After Success**: Delete `.github/workflows/test-app-token.yml`
+**After Success**:
+1. Delete the test workflow file:
+   ```bash
+   git rm .github/workflows/test-app-token.yml
+   git commit -m "chore: remove GitHub App token test workflow"
+   git push
+   ```
+2. Mark T014 complete in your checklist below
 
 ---
 
 ## Checklist for Part 2 Completion
 
-- [ ] T005: GitHub App created, App ID recorded
-- [ ] T006: Permissions configured (contents + pull-requests only)
-- [ ] T007: Homepage URL set to wormhole repository
-- [ ] T008: Private key generated and stored securely
-- [ ] T009: App installed on AI-Substrate organization
-- [ ] T010: App added to main branch bypass list
-- [ ] T011: App ID stored as `RELEASE_PLEASE_APP_ID` secret
-- [ ] T012: Private key stored as `RELEASE_PLEASE_APP_PRIVATE_KEY` secret
-- [ ] T013: Rotation date stored as `APP_KEY_LAST_ROTATION` variable
-- [ ] T014: Token generation tested successfully
+Use this checklist as you work through T005-T014:
 
-**Status**: Ready to proceed to configuration files (T015-T017)
+- [ ] **T003**: Verify merge strategy (document in `merge-strategy.md`)
+- [ ] **T005**: GitHub App created, App ID recorded
+- [ ] **T006**: Permissions configured (contents + pull-requests only)
+- [ ] **T007**: Homepage URL set to wormhole repository
+- [ ] **T008**: Private key generated and downloaded (.pem file)
+- [ ] **T009**: App installed on AI-Substrate organization
+- [ ] **T010**: App added to main branch bypass list ⚠️ **CRITICAL**
+- [ ] **T011**: App ID stored as `RELEASE_PLEASE_APP_ID` secret
+- [ ] **T012**: Private key stored as `RELEASE_PLEASE_APP_PRIVATE_KEY` secret
+- [ ] **T013**: Rotation date stored as `APP_KEY_LAST_ROTATION` variable (value: `2025-11-10`)
+- [ ] **T014**: Token generation tested successfully (test workflow deleted after)
+
+**After completing all tasks above**: ✅ GitHub App setup is complete!
+
+**Next Phase**: Testing and validation (T036-T057) - I will handle these
+
+---
+
+## Summary: What You Need To Do
+
+1. **Quick task (5 min)**: T003 - Check merge strategy in repo settings
+2. **Main task (15-20 min)**: T005-T014 - Create GitHub App and configure secrets
+3. **Tell me when done**: I'll proceed with testing phase
+
+**Current status**: All configuration files are ready. Just need the GitHub App credentials!
 
 ---
 
@@ -359,5 +405,5 @@ jobs:
 
 - All GitHub UI tasks require organizational admin or repository admin access
 - Private key security is CRITICAL - never commit to git
-- App bypass list is essential for Release PR creation
+- App bypass list (T010) is essential - without it, release-please cannot create Release PRs
 - Test workflow (T014) should be deleted after verification to avoid clutter
