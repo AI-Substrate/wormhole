@@ -2,15 +2,15 @@ name: Build and Release
 
 on:
   workflow_dispatch:  # Allow manual triggering for testing
-  # Temporarily disabled during release-please migration
+  # Disabled during release-please migration - will be deleted after validation
   # pull_request:
   #   branches:
   #     - main
-  push:
-    branches:
-      - main
-      - develop
-      - org-migration-AI-Substrate
+  # push:
+  #   branches:
+  #     - main
+  #     - develop
+  #     - org-migration-AI-Substrate
 
 jobs:
   semantic-release:
