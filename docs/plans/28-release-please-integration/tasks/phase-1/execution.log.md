@@ -16,6 +16,43 @@ Implementing Phase 1 tasks following Manual validation approach. User will handl
 
 ---
 
+### T002: Test organization token policy ✅
+**Dossier Task**: T002 | **Plan Task**: 1.2
+**Status**: Completed
+**Type**: Setup | **Dependencies**: T001
+
+**Actions Taken**:
+- Modified `build-and-release.yml` to add `workflow_dispatch` trigger
+- Created test PR #7 to trigger workflow
+- Analyzed workflow failure logs
+
+**Test Method**:
+- PR: https://github.com/AI-Substrate/wormhole/pull/7
+- Workflow Run: https://github.com/AI-Substrate/wormhole/actions/runs/19222998950
+
+**Test Results**:
+```
+Checkout code	##[error]Input required and not supplied: token
+```
+
+**Findings**:
+- `SEMANTIC_RELEASE_TOKEN` secret is **not configured** (or empty)
+- Workflow fails at checkout step before testing org token policy
+- Cannot complete full token policy test without secret
+- Current semantic-release setup is **non-functional**
+
+**Conclusion**:
+- Organization token policy: ⚠️ Unable to determine
+- GitHub App urgency: **HIGH** (current workflow broken)
+- Recommendation: **Proceed immediately with GitHub App** (T005-T014)
+- Skip PAT configuration - migrate directly to App-based auth
+
+**Documentation**: Updated `validation/token-policy-test.md` with findings
+
+**Backlinks**: [Task T002 in tasks.md](./tasks.md#L15), [PR #7](https://github.com/AI-Substrate/wormhole/pull/7)
+
+---
+
 ### T001: Document current release workflow state ✅
 **Dossier Task**: T001 | **Plan Task**: 1.1
 **Status**: Completed
