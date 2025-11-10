@@ -9,29 +9,13 @@
       "release-type": "node",
       "package-name": "vsc-bridge",
       "extra-files": [
-        "packages/extension/package.json"
-      ]
-    },
-    "packages/extension": {
-      "release-type": "node",
-      "package-name": "vsc-bridge-extension"
-    },
-    "packages/shared-test": {
-      "release-type": "node",
-      "package-name": "vsc-bridge-shared-test"
+        "packages/extension/package.json",
+        "packages/shared-test/package.json"
+      ],
+      "include-component-in-tag": false
     }
   },
   "plugins": ["node-workspace"],
-  "linked-versions": [
-    {
-      "groupName": "vsc-bridge-monorepo",
-      "components": [
-        ".",
-        "packages/extension",
-        "packages/shared-test"
-      ]
-    }
-  ],
   "changelog-sections": [
     {"type": "feat", "section": "🚀 Features"},
     {"type": "fix", "section": "🐛 Bug Fixes"},
