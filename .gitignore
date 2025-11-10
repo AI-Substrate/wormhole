@@ -100,3 +100,6 @@ codebase.md
 .claude/settings.local.json
 artifacts/
 test/scratch/
+.env
+
+
