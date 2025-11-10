@@ -24,10 +24,12 @@
 			"command": "npx",
 			"args": [
 				"--yes",
-				"github:AI-Substrate/wormhole",
+				"-p",
+				"github:AI-Substrate/wormhole#minor-fixes",
+				"vscb",
 				"mcp",
 				"--workspace",
-				"."
+				"${workspaceFolder}/test"
 			]
 		}, 
 		// "serena for vsc-bridge": {
