@@ -121,7 +121,7 @@ async function main() {
     error('\n💥 Build failed\n');
     error('Troubleshooting:');
     error('  1. Ensure Node.js >= 18.0.0: node --version');
-    error('  2. Try manual build: npm install && node scripts/build-manifest.bundle.mjs && npm run build:cli');
+    error('  2. Try manual build: npm install && node scripts/build-manifest.bundle.cjs && npm run build:cli');
     error('  3. Check TypeScript version: npx tsc --version');
     error('  4. Report issue: https://github.com/AI-Substrate/wormhole/issues');
     error(`\nError details: ${err.message}`);

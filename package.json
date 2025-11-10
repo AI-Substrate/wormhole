@@ -49,7 +49,7 @@
     "build:shared-test": "cd packages/shared-test && npm run build",
     "build:manifest": "node scripts/build-manifest.bundle.cjs",
     "build:manifest:dev": "tsx scripts/build-manifest.cts",
-    "bundle:manifest": "esbuild scripts/build-manifest.cts --bundle --platform=node --format=cjs --outfile=scripts/build-manifest.bundle.cjs '--external:fs' '--external:path' '--external:glob'",
+    "bundle:manifest": "esbuild scripts/build-manifest.cts --bundle --platform=node --format=cjs --outfile=scripts/build-manifest.bundle.cjs '--external:fs' '--external:path'",
     "watch:manifest": "chokidar 'packages/extension/src/vsc-scripts/**/*.meta.yaml' -c 'npm run build:manifest'",
     "test": "xvfb-run -a vscode-test",
     "test:extension": "xvfb-run -a vscode-test",
