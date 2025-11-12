@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/AI-Substrate/wormhole/compare/v1.2.0...v1.3.0) (2025-11-12)
+
+
+### 🚀 Features
+
+* build fixes and Flowspace integration ([6af7c00](https://github.com/AI-Substrate/wormhole/commit/6af7c00c9303054d39cf57f738ac45cc7b8b9b3a))
+
 ## [1.2.0](https://github.com/AI-Substrate/wormhole/compare/v1.1.0...v1.2.0) (2025-11-10)
 
 
