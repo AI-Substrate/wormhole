@@ -1,0 +1,22 @@
+version: '1.0'
+repositories:
+  main:
+    name: main
+    condensed_path: .flowspace/output/lfl/condensed.jsonl
+    description: Main project repository (auto-registered)
+    status: active
+    weight: 1.0
+    tags: []
+    scan_paths:
+    - /git-root
+    output_dir: .flowspace/output
+    watch_enabled: false
+    ignore_patterns: null
+    file_count: 830
+    total_nodes: 2286
+    index_duration: null
+    graph_load_time: null
+    created_at: '2025-11-10T09:12:05.602640'
+    updated_at: '2025-11-10T09:12:05.604399'
+    last_indexed: '2025-11-10T09:12:05.604399'
+default_repo: main

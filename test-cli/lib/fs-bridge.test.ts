@@ -741,7 +741,7 @@ describe('Pre-Submission Health Check (Phase 2)', () => {
     expect(result.error.message).toContain('Extension not running, crashed, or not installed');
     expect(result.error.message).toContain('host.json not found');
     expect(result.error.message).toContain('VS Code is open with vsc-bridge extension');
-    expect(result.error.message).toContain('[TBD]'); // Installation instructions placeholder
+    expect(result.error.message).toContain('vscb get-vsix'); // Installation instructions
 
     // Should have meta timestamp
     expect(result.meta).toBeDefined();
@@ -783,7 +783,7 @@ describe('Pre-Submission Health Check (Phase 2)', () => {
     expect(result.error.message).toContain('Extension not running, crashed, or not installed');
     expect(result.error.message).toMatch(/host\.json age: \d+s \(stale\)/); // Age in seconds
     expect(result.error.message).toContain('VS Code is open with vsc-bridge extension');
-    expect(result.error.message).toContain('[TBD]'); // Installation instructions placeholder
+    expect(result.error.message).toContain('vscb get-vsix'); // Installation instructions
 
     // Should have meta timestamp
     expect(result.meta).toBeDefined();
@@ -927,7 +927,7 @@ describe('Pickup Acknowledgment Polling (Phase 3)', () => {
     expect(result.error.message).toContain('overloaded, at capacity, crashed, or not installed');
     expect(result.error.message).toContain('restarting VS Code');
     expect(result.error.message).toContain('capacity settings (MAX_CONCURRENT)');
-    expect(result.error.message).toContain('[TBD]'); // Installation instructions placeholder
+    expect(result.error.message).toContain('vscb get-vsix'); // Installation instructions
 
     // Should have meta timestamp
     expect(result.meta).toBeDefined();
@@ -1449,8 +1449,8 @@ describe('Error Message Enhancement - Phase 6', () => {
       expect(message).toContain('vsc-bridge extension');
       expect(message).toContain('installed and active');
 
-      // 5. Installation instructions placeholder
-      expect(message).toContain('[TBD]');
+      // 5. Installation instructions
+      expect(message).toContain('vscb get-vsix');
     });
 
     it('should include stale age in diagnostic when host.json exists but stale', async () => {
@@ -1528,11 +1528,11 @@ describe('Error Message Enhancement - Phase 6', () => {
       expect(message).toContain('MAX_CONCURRENT');
 
       // 5. Installation guidance
-      expect(message).toContain('Check that VS Code is running');
-      expect(message).toContain('vsc-bridge extension');
+      expect(message).toContain('restarting VS Code');
+      expect(message).toContain('not installed');
 
-      // 6. Installation instructions placeholder
-      expect(message).toContain('[TBD]');
+      // 6. Installation instructions
+      expect(message).toContain('vscb get-vsix');
     });
   });
 

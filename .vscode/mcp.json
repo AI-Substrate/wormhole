@@ -18,7 +18,20 @@
 				"--workspace",
 				"${workspaceFolder}/test"
 			]
-		}
+		},
+		"wormhole_npx": {
+			"type": "stdio",
+			"command": "npx",
+			"args": [
+				"--yes",
+				"-p",
+				"github:AI-Substrate/wormhole#minor-fixes",
+				"vscb",
+				"mcp",
+				"--workspace",
+				"${workspaceFolder}/test"
+			]
+		}, 
 		// "serena for vsc-bridge": {
 		// 	"type": "stdio",
 		// 	"command": "bash",

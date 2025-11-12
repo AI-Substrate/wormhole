@@ -26,6 +26,10 @@ pnpm-debug.log*
 !packages/extension/src/core/debug/step-operations.d.ts
 !packages/extension/src/core/debug/step-strategies.d.ts
 **/manifest.json
+
+# Allow generated files needed for npx installs
+!dist/manifest.json
+!dist/lib/mcp/docs/
 packages/extension/src/vsc-scripts/generated/schemas.ts
 **/build-manifest.js
 **/*.vsix
@@ -100,3 +104,6 @@ codebase.md
 .claude/settings.local.json
 artifacts/
 test/scratch/
+.env
+
+

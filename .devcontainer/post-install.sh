@@ -253,6 +253,8 @@ fi
 echo "✅ Permission configuration complete"
 echo ""
 
+curl -L https://aka.ms/InstallFlowspace | bash
+
 # ==========================================
 # FINAL: Summary
 # ==========================================
