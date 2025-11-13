@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
  * Clear file breakpoints action script
  * Clears all breakpoints in a specific file
  */
-@RegisterScript('breakpoint.clear-file')
+@RegisterScript('breakpoint.clear.file')
 export class ClearFileBreakpointsScript extends ActionScript<any> {
     constructor() {
         super();

@@ -8,7 +8,7 @@ import { ErrorCode } from '@core/response/errorTaxonomy';
  * Clear project breakpoints action script
  * Clears all breakpoints across the entire project
  */
-@RegisterScript('breakpoint.clear-project')
+@RegisterScript('breakpoint.clear.project')
 export class ClearProjectBreakpointsScript extends ActionScript<any> {
     constructor() {
         super();

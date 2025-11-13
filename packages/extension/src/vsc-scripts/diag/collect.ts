@@ -10,7 +10,7 @@ import * as vscode from 'vscode';
  * Collect diagnostics query script
  * Collects system, extension, and debug session diagnostics
  */
-@RegisterScript('diag.collect')
+@RegisterScript('diagnostic.collect')
 export class CollectDiagnosticsScript extends QueryScript<any> {
     constructor() {
         super();

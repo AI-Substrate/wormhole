@@ -11,7 +11,7 @@ import { waitUntilPausedAndGetLocation } from '@core/debug/debug-polling-helpers
  *
  * Uses standardized polling approach for consistent outcome detection.
  */
-@RegisterScript('tests.debug-single')
+@RegisterScript('test.debug-single')
 export class DebugSingleTestScript extends WaitableScript<any> {
     constructor() {
         super();
