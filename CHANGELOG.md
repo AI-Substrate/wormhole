@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/AI-Substrate/wormhole/compare/v1.3.0...v1.3.1) (2025-11-13)
+
+
+### 🐛 Bug Fixes
+
+* update script registration identifiers for consistency ([#16](https://github.com/AI-Substrate/wormhole/issues/16)) ([fd43c28](https://github.com/AI-Substrate/wormhole/commit/fd43c281332865e3861a5c595cb96c9d4bccbd68))
+
 ## [1.3.0](https://github.com/AI-Substrate/wormhole/compare/v1.2.0...v1.3.0) (2025-11-12)
 
 
