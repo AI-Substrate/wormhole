@@ -22,7 +22,7 @@ import { ErrorCode } from '@core/response/errorTaxonomy';
  * This reloads the current window. For Extension Development Host,
  * this will reload the host window. The workspace will be preserved.
  */
-@RegisterScript('utils.restart-vscode')
+@RegisterScript('util.restart-vscode')
 export class RestartVSCodeScript extends ActionScript<any> {
     async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscode = bridgeContext.vscode;
