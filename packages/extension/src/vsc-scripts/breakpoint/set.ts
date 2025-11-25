@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import { z } from 'zod';
 import { ActionScript, RegisterScript } from '@script-base';
 import type { IBridgeContext } from '../../core/bridge-context/types';
@@ -26,12 +27,27 @@ export class SetBreakpointScript extends ActionScript<any> {
     async execute(bridgeContext: IBridgeContext, params: any): Promise<any> {
         const vscodeApi = bridgeContext.vscode;
 
+        // Resolve relative path to absolute (supports workspace-relative paths)
+        let resolvedPath = params.path;
+        if (!path.isAbsolute(params.path)) {
+            const workspace = vscodeApi.workspace.workspaceFolders?.[0];
+            if (!workspace) {
+                return ScriptResult.failure(
+                    `Cannot resolve relative path "${params.path}": No workspace folder open`,
+                    ErrorCode.E_INVALID_PATH,
+                    { path: params.path }
+                );
+            }
+            resolvedPath = path.resolve(workspace.uri.fsPath, params.path);
+        }
+
         // Validate file exists
-        if (!fs.existsSync(params.path)) {
+        if (!fs.existsSync(resolvedPath)) {
             return ScriptResult.failure(
-                `File not found: ${params.path}`,
+                `File not found: ${params.path}` +
+                (resolvedPath !== params.path ? ` (resolved to: ${resolvedPath})` : ''),
                 ErrorCode.E_FILE_NOT_FOUND,
-                { path: params.path }
+                { path: params.path, resolvedPath }
             );
         }
 
@@ -46,7 +62,7 @@ export class SetBreakpointScript extends ActionScript<any> {
 
         // Check if line number is within file bounds (optional but helpful)
         try {
-            const fileContent = fs.readFileSync(params.path, 'utf-8');
+            const fileContent = fs.readFileSync(resolvedPath, 'utf-8');
             const lineCount = fileContent.split('\n').length;
 
             if (params.line > lineCount) {
@@ -60,7 +76,7 @@ export class SetBreakpointScript extends ActionScript<any> {
         }
 
         // Create source breakpoint
-        const uri = vscodeApi.Uri.file(params.path);
+        const uri = vscodeApi.Uri.file(resolvedPath);
         const position = new vscodeApi.Position(params.line - 1, 0); // VS Code uses 0-indexed lines
         const location = new vscodeApi.Location(uri, position);
 

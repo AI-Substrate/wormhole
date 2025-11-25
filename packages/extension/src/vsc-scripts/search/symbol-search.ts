@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import * as fs from 'fs';
+import * as path from 'path';
 import { QueryScript, RegisterScript } from '@script-base';
 import type { IBridgeContext } from '../../core/bridge-context/types';
 import { ScriptResult } from '@core/scripts/ScriptResult';
@@ -55,15 +56,30 @@ export class SymbolSearchScript extends QueryScript<any> {
                     params.query
                 ) as any[]) || [];
             } else if (params.mode === 'document') {
-                if (!fs.existsSync(params.path)) {
+                // Resolve relative path to absolute (supports workspace-relative paths)
+                let resolvedPath = params.path;
+                if (!path.isAbsolute(params.path)) {
+                    const workspace = vscode.workspace.workspaceFolders?.[0];
+                    if (!workspace) {
+                        return ScriptResult.failure(
+                            `Cannot resolve relative path "${params.path}": No workspace folder open`,
+                            ErrorCode.E_INVALID_PATH,
+                            { path: params.path }
+                        );
+                    }
+                    resolvedPath = path.resolve(workspace.uri.fsPath, params.path);
+                }
+
+                if (!fs.existsSync(resolvedPath)) {
                     return ScriptResult.failure(
-                        `File not found: ${params.path}`,
+                        `File not found: ${params.path}` +
+                        (resolvedPath !== params.path ? ` (resolved to: ${resolvedPath})` : ''),
                         ErrorCode.E_FILE_NOT_FOUND,
-                        { path: params.path }
+                        { path: params.path, resolvedPath }
                     );
                 }
 
-                const uri = vscode.Uri.file(params.path);
+                const uri = vscode.Uri.file(resolvedPath);
                 const docSymbols = (await vscode.commands.executeCommand(
                     'vscode.executeDocumentSymbolProvider',
                     uri

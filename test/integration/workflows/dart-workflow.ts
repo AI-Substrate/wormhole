@@ -21,13 +21,9 @@
 import { expect } from 'vitest';
 import { DebugRunner } from '../runners/DebugRunner';
 import { withRetry } from './base/utils';
-import * as path from 'path';
 
-// Project paths
-const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
-
-// Test file path
-const DART_TEST_FILE = path.join(PROJECT_ROOT, 'test/integration-simple/dart/test/debug_test.dart');
+// Test file path - relative to test/ workspace (resolved by runner.resolvePath())
+const DART_TEST_FILE = 'integration-simple/dart/test/debug_test.dart';
 
 /**
  * Execute Dart enhanced debug workflow

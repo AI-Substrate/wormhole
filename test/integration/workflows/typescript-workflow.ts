@@ -16,11 +16,14 @@ import { enhancedCoverageWorkflow, EnhancedWorkflowConfig } from './base/enhance
 import { scopeExtractors, findBreakpointLine, findBreakpoint2Line } from './base/utils';
 import * as path from 'path';
 
-// Project paths
+// Project root for local file operations (findBreakpointLine uses fs.readFile)
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
 
-// Test file path
-const TYPESCRIPT_TEST_FILE = path.join(PROJECT_ROOT, 'test/integration-simple/typescript/debug.test.ts');
+// Test file path - relative to test/ workspace (resolved by runner.resolvePath())
+const TYPESCRIPT_TEST_FILE = 'integration-simple/typescript/debug.test.ts';
+
+// Absolute path for local file reading (findBreakpointLine)
+const TYPESCRIPT_TEST_FILE_ABS = path.join(PROJECT_ROOT, 'test', TYPESCRIPT_TEST_FILE);
 
 /**
  * Execute TypeScript enhanced debug workflow
@@ -28,9 +31,9 @@ const TYPESCRIPT_TEST_FILE = path.join(PROJECT_ROOT, 'test/integration-simple/ty
  * @param runner - DebugRunner implementation (CLI or MCP)
  */
 export async function typescriptEnhancedDebugWorkflow(runner: DebugRunner): Promise<void> {
-    // Dynamically find breakpoint lines
-    const breakpoint1Line = await findBreakpointLine(TYPESCRIPT_TEST_FILE);   // Line 32: const sum = add(x, y);
-    const breakpoint2Line = await findBreakpoint2Line(TYPESCRIPT_TEST_FILE);  // Line 37: expect(diff).toBe(2);
+    // Dynamically find breakpoint lines (uses absolute path for local fs.readFile)
+    const breakpoint1Line = await findBreakpointLine(TYPESCRIPT_TEST_FILE_ABS);   // Line 32: const sum = add(x, y);
+    const breakpoint2Line = await findBreakpoint2Line(TYPESCRIPT_TEST_FILE_ABS);  // Line 37: expect(diff).toBe(2);
 
     const config: EnhancedWorkflowConfig = {
         // Language information

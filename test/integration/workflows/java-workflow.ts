@@ -14,14 +14,14 @@ import { enhancedCoverageWorkflow, EnhancedWorkflowConfig } from './base/enhance
 import { scopeExtractors, findBreakpointLine, findBreakpoint2Line } from './base/utils';
 import * as path from 'path';
 
-// Project paths
+// Project root for local file operations (findBreakpointLine uses fs.readFile)
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
 
-// Test file path
-const JAVA_TEST_FILE = path.join(
-    PROJECT_ROOT,
-    'test/integration-simple/java/src/test/java/com/example/DebugTest.java'
-);
+// Test file path - relative to test/ workspace (resolved by runner.resolvePath())
+const JAVA_TEST_FILE = 'integration-simple/java/src/test/java/com/example/DebugTest.java';
+
+// Absolute path for local file reading (findBreakpointLine)
+const JAVA_TEST_FILE_ABS = path.join(PROJECT_ROOT, 'test', JAVA_TEST_FILE);
 
 /**
  * Execute Java enhanced debug workflow
@@ -29,9 +29,9 @@ const JAVA_TEST_FILE = path.join(
  * @param runner - DebugRunner implementation (CLI or MCP)
  */
 export async function javaEnhancedDebugWorkflow(runner: DebugRunner): Promise<void> {
-    // Dynamically find breakpoint lines
-    const breakpoint1Line = await findBreakpointLine(JAVA_TEST_FILE);    // Line 36: int sum = add(x, y);
-    const breakpoint2Line = await findBreakpoint2Line(JAVA_TEST_FILE);   // Line 41: assertEquals(2, diff);
+    // Dynamically find breakpoint lines (uses absolute path for local fs.readFile)
+    const breakpoint1Line = await findBreakpointLine(JAVA_TEST_FILE_ABS);    // Line 36: int sum = add(x, y);
+    const breakpoint2Line = await findBreakpoint2Line(JAVA_TEST_FILE_ABS);   // Line 41: assertEquals(2, diff);
 
     const config: EnhancedWorkflowConfig = {
         // Language information

@@ -11,6 +11,34 @@
  */
 
 import * as vscode from 'vscode';
+import * as path from 'path';
+
+/**
+ * Resolve a file path to absolute, using workspace root for relative paths.
+ *
+ * @param filePath - Absolute or workspace-relative path
+ * @returns Absolute path
+ * @throws Error with code E_NO_WORKSPACE if no workspace folder available for relative path
+ */
+export function resolveToAbsolutePath(filePath: string): string {
+    // Already absolute - return as-is
+    if (path.isAbsolute(filePath)) {
+        return filePath;
+    }
+
+    // Resolve relative to first workspace folder
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+        const error: any = new Error(
+            `Cannot resolve relative path "${filePath}": No workspace folder open. ` +
+            `Use an absolute path or open a workspace folder.`
+        );
+        error.code = 'E_NO_WORKSPACE';
+        throw error;
+    }
+
+    return path.resolve(workspaceFolder.uri.fsPath, filePath);
+}
 
 /**
  * Parsed Flowspace ID components
@@ -374,8 +402,11 @@ export async function resolveFromFlowspaceId(
     // Parse Flowspace ID
     const parsed = parseFlowspaceId(nodeId);
 
+    // Resolve relative path to absolute (supports workspace-relative paths in Flowspace IDs)
+    const absolutePath = resolveToAbsolutePath(parsed.filePath);
+
     // Convert file path to URI
-    const uri = vscode.Uri.file(parsed.filePath);
+    const uri = vscode.Uri.file(absolutePath);
 
     // Get document symbols from LSP
     const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
@@ -425,8 +456,11 @@ export async function resolveFromSymbolName(
     filePath: string,
     symbolName: string
 ): Promise<SymbolResolutionResult | null> {
+    // Resolve relative path to absolute (supports workspace-relative paths)
+    const absolutePath = resolveToAbsolutePath(filePath);
+
     // Convert file path to URI
-    const uri = vscode.Uri.file(filePath);
+    const uri = vscode.Uri.file(absolutePath);
 
     // Get document symbols from LSP
     const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(

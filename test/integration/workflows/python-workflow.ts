@@ -23,13 +23,9 @@
 import { expect } from 'vitest';
 import { DebugRunner } from '../runners/DebugRunner';
 import { withRetry } from './base/utils';
-import * as path from 'path';
 
-// Project paths
-const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
-
-// Test file paths (matching cross-language-debug.test.ts)
-const PYTHON_TEST_FILE = path.join(PROJECT_ROOT, 'test/integration-simple/python/test_debug.py');
+// Test file paths - relative to test/ workspace (resolved by runner.resolvePath())
+const PYTHON_TEST_FILE = 'integration-simple/python/test_debug.py';
 
 // Breakpoint lines (matching cross-language-debug.test.ts)
 // These are dynamically discovered via VSCB_BREAKPOINT_NEXT_LINE marker

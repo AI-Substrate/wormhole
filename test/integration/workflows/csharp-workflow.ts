@@ -14,11 +14,14 @@ import { enhancedCoverageWorkflow, EnhancedWorkflowConfig } from './base/enhance
 import { scopeExtractors, variableMatchers, findBreakpointLine, findBreakpoint2Line } from './base/utils';
 import * as path from 'path';
 
-// Project paths
+// Project root for local file operations (findBreakpointLine uses fs.readFile)
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
 
-// Test file path
-const CSHARP_TEST_FILE = path.join(PROJECT_ROOT, 'test/integration-simple/csharp/DebugTest.cs');
+// Test file path - relative to test/ workspace (resolved by runner.resolvePath())
+const CSHARP_TEST_FILE = 'integration-simple/csharp/DebugTest.cs';
+
+// Absolute path for local file reading (findBreakpointLine)
+const CSHARP_TEST_FILE_ABS = path.join(PROJECT_ROOT, 'test', CSHARP_TEST_FILE);
 
 /**
  * Execute C# enhanced debug workflow
@@ -26,9 +29,9 @@ const CSHARP_TEST_FILE = path.join(PROJECT_ROOT, 'test/integration-simple/csharp
  * @param runner - DebugRunner implementation (CLI or MCP)
  */
 export async function csharpEnhancedDebugWorkflow(runner: DebugRunner): Promise<void> {
-    // Dynamically find breakpoint lines
-    const breakpoint1Line = await findBreakpointLine(CSHARP_TEST_FILE);   // Line 32: int sum = Add(x, y);
-    const breakpoint2Line = await findBreakpoint2Line(CSHARP_TEST_FILE);  // Line 37: Assert.Equal(2, diff);
+    // Dynamically find breakpoint lines (uses absolute path for local fs.readFile)
+    const breakpoint1Line = await findBreakpointLine(CSHARP_TEST_FILE_ABS);   // Line 32: int sum = Add(x, y);
+    const breakpoint2Line = await findBreakpoint2Line(CSHARP_TEST_FILE_ABS);  // Line 37: Assert.Equal(2, diff);
 
     const config: EnhancedWorkflowConfig = {
         // Language information
