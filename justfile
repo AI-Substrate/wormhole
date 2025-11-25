@@ -774,3 +774,23 @@ clean-all-dumps:
 # Package offline installation bundle
 package-offline-bundle: build package-extension
     bash ci/scripts/package-offline-bundle.sh
+
+# ==========================================
+# MCP TOOLS DOCUMENTATION
+# ==========================================
+
+# Dump all MCP tools documentation (Markdown)
+# Usage: just dump-mcp-tools
+# Usage: just dump-mcp-tools > docs/mcp-tools.md
+dump-mcp-tools *ARGS:
+    @npx tsx scripts/dump-mcp-tools.ts {{ARGS}}
+
+# Dump MCP tools as JSON
+# Usage: just dump-mcp-tools-json
+dump-mcp-tools-json:
+    @npx tsx scripts/dump-mcp-tools.ts --json
+
+# Dump filtered MCP tools (by name regex)
+# Usage: just dump-mcp-tools-filter "debug|breakpoint"
+dump-mcp-tools-filter pattern:
+    @npx tsx scripts/dump-mcp-tools.ts --filter "{{pattern}}"
