@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/AI-Substrate/wormhole/compare/v1.3.1...v1.4.0) (2025-11-25)
+
+
+### 🚀 Features
+
+* enhance path resolution for workspace-relative paths in scripts ([1ecb352](https://github.com/AI-Substrate/wormhole/commit/1ecb352d84e39476501da027a9c3892c4ae7d998))
+* implement MCP tools documentation dumping scripts and update justfile ([07bb27e](https://github.com/AI-Substrate/wormhole/commit/07bb27ed5914839902c85c023b735926941b4e3c))
+
 ## [1.3.1](https://github.com/AI-Substrate/wormhole/compare/v1.3.0...v1.3.1) (2025-11-13)
 
 
